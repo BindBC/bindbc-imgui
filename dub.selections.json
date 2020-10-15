@@ -3,6 +3,7 @@
 	"versions": {
 		"bindbc-glfw": "0.5.0",
 		"bindbc-loader": "0.3.2",
+		"bindbc-opengl": "0.1.0",
 		"bindbc-sdl": "0.1.0"
 	}
 }
