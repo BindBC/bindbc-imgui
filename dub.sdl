@@ -1,0 +1,34 @@
+name "bindbc-imgui"
+description "Dynamic and static bindings to imgui, compatible with -betterC, @nogc, and nothrow."
+homepage ""
+authors "Joshua T. Fisher"
+license "Boost"
+
+targetType "staticLibrary"
+targetPath "lib"
+targetName "BindBC_ImGui"
+
+configuration "dynamic" {
+    dependency "bindbc-loader" version="~>0.3.0"
+    dependency "bindbc-sdl" version="~>0.1.0"
+    dependency "bindbc-glfw" version="~>0.5.0"
+}
+
+configuration "dynamicBC" {
+    dependency "bindbc-loader" version="~>0.3.0"
+    subConfiguration "bindbc-loader" "yesBC"
+    dependency "bindbc-sdl" version="~>0.1.0"
+    dependency "bindbc-glfw" version="~>0.5.0"
+    dflags "-betterC"
+}
+
+configuration "static" {
+    versions "BindImGui_Static"
+    excludedSourceFiles "source/bindbc/imgui/binddynamic.d"
+}
+
+configuration "staticBC" {
+    dflags "-betterC"
+    versions "BindImGui_Static"
+    excludedSourceFiles "source/bindbc/imgui/binddynamic.d"
+}
