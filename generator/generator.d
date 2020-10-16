@@ -8,27 +8,19 @@ import std.algorithm;
 import std.algorithm.searching;
 import std.algorithm.iteration;
 
+shared immutable string[string] cArgMap;
+shared immutable string[string] cTypeMap;
 
-string imgui_argname_to_dlang(string imguiName)
+shared static this()
 {
-    const string[string] typeMap = [
+    cArgMap = [
         "align": "alignment",
         "ref" : "reference",
         "in" : "inItem",
         "out" : "outItem"
     ];
-
-    if (auto type = imguiName in typeMap)
-    {
-        return *type;
-    }
-
-    return imguiName;
-}
-
-string imgui_type_to_dlang(string imguiType)
-{
-    const string[string] typeMap = [
+    
+    cTypeMap = [
         "unsigned char": "char",
         "unsigned_char": "char",
         "unsigned short": "ushort",
@@ -50,8 +42,21 @@ string imgui_type_to_dlang(string imguiType)
         "unsigned char**" : "char**",
         "const unsigned char[256]" : "const char[256]"
     ];
+}
 
-    if (auto type = imguiType in typeMap)
+string imgui_argname_to_dlang(string imguiName)
+{
+    if (auto type = imguiName in cArgMap)
+    {
+        return *type;
+    }
+
+    return imguiName;
+}
+
+string imgui_type_to_dlang(string imguiType)
+{
+    if (auto type = imguiType in cTypeMap)
     {
         return *type;
     }
@@ -169,11 +174,9 @@ struct TypeToReplace
 
 `;
 
-string get_imvector_structs(JSONValue definitions)
+string get_imvector_structs(Appender!string strBuilder, JSONValue definitions)
 {
     string[string] imTemplateTypes;
-    auto strBuilder = appender!string;
-
     auto structs = definitions["structs"];
     foreach (string structName, JSONValue structMembers; structs) 
     {
@@ -216,9 +219,8 @@ string get_imvector_structs(JSONValue definitions)
     return strBuilder.data;
 }
 
-string get_typedefs(JSONValue typedefs)
+string get_typedefs(Appender!string strBuilder, JSONValue typedefs)
 {
-    auto strBuilder = appender!string;
     foreach (string typedefName, JSONValue typeDefValue; typedefs) 
     {
         const string originalTypeName = imgui_type_to_dlang(typeDefValue.str);
@@ -234,10 +236,8 @@ string get_typedefs(JSONValue typedefs)
     return strBuilder.data;
 }
 
-string get_enums(JSONValue definitions)
+string get_enums(Appender!string strBuilder, JSONValue definitions)
 {
-    auto strBuilder = appender!string;
-
     auto enums = definitions["enums"];
     foreach (string enumName, JSONValue enumValues; enums) 
     {
@@ -258,10 +258,8 @@ string get_enums(JSONValue definitions)
     return strBuilder.data;
 }
 
-string get_structs(JSONValue definitions)
+string get_structs(Appender!string strBuilder, JSONValue definitions)
 {
-    auto strBuilder = appender!string;
-
     auto structs = definitions["structs"];
     foreach (string structName, JSONValue structMembers; structs) 
     {
@@ -293,9 +291,8 @@ string get_structs(JSONValue definitions)
 }
 
 
-string write_function_loading(JSONValue definitions)
+string write_function_loading(Appender!string strBuilder, JSONValue definitions)
 {
-    auto strBuilder = appender!string;
     foreach (string functionName, JSONValue functionDecl; definitions) 
     {
         foreach (JSONValue cimguiFunction; functionDecl.array)
@@ -310,10 +307,8 @@ string write_function_loading(JSONValue definitions)
     return strBuilder.data;
 }
 
-string get_functions(JSONValue definitions, bool functionDecls)
-{
-    auto strBuilder = appender!string;
-    
+string get_functions(Appender!string strBuilder, JSONValue definitions, bool functionDecls)
+{    
     string[] imFunctionPtrTypes;
 
     strBuilder.put("extern(C) @nogc nothrow {\n");
@@ -416,13 +411,13 @@ string get_functions(JSONValue definitions, bool functionDecls)
     return strBuilder.data;
 }
 
-void write_imgui_file()
+void write_imgui_file(
+    JSONValue typedefs_dict,
+    JSONValue structs_and_enums,
+    JSONValue definitions,
+    JSONValue impl_definitions)
 {
     auto strBuilder = appender!string;
-    JSONValue typedefs_dict = parseJSON(std.file.readText("./cimgui/generator/output/typedefs_dict.json"));
-    JSONValue structs_and_enums = parseJSON(std.file.readText("./cimgui/generator/output/structs_and_enums.json"));
-    JSONValue definitions = parseJSON(std.file.readText("./cimgui/generator/output/definitions.json"));
-    JSONValue impl_definitions = parseJSON(std.file.readText("./cimgui/generator/output/impl_definitions.json"));
 
     strBuilder.put("module bindbc.imgui.bind.imgui;\n\n");
     strBuilder.put("import core.stdc.stdio;\n\n");
@@ -430,28 +425,26 @@ void write_imgui_file()
     strBuilder.put("import bindbc.sdl;\n\n");
     strBuilder.put("import bindbc.glfw;\n\n");
 
-    strBuilder.put(get_typedefs(typedefs_dict));
+    get_typedefs(strBuilder, typedefs_dict);
     strBuilder.put("\n\n");
-    strBuilder.put(get_imvector_structs(structs_and_enums));
+    get_imvector_structs(strBuilder, structs_and_enums);
     strBuilder.put("\n\n");
-    strBuilder.put(get_enums(structs_and_enums));
+    get_enums(strBuilder, structs_and_enums);
     strBuilder.put("\n\n");
-    strBuilder.put(get_structs(structs_and_enums));
+    get_structs(strBuilder, structs_and_enums);
     strBuilder.put("\n\n");
-
-
 
     strBuilder.put("version(BindImGui_Static) {\n");
 
-    strBuilder.put(get_functions(definitions, true));
-    strBuilder.put(get_functions(impl_definitions, true));
+    get_functions(strBuilder, definitions, true);
+    get_functions(strBuilder, impl_definitions, true);
     
     strBuilder.put("}\n");
 
     strBuilder.put("else {\n");
 
-    strBuilder.put(get_functions(definitions, false));
-    strBuilder.put(get_functions(impl_definitions, false));
+    get_functions(strBuilder, definitions, false);
+    get_functions(strBuilder, impl_definitions, false);
     
     strBuilder.put("}\n");
     
@@ -461,21 +454,20 @@ void write_imgui_file()
     std.file.write("source/bindbc/imgui/bind/imgui.d", strBuilder.data);
 }
 
-void write_loader()
+void write_loader(
+    JSONValue definitions,
+    JSONValue impl_definitions)
 {
-    JSONValue definitions = parseJSON(std.file.readText("./cimgui/generator/output/definitions.json"));
-    JSONValue impl_definitions = parseJSON(std.file.readText("./cimgui/generator/output/impl_definitions.json"));
-
     auto strBuilder = appender!string;
     strBuilder.put(loaderPrelude);
     strBuilder.put("\n");
 
-    strBuilder.put(write_function_loading(definitions));
+    write_function_loading(strBuilder, definitions);
 
     strBuilder.put("\n\n");
     strBuilder.put("// Backends\n");
 
-    strBuilder.put(write_function_loading(impl_definitions));
+    write_function_loading(strBuilder, impl_definitions);
 
     strBuilder.put(loaderEnd);
     
@@ -484,8 +476,13 @@ void write_loader()
 
 void main()
 {
-    write_loader();
-    write_imgui_file();
+    JSONValue typedefs_dict = parseJSON(std.file.readText("./cimgui/generator/output/typedefs_dict.json"));
+    JSONValue structs_and_enums = parseJSON(std.file.readText("./cimgui/generator/output/structs_and_enums.json"));
+    JSONValue definitions = parseJSON(std.file.readText("./cimgui/generator/output/definitions.json"));
+    JSONValue impl_definitions = parseJSON(std.file.readText("./cimgui/generator/output/impl_definitions.json"));
+
+    write_loader(definitions, impl_definitions);
+    write_imgui_file(typedefs_dict, structs_and_enums, definitions, impl_definitions);
 
     //JSONValue definitions = parseJSON(std.file.readText("./cimgui/generator/output/definitions.json"));
     //JSONValue impl_definitions = parseJSON(std.file.readText("./cimgui/generator/output/impl_definitions.json"));
