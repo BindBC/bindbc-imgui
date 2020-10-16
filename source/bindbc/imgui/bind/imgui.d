@@ -71,12 +71,14 @@ alias ImGuiNextItemDataFlags = int;
 
 
 
-    struct ImVector
-    {
-        int Size;
-        int Capacity;
-        void* Data;
-    }
+struct ImVector
+{
+    int Size;
+    int Capacity;
+    void* Data;
+}
+
+
 struct ImVector_char
 {
     int Size;

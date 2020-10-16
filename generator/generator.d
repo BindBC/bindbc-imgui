@@ -174,6 +174,17 @@ struct TypeToReplace
 
 `;
 
+const string baseImVector = `
+struct ImVector
+{
+    int Size;
+    int Capacity;
+    void* Data;
+}
+
+`;
+
+
 string get_imvector_structs(Appender!string strBuilder, JSONValue definitions)
 {
     string[string] imTemplateTypes;
@@ -195,13 +206,7 @@ string get_imvector_structs(Appender!string strBuilder, JSONValue definitions)
         }
     }
 
-    strBuilder.put("
-    struct ImVector
-    {
-        int Size;
-        int Capacity;
-        void* Data;
-    }");
+    strBuilder.put(baseImVector);
 
     foreach (string templateName, string templatedOnType; imTemplateTypes)
     {
