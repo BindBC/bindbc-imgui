@@ -1,4 +1,4 @@
-module bindbc.ImGui;
+module bindbc.imgui;
 
 public import bindbc.imgui.config,
               bindbc.imgui.bind;
