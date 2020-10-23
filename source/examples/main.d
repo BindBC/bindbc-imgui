@@ -2,11 +2,16 @@ module examples.main;
 
 import std.stdio;
 import bindbc.sdl,
+       bindbc.sdl.dynload,
+       bindbc.imgui.dynload,
        bindbc.imgui.bind.imgui,
        bindbc.opengl;
 
 void main()
 {
+    loadSDL();
+    loadImGui();
+
     const char* glsl_version = "#version 130";
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
