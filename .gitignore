@@ -1,3 +1,13 @@
 /.dub/
 lib/
 build/
+
+dub.selections.json
+
+#Avoid outputs being pushed
+bindbc-imgui
+bindbc-imgui.exe
+bindbc-imgui.so
+bindbc-imgui.dll
+bindbc-imgui-test
+bindbc-imgui-test.exe
