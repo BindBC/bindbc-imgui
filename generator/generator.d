@@ -103,8 +103,7 @@ ImGuiSupport loadImGui()
     version(Windows) {
         const(char)[][3] libNames = [
             "cimgui.dll",
-            "cimgui.dll",
-            "cimgui.dll"
+            "cimguid.dll",
         ];
     }
     else version(OSX) {
@@ -481,10 +480,10 @@ void write_loader(
 
 void main()
 {
-    JSONValue typedefs_dict = parseJSON(std.file.readText("./cimgui/generator/output/typedefs_dict.json"));
-    JSONValue structs_and_enums = parseJSON(std.file.readText("./cimgui/generator/output/structs_and_enums.json"));
-    JSONValue definitions = parseJSON(std.file.readText("./cimgui/generator/output/definitions.json"));
-    JSONValue impl_definitions = parseJSON(std.file.readText("./cimgui/generator/output/impl_definitions.json"));
+    JSONValue typedefs_dict = parseJSON(std.file.readText("./deps/cimgui/generator/output/typedefs_dict.json"));
+    JSONValue structs_and_enums = parseJSON(std.file.readText("./deps/cimgui/generator/output/structs_and_enums.json"));
+    JSONValue definitions = parseJSON(std.file.readText("./deps/cimgui/generator/output/definitions.json"));
+    JSONValue impl_definitions = parseJSON(std.file.readText("./deps/cimgui/generator/output/impl_definitions.json"));
 
     write_loader(definitions, impl_definitions);
     write_imgui_file(typedefs_dict, structs_and_enums, definitions, impl_definitions);
