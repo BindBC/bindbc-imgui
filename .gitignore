@@ -2,6 +2,7 @@
 lib/
 build/
 .dub/
+.vscode/
 
 dub.selections.json
 
