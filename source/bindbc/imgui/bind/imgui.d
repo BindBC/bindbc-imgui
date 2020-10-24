@@ -9,8 +9,10 @@ import bindbc.sdl;
 import bindbc.glfw;
 
 alias ImGuiTreeNodeFlags = int;
+struct ImGuiDockRequest;
 alias ImU32 = uint;
 alias ImGuiNavDirSourceFlags = int;
+alias ImGuiDockNodeFlags = int;
 alias ImGuiSizeCallback = void function(ImGuiSizeCallbackData* data);;
 alias ImGuiButtonFlags = int;
 alias ImGuiNextWindowDataFlags = int;
@@ -20,6 +22,7 @@ alias ImS8 = byte;
 alias ImGuiSliderFlags = int;
 alias ImU64 = ulong;
 alias ImGuiItemFlags = int;
+alias ImGuiDataAuthority = int;
 alias ImWchar = ImWchar16;
 alias ImGuiConfigFlags = int;
 alias ImGuiID = uint;
@@ -33,6 +36,7 @@ alias ImGuiTabItemFlags = int;
 alias ImGuiTooltipFlags = int;
 alias ImGuiStyleVar = int;
 alias ImDrawCallback = void function(const ImDrawList* parent_list,const ImDrawCmd* cmd);;
+struct ImGuiDockNodeSettings;
 alias ImDrawCornerFlags = int;
 alias ImGuiComboFlags = int;
 alias ImS32 = int;
@@ -60,14 +64,15 @@ alias ImGuiDataType = int;
 alias ImGuiHoveredFlags = int;
 alias ImTextureID = void*;
 alias ImDrawListFlags = int;
+alias ImGuiViewportFlags = int;
 alias ImGuiNavMoveFlags = int;
 alias ImGuiBackendFlags = int;
 alias ImGuiDir = int;
 alias ImGuiCond = int;
-alias ImS16 = short;
 alias ImFontAtlasFlags = int;
 alias ImGuiColorEditFlags = int;
 alias ImGuiNextItemDataFlags = int;
+alias ImS16 = short;
 
 
 
@@ -84,6 +89,14 @@ struct ImVector_char
     int Size;
     int Capacity;
     char* Data;
+}
+
+
+struct ImVector_ImGuiDockRequest
+{
+    int Size;
+    int Capacity;
+    ImGuiDockRequest* Data;
 }
 
 
@@ -157,6 +170,14 @@ struct ImVector_ImGuiTabItem
     int Size;
     int Capacity;
     ImGuiTabItem* Data;
+}
+
+
+struct ImVector_const_charPtr
+{
+    int Size;
+    int Capacity;
+    const char** Data;
 }
 
 
@@ -264,6 +285,14 @@ struct ImVector_ImGuiColumnData
 }
 
 
+struct ImVector_ImGuiPlatformMonitor
+{
+    int Size;
+    int Capacity;
+    ImGuiPlatformMonitor* Data;
+}
+
+
 struct ImChunkStream_ImGuiWindowSettings 
 {
     ImGuiWindowSettings Buf;
@@ -275,6 +304,30 @@ struct ImVector_ImGuiStoragePair
     int Size;
     int Capacity;
     ImGuiStoragePair* Data;
+}
+
+
+struct ImVector_ImGuiViewportPPtr
+{
+    int Size;
+    int Capacity;
+    ImGuiViewportP** Data;
+}
+
+
+struct ImVector_ImGuiDockNodeSettings
+{
+    int Size;
+    int Capacity;
+    ImGuiDockNodeSettings* Data;
+}
+
+
+struct ImVector_ImGuiViewportPtr
+{
+    int Size;
+    int Capacity;
+    ImGuiViewport** Data;
 }
 
 
@@ -400,6 +453,35 @@ enum {
     ImGuiMouseButton_COUNT = 5,
 }
 
+alias ImGuiDockNodeFlagsPrivate_ = int;
+enum {
+    ImGuiDockNodeFlags_DockSpace = 1024,
+    ImGuiDockNodeFlags_CentralNode = 2048,
+    ImGuiDockNodeFlags_NoTabBar = 4096,
+    ImGuiDockNodeFlags_HiddenTabBar = 8192,
+    ImGuiDockNodeFlags_NoWindowMenuButton = 16384,
+    ImGuiDockNodeFlags_NoCloseButton = 32768,
+    ImGuiDockNodeFlags_NoDocking = 65536,
+    ImGuiDockNodeFlags_NoDockingSplitMe = 131072,
+    ImGuiDockNodeFlags_NoDockingSplitOther = 262144,
+    ImGuiDockNodeFlags_NoDockingOverMe = 524288,
+    ImGuiDockNodeFlags_NoDockingOverOther = 1048576,
+    ImGuiDockNodeFlags_NoResizeX = 2097152,
+    ImGuiDockNodeFlags_NoResizeY = 4194304,
+    ImGuiDockNodeFlags_SharedFlagsInheritMask_ = -1,
+    ImGuiDockNodeFlags_NoResizeFlagsMask_ = 6291488,
+    ImGuiDockNodeFlags_LocalFlagsMask_ = 6421616,
+    ImGuiDockNodeFlags_LocalFlagsTransferMask_ = 6420592,
+    ImGuiDockNodeFlags_SavedFlagsMask_ = 6421536,
+}
+
+alias ImGuiDataAuthority_ = int;
+enum {
+    ImGuiDataAuthority_Auto = 0,
+    ImGuiDataAuthority_DockNode = 1,
+    ImGuiDataAuthority_Window = 2,
+}
+
 alias ImGuiNavDirSourceFlags_ = int;
 enum {
     ImGuiNavDirSourceFlags_None = 0,
@@ -450,6 +532,10 @@ enum {
     ImGuiConfigFlags_NavNoCaptureKeyboard = 8,
     ImGuiConfigFlags_NoMouse = 16,
     ImGuiConfigFlags_NoMouseCursorChange = 32,
+    ImGuiConfigFlags_DockingEnable = 64,
+    ImGuiConfigFlags_ViewportsEnable = 1024,
+    ImGuiConfigFlags_DpiEnableScaleViewports = 16384,
+    ImGuiConfigFlags_DpiEnableScaleFonts = 32768,
     ImGuiConfigFlags_IsSRGB = 1048576,
     ImGuiConfigFlags_IsTouchScreen = 2097152,
 }
@@ -625,6 +711,7 @@ enum {
     ImGuiWindowFlags_NoNavInputs = 262144,
     ImGuiWindowFlags_NoNavFocus = 524288,
     ImGuiWindowFlags_UnsavedDocument = 1048576,
+    ImGuiWindowFlags_NoDocking = 2097152,
     ImGuiWindowFlags_NoNav = 786432,
     ImGuiWindowFlags_NoDecoration = 43,
     ImGuiWindowFlags_NoInputs = 786944,
@@ -634,6 +721,7 @@ enum {
     ImGuiWindowFlags_Popup = 67108864,
     ImGuiWindowFlags_Modal = 134217728,
     ImGuiWindowFlags_ChildMenu = 268435456,
+    ImGuiWindowFlags_DockNodeHost = 536870912,
 }
 
 alias ImGuiCond_ = int;
@@ -666,6 +754,9 @@ enum {
     ImGuiNextWindowDataFlags_HasFocus = 32,
     ImGuiNextWindowDataFlags_HasBgAlpha = 64,
     ImGuiNextWindowDataFlags_HasScroll = 128,
+    ImGuiNextWindowDataFlags_HasViewport = 256,
+    ImGuiNextWindowDataFlags_HasDock = 512,
+    ImGuiNextWindowDataFlags_HasWindowClass = 1024,
 }
 
 alias ImGuiStyleVar_ = int;
@@ -730,6 +821,9 @@ enum {
     ImGuiBackendFlags_HasMouseCursors = 2,
     ImGuiBackendFlags_HasSetMousePos = 4,
     ImGuiBackendFlags_RendererHasVtxOffset = 8,
+    ImGuiBackendFlags_PlatformHasViewports = 1024,
+    ImGuiBackendFlags_HasMouseHoveredViewport = 2048,
+    ImGuiBackendFlags_RendererHasViewports = 4096,
 }
 
 alias ImFontAtlasFlags_ = int;
@@ -759,6 +853,14 @@ enum {
     ImGuiNavLayer_Main = 0,
     ImGuiNavLayer_Menu = 1,
     ImGuiNavLayer_COUNT = 2,
+}
+
+alias ImGuiDockNodeState = int;
+enum {
+    ImGuiDockNodeState_Unknown = 0,
+    ImGuiDockNodeState_HostWindowHiddenBecauseSingleWindow = 1,
+    ImGuiDockNodeState_HostWindowHiddenBecauseWindowsAreResizing = 2,
+    ImGuiDockNodeState_HostWindowVisible = 3,
 }
 
 alias ImGuiAxis = int;
@@ -848,6 +950,8 @@ alias ImGuiTabItemFlagsPrivate_ = int;
 enum {
     ImGuiTabItemFlags_NoCloseButton = 1048576,
     ImGuiTabItemFlags_Button = 2097152,
+    ImGuiTabItemFlags_Unsorted = 4194304,
+    ImGuiTabItemFlags_Preview = 8388608,
 }
 
 alias ImGuiSliderFlags_ = int;
@@ -942,17 +1046,19 @@ enum {
     ImGuiCol_TabActive = 35,
     ImGuiCol_TabUnfocused = 36,
     ImGuiCol_TabUnfocusedActive = 37,
-    ImGuiCol_PlotLines = 38,
-    ImGuiCol_PlotLinesHovered = 39,
-    ImGuiCol_PlotHistogram = 40,
-    ImGuiCol_PlotHistogramHovered = 41,
-    ImGuiCol_TextSelectedBg = 42,
-    ImGuiCol_DragDropTarget = 43,
-    ImGuiCol_NavHighlight = 44,
-    ImGuiCol_NavWindowingHighlight = 45,
-    ImGuiCol_NavWindowingDimBg = 46,
-    ImGuiCol_ModalWindowDimBg = 47,
-    ImGuiCol_COUNT = 48,
+    ImGuiCol_DockingPreview = 38,
+    ImGuiCol_DockingEmptyBg = 39,
+    ImGuiCol_PlotLines = 40,
+    ImGuiCol_PlotLinesHovered = 41,
+    ImGuiCol_PlotHistogram = 42,
+    ImGuiCol_PlotHistogramHovered = 43,
+    ImGuiCol_TextSelectedBg = 44,
+    ImGuiCol_DragDropTarget = 45,
+    ImGuiCol_NavHighlight = 46,
+    ImGuiCol_NavWindowingHighlight = 47,
+    ImGuiCol_NavWindowingDimBg = 48,
+    ImGuiCol_ModalWindowDimBg = 49,
+    ImGuiCol_COUNT = 50,
 }
 
 alias ImGuiButtonFlags_ = int;
@@ -963,6 +1069,21 @@ enum {
     ImGuiButtonFlags_MouseButtonMiddle = 4,
     ImGuiButtonFlags_MouseButtonMask_ = 7,
     ImGuiButtonFlags_MouseButtonDefault_ = 1,
+}
+
+alias ImGuiViewportFlags_ = int;
+enum {
+    ImGuiViewportFlags_None = 0,
+    ImGuiViewportFlags_NoDecoration = 1,
+    ImGuiViewportFlags_NoTaskBarIcon = 2,
+    ImGuiViewportFlags_NoFocusOnAppearing = 4,
+    ImGuiViewportFlags_NoFocusOnClick = 8,
+    ImGuiViewportFlags_NoInputs = 16,
+    ImGuiViewportFlags_NoRendererClear = 32,
+    ImGuiViewportFlags_TopMost = 64,
+    ImGuiViewportFlags_Minimized = 128,
+    ImGuiViewportFlags_NoAutoMerge = 256,
+    ImGuiViewportFlags_CanHostOtherWindows = 512,
 }
 
 alias ImGuiSelectableFlagsPrivate_ = int;
@@ -1015,6 +1136,17 @@ enum {
     ImGuiColumnsFlags_NoPreserveWidths = 4,
     ImGuiColumnsFlags_NoForceWithinWindow = 8,
     ImGuiColumnsFlags_GrowParentContentsSize = 16,
+}
+
+alias ImGuiDockNodeFlags_ = int;
+enum {
+    ImGuiDockNodeFlags_None = 0,
+    ImGuiDockNodeFlags_KeepAliveOnly = 1,
+    ImGuiDockNodeFlags_NoDockingInCentralNode = 4,
+    ImGuiDockNodeFlags_PassthruCentralNode = 8,
+    ImGuiDockNodeFlags_NoSplit = 16,
+    ImGuiDockNodeFlags_NoResize = 32,
+    ImGuiDockNodeFlags_AutoHideTabBar = 64,
 }
 
 alias ImGuiInputTextFlags_ = int;
@@ -1133,6 +1265,14 @@ struct ImGuiIO {
     bool FontAllowUserScaling;
     ImFont* FontDefault;
     ImVec2 DisplayFramebufferScale;
+    bool ConfigDockingNoSplit;
+    bool ConfigDockingWithShift;
+    bool ConfigDockingAlwaysTabBar;
+    bool ConfigDockingTransparentPayload;
+    bool ConfigViewportsNoAutoMerge;
+    bool ConfigViewportsNoTaskBarIcon;
+    bool ConfigViewportsNoDecoration;
+    bool ConfigViewportsNoDefaultParent;
     bool MouseDrawCursor;
     bool ConfigMacOSXBehaviors;
     bool ConfigInputTextCursorBlink;
@@ -1147,13 +1287,12 @@ struct ImGuiIO {
     const char* function(void* user_data) GetClipboardTextFn;
     void function(void* user_data,const char* text) SetClipboardTextFn;
     void* ClipboardUserData;
-    void function(int x,int y) ImeSetInputScreenPosFn;
-    void* ImeWindowHandle;
     void* RenderDrawListsFnUnused;
     ImVec2 MousePos;
     bool[5] MouseDown;
     float MouseWheel;
     float MouseWheelH;
+    ImGuiID MouseHoveredViewport;
     bool KeyCtrl;
     bool KeyShift;
     bool KeyAlt;
@@ -1244,6 +1383,12 @@ struct ImGuiWindow {
     char* Name;
     ImGuiID ID;
     ImGuiWindowFlags Flags;
+    ImGuiWindowFlags FlagsPreviousFrame;
+    ImGuiWindowClass WindowClass;
+    ImGuiViewportP* Viewport;
+    ImGuiID ViewportId;
+    ImVec2 ViewportPos;
+    int ViewportAllowPlatformMonitorExtend;
     ImVec2 Pos;
     ImVec2 Size;
     ImVec2 SizeFull;
@@ -1263,6 +1408,7 @@ struct ImGuiWindow {
     ImVec2 ScrollbarSizes;
     bool ScrollbarX;
     bool ScrollbarY;
+    bool ViewportOwned;
     bool Active;
     bool WasActive;
     bool WriteAccessed;
@@ -1288,6 +1434,7 @@ struct ImGuiWindow {
     ImGuiCond SetWindowPosAllowFlags;
     ImGuiCond SetWindowSizeAllowFlags;
     ImGuiCond SetWindowCollapsedAllowFlags;
+    ImGuiCond SetWindowDockAllowFlags;
     ImVec2 SetWindowPosVal;
     ImVec2 SetWindowPosPivot;
     ImVector_ImGuiID IDStack;
@@ -1302,16 +1449,19 @@ struct ImGuiWindow {
     ImVec2ih HitTestHoleSize;
     ImVec2ih HitTestHoleOffset;
     int LastFrameActive;
+    int LastFrameJustFocused;
     float LastTimeActive;
     float ItemWidthDefault;
     ImGuiStorage StateStorage;
     ImVector_ImGuiColumns ColumnsStorage;
     float FontWindowScale;
+    float FontDpiScale;
     int SettingsOffset;
     ImDrawList* DrawList;
     ImDrawList DrawListInst;
     ImGuiWindow* ParentWindow;
     ImGuiWindow* RootWindow;
+    ImGuiWindow* RootWindowDockStop;
     ImGuiWindow* RootWindowForTitleBarHighlight;
     ImGuiWindow* RootWindowForNav;
     ImGuiWindow* NavLastChildNavWindow;
@@ -1320,6 +1470,15 @@ struct ImGuiWindow {
     bool MemoryCompacted;
     int MemoryDrawListIdxCapacity;
     int MemoryDrawListVtxCapacity;
+    ImGuiDockNode* DockNode;
+    ImGuiDockNode* DockNodeAsHost;
+    ImGuiID DockId;
+    ImGuiItemStatusFlags DockTabItemStatusFlags;
+    ImRect DockTabItemRect;
+    short DockOrder;
+    bool DockIsActive;
+    bool DockTabIsVisible;
+    bool DockTabWantClose;
 }
 
 struct ImGuiPopupData {
@@ -1388,6 +1547,36 @@ struct ImDrawVert {
     ImU32 col;
 }
 
+struct ImGuiViewport {
+    ImGuiID ID;
+    ImGuiViewportFlags Flags;
+    ImVec2 Pos;
+    ImVec2 Size;
+    ImVec2 WorkOffsetMin;
+    ImVec2 WorkOffsetMax;
+    float DpiScale;
+    ImDrawData* DrawData;
+    ImGuiID ParentViewportId;
+    void* RendererUserData;
+    void* PlatformUserData;
+    void* PlatformHandle;
+    void* PlatformHandleRaw;
+    bool PlatformRequestMove;
+    bool PlatformRequestResize;
+    bool PlatformRequestClose;
+}
+
+struct ImGuiWindowClass {
+    ImGuiID ClassId;
+    ImGuiID ParentViewportId;
+    ImGuiViewportFlags ViewportFlagsOverrideSet;
+    ImGuiViewportFlags ViewportFlagsOverrideClear;
+    ImGuiDockNodeFlags DockNodeFlagsOverrideSet;
+    ImGuiDockNodeFlags DockNodeFlagsOverrideClear;
+    bool DockingAlwaysTabBar;
+    bool DockingAllowUnclassed;
+}
+
 struct StbTexteditRow {
     float x0;
     float x1;
@@ -1395,13 +1584,6 @@ struct StbTexteditRow {
     float ymin;
     float ymax;
     int num_chars;
-}
-
-struct StbUndoRecord {
-    int where;
-    int insert_length;
-    int delete_length;
-    int char_storage;
 }
 
 struct ImGuiWindowTempData {
@@ -1448,6 +1630,13 @@ struct ImGuiWindowTempData {
     short[6] StackSizesBackup;
 }
 
+struct StbUndoRecord {
+    int where;
+    int insert_length;
+    int delete_length;
+    int char_storage;
+}
+
 struct ImGuiGroupData {
     ImVec2 BackupCursorPos;
     ImVec2 BackupCursorMaxPos;
@@ -1482,6 +1671,36 @@ struct ImGuiInputTextCallbackData {
     int CursorPos;
     int SelectionStart;
     int SelectionEnd;
+}
+
+struct ImGuiPlatformIO {
+    void function(ImGuiViewport* vp) Platform_CreateWindow;
+    void function(ImGuiViewport* vp) Platform_DestroyWindow;
+    void function(ImGuiViewport* vp) Platform_ShowWindow;
+    void function(ImGuiViewport* vp,ImVec2 pos) Platform_SetWindowPos;
+    ImVec2 function(ImGuiViewport* vp) Platform_GetWindowPos;
+    void function(ImGuiViewport* vp,ImVec2 size) Platform_SetWindowSize;
+    ImVec2 function(ImGuiViewport* vp) Platform_GetWindowSize;
+    void function(ImGuiViewport* vp) Platform_SetWindowFocus;
+    bool function(ImGuiViewport* vp) Platform_GetWindowFocus;
+    bool function(ImGuiViewport* vp) Platform_GetWindowMinimized;
+    void function(ImGuiViewport* vp,const char* str) Platform_SetWindowTitle;
+    void function(ImGuiViewport* vp,float alpha) Platform_SetWindowAlpha;
+    void function(ImGuiViewport* vp) Platform_UpdateWindow;
+    void function(ImGuiViewport* vp,void* render_arg) Platform_RenderWindow;
+    void function(ImGuiViewport* vp,void* render_arg) Platform_SwapBuffers;
+    float function(ImGuiViewport* vp) Platform_GetWindowDpiScale;
+    void function(ImGuiViewport* vp) Platform_OnChangedViewport;
+    void function(ImGuiViewport* vp,ImVec2 pos) Platform_SetImeInputPos;
+    int function(ImGuiViewport* vp,ImU64 vk_inst,const void* vk_allocators,ImU64* out_vk_surface) Platform_CreateVkSurface;
+    void function(ImGuiViewport* vp) Renderer_CreateWindow;
+    void function(ImGuiViewport* vp) Renderer_DestroyWindow;
+    void function(ImGuiViewport* vp,ImVec2 size) Renderer_SetWindowSize;
+    void function(ImGuiViewport* vp,void* render_arg) Renderer_RenderWindow;
+    void function(ImGuiViewport* vp,void* render_arg) Renderer_SwapBuffers;
+    ImVector_ImGuiPlatformMonitor Monitors;
+    ImGuiViewport* MainViewport;
+    ImVector_ImGuiViewportPtr Viewports;
 }
 
 struct ImFontGlyph {
@@ -1577,7 +1796,10 @@ struct ImGuiContext {
     bool Initialized;
     bool FontAtlasOwnedByContext;
     ImGuiIO IO;
+    ImGuiPlatformIO PlatformIO;
     ImGuiStyle Style;
+    ImGuiConfigFlags ConfigFlagsCurrFrame;
+    ImGuiConfigFlags ConfigFlagsLastFrame;
     ImFont* Font;
     float FontSize;
     float FontBaseSize;
@@ -1585,6 +1807,7 @@ struct ImGuiContext {
     double Time;
     int FrameCount;
     int FrameCountEnded;
+    int FrameCountPlatformEnded;
     int FrameCountRendered;
     bool WithinFrameScope;
     bool WithinFrameScopeWithImplicitWindow;
@@ -1602,6 +1825,7 @@ struct ImGuiContext {
     ImGuiWindow* HoveredWindow;
     ImGuiWindow* HoveredRootWindow;
     ImGuiWindow* HoveredWindowUnderMovingWindow;
+    ImGuiDockNode* HoveredDockNode;
     ImGuiWindow* MovingWindow;
     ImGuiWindow* WheelingWindow;
     ImVec2 WheelingWindowRefMousePos;
@@ -1641,6 +1865,12 @@ struct ImGuiContext {
     ImVector_ImFontPtr FontStack;
     ImVector_ImGuiPopupData OpenPopupStack;
     ImVector_ImGuiPopupData BeginPopupStack;
+    ImVector_ImGuiViewportPPtr Viewports;
+    float CurrentDpiScale;
+    ImGuiViewportP* CurrentViewport;
+    ImGuiViewportP* MouseViewport;
+    ImGuiViewportP* MouseLastHoveredViewport;
+    int ViewportFrontMostStampCount;
     ImGuiWindow* NavWindow;
     ImGuiID NavId;
     ImGuiID NavFocusScopeId;
@@ -1692,11 +1922,7 @@ struct ImGuiContext {
     int FocusRequestNextCounterRegular;
     int FocusRequestNextCounterTabStop;
     bool FocusTabPressed;
-    ImDrawData DrawData;
-    ImDrawDataBuilder DrawDataBuilder;
     float DimBgRatio;
-    ImDrawList BackgroundDrawList;
-    ImDrawList ForegroundDrawList;
     ImGuiMouseCursor MouseCursor;
     bool DragDropActive;
     bool DragDropWithinSource;
@@ -1739,7 +1965,9 @@ struct ImGuiContext {
     ImVector_ImGuiID MenusIdSubmittedThisFrame;
     ImVec2 PlatformImePos;
     ImVec2 PlatformImeLastPos;
+    ImGuiViewportP* PlatformImePosViewport;
     char PlatformLocaleDecimalPoint;
+    ImGuiDockContext DockContext;
     bool SettingsLoaded;
     float SettingsDirtyTimer;
     ImGuiTextBuffer SettingsIniData;
@@ -1811,6 +2039,29 @@ struct ImDrawDataBuilder {
     ImVector_ImDrawListPtr[2] Layers;
 }
 
+struct ImGuiViewportP {
+    ImGuiViewport _ImGuiViewport;
+    int Idx;
+    int LastFrameActive;
+    int[2] LastFrameDrawLists;
+    int LastFrontMostStampCount;
+    ImGuiID LastNameHash;
+    ImVec2 LastPos;
+    float Alpha;
+    float LastAlpha;
+    short PlatformMonitor;
+    bool PlatformWindowCreated;
+    ImGuiWindow* Window;
+    ImDrawList*[2] DrawLists;
+    ImDrawData DrawDataP;
+    ImDrawDataBuilder DrawDataBuilder;
+    ImVec2 LastPlatformPos;
+    ImVec2 LastPlatformSize;
+    ImVec2 LastRendererSize;
+    ImVec2 CurrWorkOffsetMin;
+    ImVec2 CurrWorkOffsetMax;
+}
+
 struct ImVec1 {
     float x;
 }
@@ -1824,6 +2075,7 @@ struct ImDrawData {
     ImVec2 DisplayPos;
     ImVec2 DisplaySize;
     ImVec2 FramebufferScale;
+    ImGuiViewport* OwnerViewport;
 }
 
 struct ImGuiInputTextState {
@@ -1879,6 +2131,11 @@ struct ImGuiWindowSettings {
     ImGuiID ID;
     ImVec2ih Pos;
     ImVec2ih Size;
+    ImVec2ih ViewportPos;
+    ImGuiID ViewportId;
+    ImGuiID DockId;
+    ImGuiID ClassId;
+    short DockOrder;
     bool Collapsed;
     bool WantApply;
 }
@@ -1888,6 +2145,13 @@ struct ImVec4 {
     float y;
     float z;
     float w;
+}
+
+struct ImGuiDockContext {
+    ImGuiStorage Nodes;
+    ImVector_ImGuiDockRequest Requests;
+    ImVector_ImGuiDockNodeSettings NodesSettings;
+    bool WantFullRebuild;
 }
 
 struct ImGuiNavMoveResult {
@@ -2009,6 +2273,46 @@ struct ImGuiMenuColumns {
     float[3] NextWidths;
 }
 
+struct ImGuiDockNode {
+    ImGuiID ID;
+    ImGuiDockNodeFlags SharedFlags;
+    ImGuiDockNodeFlags LocalFlags;
+    ImGuiDockNode* ParentNode;
+    ImGuiDockNode*[2] ChildNodes;
+    ImVector_ImGuiWindowPtr Windows;
+    ImGuiTabBar* TabBar;
+    ImVec2 Pos;
+    ImVec2 Size;
+    ImVec2 SizeRef;
+    ImGuiAxis SplitAxis;
+    ImGuiWindowClass WindowClass;
+    ImGuiDockNodeState State;
+    ImGuiWindow* HostWindow;
+    ImGuiWindow* VisibleWindow;
+    ImGuiDockNode* CentralNode;
+    ImGuiDockNode* OnlyNodeWithWindows;
+    int LastFrameAlive;
+    int LastFrameActive;
+    int LastFrameFocused;
+    ImGuiID LastFocusedNodeId;
+    ImGuiID SelectedTabId;
+    ImGuiID WantCloseTabId;
+    ImGuiDataAuthority AuthorityForPos;
+    ImGuiDataAuthority AuthorityForSize;
+    ImGuiDataAuthority AuthorityForViewport;
+    bool IsVisible;
+    bool IsFocused;
+    bool HasCloseButton;
+    bool HasWindowMenuButton;
+    bool EnableCloseButton;
+    bool WantCloseAll;
+    bool WantLockSizeOnce;
+    bool WantMouseMove;
+    bool WantHiddenTabBarUpdate;
+    bool WantHiddenTabBarToggle;
+    bool MarkedForPosSizeWrite;
+}
+
 struct ImVec2ih {
     short x;
     short y;
@@ -2019,17 +2323,30 @@ struct ImGuiNextWindowData {
     ImGuiCond PosCond;
     ImGuiCond SizeCond;
     ImGuiCond CollapsedCond;
+    ImGuiCond DockCond;
     ImVec2 PosVal;
     ImVec2 PosPivotVal;
     ImVec2 SizeVal;
     ImVec2 ContentSizeVal;
     ImVec2 ScrollVal;
+    bool PosUndock;
     bool CollapsedVal;
     ImRect SizeConstraintRect;
     ImGuiSizeCallback SizeCallback;
     void* SizeCallbackUserData;
     float BgAlphaVal;
+    ImGuiID ViewportId;
+    ImGuiID DockId;
+    ImGuiWindowClass WindowClass;
     ImVec2 MenuBarOffsetMinVal;
+}
+
+struct ImGuiPlatformMonitor {
+    ImVec2 MainPos;
+    ImVec2 MainSize;
+    ImVec2 WorkPos;
+    ImVec2 WorkSize;
+    float DpiScale;
 }
 
 struct ImGuiStorage {
@@ -2039,6 +2356,7 @@ struct ImGuiStorage {
 struct ImGuiTabItem {
     ImGuiID ID;
     ImGuiTabItemFlags Flags;
+    ImGuiWindow* Window;
     int LastFrameVisible;
     int LastFrameSelected;
     float Offset;
@@ -2055,7 +2373,10 @@ struct ImGuiTabItem {
 version(BindImGui_Static) {
 extern(C) @nogc nothrow {
 void ImDrawList_AddCircleFilled(ImDrawList* self, const ImVec2 center, float radius, ImU32 col, int num_segments);
+ImGuiPlatformIO* ImGuiPlatformIO_ImGuiPlatformIO();
+void igDockContextQueueUndockWindow(ImGuiContext* ctx, ImGuiWindow* window);
 ImDrawList* igGetForegroundDrawListNil();
+ImDrawList* igGetForegroundDrawListViewportPtr(ImGuiViewport* viewport);
 ImDrawList* igGetForegroundDrawListWindowPtr(ImGuiWindow* window);
 const ImWchar* ImFontAtlas_GetGlyphRangesChineseFull(ImFontAtlas* self);
 void igBringWindowToDisplayFront(ImGuiWindow* window);
@@ -2064,6 +2385,7 @@ int ImFontAtlas_AddCustomRectRegular(ImFontAtlas* self, int width, int height);
 bool igIsMouseDragPastThreshold(ImGuiMouseButton button, float lock_threshold);
 void igSetWindowFontScale(float scale);
 bool igSliderFloat(const char* label, float* v, float v_min, float v_max, const char* format, ImGuiSliderFlags flags);
+void igDestroyPlatformWindows();
 void igImMax(ImVec2* pOut, const ImVec2 lhs, const ImVec2 rhs);
 void ImRect_GetTR(ImVec2* pOut, ImRect* self);
 const ImWchar* ImFontAtlas_GetGlyphRangesThai(ImFontAtlas* self);
@@ -2077,6 +2399,7 @@ void igLoadIniSettingsFromDisk(const char* ini_filename);
 void igImBitArraySetBit(ImU32* arr, int n);
 const char* ImGuiTextBuffer_end(ImGuiTextBuffer* self);
 void ImGuiTabBar_destroy(ImGuiTabBar* self);
+bool igDockContextCalcDropPosForDocking(ImGuiWindow* target, ImGuiDockNode* target_node, ImGuiWindow* payload, ImGuiDir split_dir, bool split_outer, ImVec2* out_pos);
 void igSetClipboardText(const char* text);
 void igRenderColorRectWithAlphaCheckerboard(ImDrawList* draw_list, ImVec2 p_min, ImVec2 p_max, ImU32 fill_col, float grid_step, ImVec2 grid_off, float rounding, int rounding_corners_flags);
 void igFindBestWindowPosForPopup(ImVec2* pOut, ImGuiWindow* window);
@@ -2098,6 +2421,7 @@ ImDrawData* igGetDrawData();
 void igRenderRectFilledRangeH(ImDrawList* draw_list, const ImRect rect, ImU32 col, float x_start_norm, float x_end_norm, float rounding);
 void igPopItemWidth();
 bool igIsWindowAppearing();
+void igSetWindowDock(ImGuiWindow* window, ImGuiID dock_id, ImGuiCond cond);
 ImGuiColumns* igFindOrCreateColumns(ImGuiWindow* window, ImGuiID id);
 void* ImGuiStorage_GetVoidPtr(ImGuiStorage* self, ImGuiID key);
 int ImGuiInputTextState_GetRedoAvailCount(ImGuiInputTextState* self);
@@ -2122,9 +2446,12 @@ ImGuiID ImGuiWindow_GetIDStr(ImGuiWindow* self, const char* str, const char* str
 ImGuiID ImGuiWindow_GetIDPtr(ImGuiWindow* self, const void* ptr);
 ImGuiID ImGuiWindow_GetIDInt(ImGuiWindow* self, int n);
 void igImFontAtlasBuildPackCustomRects(ImFontAtlas* atlas, void* stbrp_context_opaque);
+void ImGuiDockNode_Rect(ImRect* pOut, ImGuiDockNode* self);
+ImGuiDockNode* igDockBuilderGetNode(ImGuiID node_id);
 bool igIsActiveIdUsingKey(ImGuiKey key);
 void igSetCursorScreenPos(const ImVec2 pos);
 const char* igImStristr(const char* haystack, const char* haystack_end, const char* needle, const char* needle_end);
+void igSetNextWindowViewport(ImGuiID viewport_id);
 const char* ImFont_GetDebugName(ImFont* self);
 bool igBeginPopupContextWindow(const char* str_id, ImGuiPopupFlags popup_flags);
 bool igButtonEx(const char* label, const ImVec2 size_arg, ImGuiButtonFlags flags);
@@ -2138,12 +2465,14 @@ float igGetScrollMaxX();
 void ImBitVector_Create(ImBitVector* self, int sz);
 void igCloseCurrentPopup();
 void igImBitArraySetBitRange(ImU32* arr, int n, int n2);
-bool igSplitterBehavior(const ImRect bb, ImGuiID id, ImGuiAxis axis, float* size1, float* size2, float min_size1, float min_size2, float hover_extend, float hover_visibility_delay);
+ImGuiViewport* igFindViewportByPlatformHandle(void* platform_handle);
 void igGetMouseDragDelta(ImVec2* pOut, ImGuiMouseButton button, float lock_threshold);
 void igSetWindowCollapsedBool(bool collapsed, ImGuiCond cond);
 void igSetWindowCollapsedStr(const char* name, bool collapsed, ImGuiCond cond);
 void igSetWindowCollapsedWindowPtr(ImGuiWindow* window, bool collapsed, ImGuiCond cond);
+bool igSplitterBehavior(const ImRect bb, ImGuiID id, ImGuiAxis axis, float* size1, float* size2, float min_size1, float min_size2, float hover_extend, float hover_visibility_delay);
 void igImBezierCalc(ImVec2* pOut, const ImVec2 p1, const ImVec2 p2, const ImVec2 p3, const ImVec2 p4, float t);
+bool ImGuiDockNode_IsDockSpace(ImGuiDockNode* self);
 void igTextDisabled(const char* fmt, ... );
 void igFindBestWindowPosForPopupEx(ImVec2* pOut, const ImVec2 ref_pos, const ImVec2 size, ImGuiDir* last_dir, const ImRect r_outer, const ImRect r_avoid, ImGuiPopupPositionPolicy policy);
 void igShowUserGuide();
@@ -2174,23 +2503,25 @@ ImGuiListClipper* ImGuiListClipper_ImGuiListClipper();
 bool igListBoxHeaderVec2(const char* label, const ImVec2 size);
 bool igListBoxHeaderInt(const char* label, int items_count, int height_in_items);
 int igImStrlenW(const ImWchar* str);
+ImGuiDockNode* igGetWindowDockNode();
 bool igBeginPopup(const char* str_id, ImGuiWindowFlags flags);
 ImU64 igImFileGetSize(ImFileHandle file);
 ImGuiSettingsHandler* ImGuiSettingsHandler_ImGuiSettingsHandler();
 bool igMenuItemBool(const char* label, const char* shortcut, bool selected, bool enabled);
 bool igMenuItemBoolPtr(const char* label, const char* shortcut, bool* p_selected, bool enabled);
-void igImStrTrimBlanks(char* str);
+void igDockBuilderFinish(ImGuiID node_id);
 ImGuiStyleMod* ImGuiStyleMod_ImGuiStyleModInt(ImGuiStyleVar idx, int v);
 ImGuiStyleMod* ImGuiStyleMod_ImGuiStyleModFloat(ImGuiStyleVar idx, float v);
 ImGuiStyleMod* ImGuiStyleMod_ImGuiStyleModVec2(ImGuiStyleVar idx, ImVec2 v);
 void ImFontConfig_destroy(ImFontConfig* self);
 bool igBeginPopupEx(ImGuiID id, ImGuiWindowFlags extra_flags);
 bool igImCharIsBlankA(char c);
-void igResetMouseDragDelta(ImGuiMouseButton button);
+void igImStrTrimBlanks(char* str);
 void ImGuiListClipper_End(ImGuiListClipper* self);
-void igSaveIniSettingsToDisk(const char* ini_filename);
+void igResetMouseDragDelta(ImGuiMouseButton button);
 void igDestroyContext(ImGuiContext* ctx);
 void igSetNextWindowContentSize(const ImVec2 size);
+void igSaveIniSettingsToDisk(const char* ini_filename);
 void igGetWindowScrollbarRect(ImRect* pOut, ImGuiWindow* window, ImGuiAxis axis);
 bool igInputTextMultiline(const char* label, char* buf, size_t buf_size, const ImVec2 size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data);
 bool igIsClippedEx(const ImRect bb, ImGuiID id, bool clip_even_when_logged);
@@ -2199,14 +2530,17 @@ bool ImGuiTextFilter_IsActive(ImGuiTextFilter* self);
 ImDrawListSharedData* ImDrawListSharedData_ImDrawListSharedData();
 bool ImFontAtlas_GetMouseCursorTexData(ImFontAtlas* self, ImGuiMouseCursor cursor, ImVec2* out_offset, ImVec2* out_size, ImVec2[2]*/*[2]*/ out_uv_border, ImVec2[2]*/*[2]*/ out_uv_fill);
 void igLogText(const char* fmt, ... );
+bool igGetWindowAlwaysWantOwnTabBar(ImGuiWindow* window);
 bool igTabItemLabelAndCloseButton(ImDrawList* draw_list, const ImRect bb, ImGuiTabItemFlags flags, ImVec2 frame_padding, const char* label, ImGuiID tab_id, ImGuiID close_button_id, bool is_contents_visible);
-int igImStrnicmp(const char* str1, const char* str2, size_t count);
+void igBeginDockableDragDropTarget(ImGuiWindow* window);
+void ImGuiPlatformMonitor_destroy(ImGuiPlatformMonitor* self);
 void igColorEditOptionsPopup(const float* col, ImGuiColorEditFlags flags);
 float igGetTextLineHeightWithSpacing();
 ImGuiColumnData* ImGuiColumnData_ImGuiColumnData();
 void igPushStyleVarFloat(ImGuiStyleVar idx, float val);
 void igPushStyleVarVec2(ImGuiStyleVar idx, const ImVec2 val);
 bool igIsActiveIdUsingNavInput(ImGuiNavInput input);
+int igImStrnicmp(const char* str1, const char* str2, size_t count);
 ImGuiInputTextState* igGetInputTextState(ImGuiID id);
 const char* igFindRenderedTextEnd(const char* text, const char* text_end);
 void ImFontAtlas_ClearFonts(ImFontAtlas* self);
@@ -2238,30 +2572,36 @@ const ImVec4* igGetStyleColorVec4(ImGuiCol idx);
 void igPopFocusScope();
 void igTextColored(const ImVec4 col, const char* fmt, ... );
 void igShutdown(ImGuiContext* context);
+void igDockBuilderRemoveNodeDockedWindows(ImGuiID node_id, bool clear_settings_refs);
 void ImRect_ClipWith(ImRect* self, const ImRect r);
 void ImRect_GetTL(ImVec2* pOut, ImRect* self);
 ImDrawListSplitter* ImDrawListSplitter_ImDrawListSplitter();
 bool igInvisibleButton(const char* str_id, const ImVec2 size, ImGuiButtonFlags flags);
 void igSetWindowFocusNil();
 void igSetWindowFocusStr(const char* name);
+void igScaleWindowsInViewport(ImGuiViewportP* viewport, float scale);
 void igRenderMouseCursor(ImDrawList* draw_list, ImVec2 pos, float scale, ImGuiMouseCursor mouse_cursor, ImU32 col_fill, ImU32 col_border, ImU32 col_shadow);
 void igImFontAtlasBuildInit(ImFontAtlas* atlas);
+void igRenderPlatformWindowsDefault(void* platform_render_arg, void* renderer_render_arg);
 void ImDrawListSplitter_ClearFreeMemory(ImDrawListSplitter* self);
 ImGuiStyle* ImGuiStyle_ImGuiStyle();
+bool ImGuiDockNode_IsHiddenTabBar(ImGuiDockNode* self);
 bool igIsMouseDown(ImGuiMouseButton button);
 ImFontConfig* ImFontConfig_ImFontConfig();
 const char* ImGuiTabBar_GetTabName(ImGuiTabBar* self, const ImGuiTabItem* tab);
 void igNewLine();
+ImGuiPlatformIO* igGetPlatformIO();
 void igMemFree(void* ptr);
 int igCalcTypematicRepeatAmount(float t0, float t1, float repeat_delay, float repeat_rate);
 void igNextColumn();
 void igRenderFrame(ImVec2 p_min, ImVec2 p_max, ImU32 fill_col, bool border, float rounding);
 void igLogButtons();
-void igEndTabItem();
+void igDockBuilderRemoveNode(ImGuiID node_id);
 void ImFont_ClearOutputData(ImFont* self);
 ImFont* ImFont_ImFont();
-void igRenderArrowPointingAt(ImDrawList* draw_list, ImVec2 pos, ImVec2 half_sz, ImGuiDir direction, ImU32 col);
+void igEndTabItem();
 bool igVSliderFloat(const char* label, const ImVec2 size, float* v, float v_min, float v_max, const char* format, ImGuiSliderFlags flags);
+void igRenderArrowPointingAt(ImDrawList* draw_list, ImVec2 pos, ImVec2 half_sz, ImGuiDir direction, ImU32 col);
 void igEndGroup();
 bool igTreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* label, const char* label_end);
 void igPlotLinesFloatPtr(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2 graph_size, int stride);
@@ -2269,6 +2609,7 @@ void igPlotLinesFnFloatPtr(const char* label, float function(void* data,int idx)
 float igGetColumnNormFromOffset(const ImGuiColumns* columns, float offset);
 void igSetCurrentFont(ImFont* font);
 void igSetItemAllowOverlap();
+bool ImGuiDockNode_IsCentralNode(ImGuiDockNode* self);
 void** ImGuiStorage_GetVoidPtrRef(ImGuiStorage* self, ImGuiID key, void* default_val);
 bool igCheckboxFlags(const char* label, uint* flags, uint flags_value);
 ImGuiColumns* ImGuiColumns_ImGuiColumns();
@@ -2299,7 +2640,9 @@ void ImGuiInputTextState_SelectAll(ImGuiInputTextState* self);
 const char* igImParseFormatTrimDecorations(const char* format, char* buf, size_t buf_size);
 int igImTextCountUtf8BytesFromChar(const char* in_text, const char* in_text_end);
 ImGuiTabBar* ImGuiTabBar_ImGuiTabBar();
+void ImGuiViewport_GetCenter(ImVec2* pOut, ImGuiViewport* self);
 void igDebugDrawItemRect(ImU32 col);
+void igDockBuilderSetNodeSize(ImGuiID node_id, ImVec2 size);
 bool igTreeNodeBehaviorIsOpen(ImGuiID id, ImGuiTreeNodeFlags flags);
 void igSetMouseCursor(ImGuiMouseCursor cursor_type);
 void igBeginColumns(const char* str_id, int count, ImGuiColumnsFlags flags);
@@ -2317,8 +2660,10 @@ void ImDrawList_AddRectFilled(ImDrawList* self, const ImVec2 p_min, const ImVec2
 void ImGuiPopupData_destroy(ImGuiPopupData* self);
 ImGuiSettingsHandler* igFindSettingsHandler(const char* type_name);
 bool igDragInt2(const char* label, int[2]*/*[2]*/ v, float v_speed, int v_min, int v_max, const char* format, ImGuiSliderFlags flags);
+void igBeginDocked(ImGuiWindow* window, bool* p_open);
 void igSetColorEditOptions(ImGuiColorEditFlags flags);
 bool igIsAnyMouseDown();
+ImGuiDockContext* ImGuiDockContext_ImGuiDockContext();
 void ImGuiTextFilter_Build(ImGuiTextFilter* self);
 void igTabItemCalcSize(ImVec2* pOut, const char* label, bool has_close_button);
 void igSetNextWindowCollapsed(bool collapsed, ImGuiCond cond);
@@ -2335,31 +2680,40 @@ bool igTreeNodeExStrStr(const char* str_id, ImGuiTreeNodeFlags flags, const char
 bool igTreeNodeExPtr(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, ... );
 void ImBitVector_SetBit(ImBitVector* self, int n);
 void igSetColumnWidth(int column_index, float width);
+void ImGuiDockNode_destroy(ImGuiDockNode* self);
 void ImGuiNavMoveResult_destroy(ImGuiNavMoveResult* self);
 bool igIsItemClicked(ImGuiMouseButton mouse_button);
 void ImGuiColumnData_destroy(ImGuiColumnData* self);
 void ImDrawList_AddCallback(ImDrawList* self, ImDrawCallback callback, void* callback_data);
 void igGetMousePos(ImVec2* pOut);
 int igDataTypeCompare(ImGuiDataType data_type, const void* arg_1, const void* arg_2);
+void igDockContextQueueUndockNode(ImGuiContext* ctx, ImGuiDockNode* node);
 bool igImageButtonEx(ImGuiID id, ImTextureID texture_id, const ImVec2 size, const ImVec2 uv0, const ImVec2 uv1, const ImVec2 padding, const ImVec4 bg_col, const ImVec4 tint_col);
 ImGuiID igGetWindowResizeID(ImGuiWindow* window, int n);
 void igBullet();
+void igRenderArrowDockMenu(ImDrawList* draw_list, ImVec2 p_min, float sz, ImU32 col);
 ImGuiID igGetHoveredID();
 void igGetWindowContentRegionMin(ImVec2* pOut);
 void ImDrawList_AddNgonFilled(ImDrawList* self, const ImVec2 center, float radius, ImU32 col, int num_segments);
 bool igDragScalar(const char* label, ImGuiDataType data_type, void* p_data, float v_speed, const void* p_min, const void* p_max, const char* format, ImGuiSliderFlags flags);
+ImGuiDockNode* ImGuiDockNode_ImGuiDockNode(ImGuiID id);
 void igSetCursorPos(const ImVec2 local_pos);
 void igEndColumns();
 void igSetTooltip(const char* fmt, ... );
-bool igBeginTabBarEx(ImGuiTabBar* tab_bar, const ImRect bb, ImGuiTabBarFlags flags);
+void ImGuiViewportP_destroy(ImGuiViewportP* self);
+bool igBeginTabBarEx(ImGuiTabBar* tab_bar, const ImRect bb, ImGuiTabBarFlags flags, ImGuiDockNode* dock_node);
 void igShadeVertsLinearColorGradientKeepAlpha(ImDrawList* draw_list, int vert_start_idx, int vert_end_idx, ImVec2 gradient_p0, ImVec2 gradient_p1, ImU32 col0, ImU32 col1);
 bool ImGuiInputTextState_HasSelection(ImGuiInputTextState* self);
+ImGuiDockNode* igDockNodeGetRootNode(ImGuiDockNode* node);
+bool ImGuiDockNode_IsSplitNode(ImGuiDockNode* self);
 float igCalcItemWidth();
+void igDockContextRebuildNodes(ImGuiContext* ctx);
 void igPushItemWidth(float item_width);
 bool igScrollbarEx(const ImRect bb, ImGuiID id, ImGuiAxis axis, float* p_scroll_v, float avail_v, float contents_v, ImDrawCornerFlags rounding_corners);
 void ImDrawList_ChannelsMerge(ImDrawList* self);
 void igSetAllocatorFunctions(void* function(size_t sz,void* user_data) alloc_func, void function(void* ptr,void* user_data) free_func, void* user_data);
 const ImFontGlyph* ImFont_FindGlyph(ImFont* self, ImWchar c);
+int igDockNodeGetDepth(const ImGuiDockNode* node);
 void igDebugStartItemPicker();
 void ImGuiNextWindowData_destroy(ImGuiNextWindowData* self);
 bool ImGuiPayload_IsDelivery(ImGuiPayload* self);
@@ -2376,6 +2730,7 @@ void ImFont_destroy(ImFont* self);
 void igEndMenuBar();
 void igGetWindowSize(ImVec2* pOut);
 bool igInputInt4(const char* label, int[4]*/*[4]*/ v, ImGuiInputTextFlags flags);
+void igShowViewportThumbnails();
 float igImSignFloat(float x);
 double igImSigndouble(double x);
 void igLabelText(const char* label, const char* fmt, ... );
@@ -2398,14 +2753,16 @@ void ImDrawDataBuilder_Clear(ImDrawDataBuilder* self);
 ImVec2ih* ImVec2ih_ImVec2ihNil();
 ImVec2ih* ImVec2ih_ImVec2ihshort(short _x, short _y);
 ImVec2ih* ImVec2ih_ImVec2ihVec2(const ImVec2 rhs);
-void igPopStyleColor(int count);
+void igDockContextQueueDock(ImGuiContext* ctx, ImGuiWindow* target, ImGuiDockNode* target_node, ImGuiWindow* payload, ImGuiDir split_dir, float split_ratio, bool split_outer);
 ImVec1* ImVec1_ImVec1Nil();
 ImVec1* ImVec1_ImVec1Float(float _x);
 void igCalcItemSize(ImVec2* pOut, ImVec2 size, float default_w, float default_h);
 bool ImFontAtlasCustomRect_IsPacked(ImFontAtlasCustomRect* self);
+void igPopStyleColor(int count);
 bool igColorEdit4(const char* label, float[4]*/*[4]*/ col, ImGuiColorEditFlags flags);
 int igPlotEx(ImGuiPlotType plot_type, const char* label, float function(void* data,int idx) values_getter, void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2 frame_size);
 void igGetCursorStartPos(ImVec2* pOut);
+ImGuiID igDockSpaceOverViewport(ImGuiViewport* viewport, ImGuiDockNodeFlags flags, const ImGuiWindowClass* window_class);
 void ImGuiInputTextCallbackData_destroy(ImGuiInputTextCallbackData* self);
 bool ImFontAtlas_IsBuilt(ImFontAtlas* self);
 const char* ImGuiTextBuffer_begin(ImGuiTextBuffer* self);
@@ -2417,11 +2774,13 @@ ImGuiID ImGuiWindow_GetIDNoKeepAliveInt(ImGuiWindow* self, int n);
 void ImFont_BuildLookupTable(ImFont* self);
 void ImGuiTextBuffer_appendfv(ImGuiTextBuffer* self, const char* fmt, va_list args);
 bool igDragInt4(const char* label, int[4]*/*[4]*/ v, float v_speed, int v_min, int v_max, const char* format, ImGuiSliderFlags flags);
+bool ImGuiDockNode_IsEmpty(ImGuiDockNode* self);
 void igClearIniSettings();
-int igImTextCountCharsFromUtf8(const char* in_text, const char* in_text_end);
 void ImDrawList_PathLineToMergeDuplicate(ImDrawList* self, const ImVec2 pos);
 ImGuiIO* ImGuiIO_ImGuiIO();
+void igSetNextWindowClass(const ImGuiWindowClass* window_class);
 bool igBeginDragDropTarget();
+int igImTextCountCharsFromUtf8(const char* in_text, const char* in_text_end);
 void ImGuiTextBuffer_clear(ImGuiTextBuffer* self);
 int igImStricmp(const char* str1, const char* str2);
 void igMarkItemEdited(ImGuiID id);
@@ -2435,11 +2794,11 @@ bool igSliderInt4(const char* label, int[4]*/*[4]*/ v, int v_min, int v_max, con
 void igGetItemRectMin(ImVec2* pOut);
 void ImDrawList_PrimReserve(ImDrawList* self, int idx_count, int vtx_count);
 ImGuiMenuColumns* ImGuiMenuColumns_ImGuiMenuColumns();
+ImGuiDockNode* igDockBuilderGetCentralNode(ImGuiID node_id);
 ImGuiWindowTempData* ImGuiWindowTempData_ImGuiWindowTempData();
 void ImDrawList_AddRectFilledMultiColor(ImDrawList* self, const ImVec2 p_min, const ImVec2 p_max, ImU32 col_upr_left, ImU32 col_upr_right, ImU32 col_bot_right, ImU32 col_bot_left);
-float igImPowFloat(float x, float y);
-double igImPowdouble(double x, double y);
-void igSeparatorEx(ImGuiSeparatorFlags flags);
+void ImGuiViewport_GetWorkSize(ImVec2* pOut, ImGuiViewport* self);
+ImGuiViewport* igGetWindowViewport();
 void igSetStateStorage(ImGuiStorage* storage);
 void ImGuiStorage_SetAllInt(ImGuiStorage* self, int val);
 bool ImGuiListClipper_Step(ImGuiListClipper* self);
@@ -2448,6 +2807,8 @@ void ImGuiInputTextCallbackData_DeleteChars(ImGuiInputTextCallbackData* self, in
 void igImFontAtlasBuildSetupFont(ImFontAtlas* atlas, ImFont* font, ImFontConfig* font_config, float ascent, float descent);
 bool ImGuiTextBuffer_empty(ImGuiTextBuffer* self);
 void igShowDemoWindow(bool* p_open);
+float igImPowFloat(float x, float y);
+double igImPowdouble(double x, double y);
 void ImGuiTextRange_destroy(ImGuiTextRange* self);
 void ImGuiStorage_SetVoidPtr(ImGuiStorage* self, ImGuiID key, void* val);
 float igImInvLength(const ImVec2 lhs, float fail_value);
@@ -2455,6 +2816,7 @@ bool igCloseButton(ImGuiID id, const ImVec2 pos);
 void ImDrawList_PushTextureID(ImDrawList* self, ImTextureID texture_id);
 void ImDrawList_PathLineTo(ImDrawList* self, const ImVec2 pos);
 void igSetWindowHitTestHole(ImGuiWindow* window, const ImVec2 pos, const ImVec2 size);
+void igSeparatorEx(ImGuiSeparatorFlags flags);
 void ImRect_AddVec2(ImRect* self, const ImVec2 p);
 void ImRect_AddRect(ImRect* self, const ImRect r);
 void igShowMetricsWindow(bool* p_open);
@@ -2466,8 +2828,9 @@ void ImDrawList_PathRect(ImDrawList* self, const ImVec2 rect_min, const ImVec2 r
 bool igInputTextEx(const char* label, const char* hint, char* buf, int buf_size, const ImVec2 size_arg, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data);
 bool igColorEdit3(const char* label, float[3]*/*[3]*/ col, ImGuiColorEditFlags flags);
 void ImColor_destroy(ImColor* self);
-bool igTabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, ImGuiTabItemFlags flags);
+ImGuiDockNodeFlags ImGuiDockNode_GetMergedFlags(ImGuiDockNode* self);
 bool igIsItemToggledSelection();
+bool igTabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, ImGuiTabItemFlags flags, ImGuiWindow* docked_window);
 bool igIsKeyPressedMap(ImGuiKey key, bool repeat);
 void igLogFinish();
 void igGetItemRectSize(ImVec2* pOut);
@@ -2480,19 +2843,21 @@ void igMarkIniSettingsDirtyNil();
 void igMarkIniSettingsDirtyWindowPtr(ImGuiWindow* window);
 float igGetWindowWidth();
 void igBulletTextV(const char* fmt, va_list args);
-void igPushTextWrapPos(float wrap_local_pos_x);
+void igDockBuilderCopyNode(ImGuiID src_node_id, ImGuiID dst_node_id, ImVector_ImGuiID* out_node_remap_pairs);
 void ImDrawListSplitter_SetCurrentChannel(ImDrawListSplitter* self, ImDrawList* draw_list, int channel_idx);
 void ImGuiStorage_SetBool(ImGuiStorage* self, ImGuiID key, bool val);
 void igAlignTextToFramePadding();
 bool igIsWindowHovered(ImGuiHoveredFlags flags);
+void igDockBuilderCopyDockSpace(ImGuiID src_dockspace_id, ImGuiID dst_dockspace_id, ImVector_const_charPtr* in_window_remap_pairs);
 void ImDrawList_PathBezierCurveTo(ImDrawList* self, const ImVec2 p2, const ImVec2 p3, const ImVec2 p4, int num_segments);
 void ImRect_GetCenter(ImVec2* pOut, ImRect* self);
 float igGetWindowContentRegionWidth();
 void ImDrawList_PathArcTo(ImDrawList* self, const ImVec2 center, float radius, float a_min, float a_max, int num_segments);
 bool igIsAnyItemActive();
-void igStyleColorsDark(ImGuiStyle* dst);
+void igPushTextWrapPos(float wrap_local_pos_x);
 float igGetTreeNodeToLabelSpacing();
 void igSameLine(float offset_from_start_x, float spacing);
+void igStyleColorsDark(ImGuiStyle* dst);
 void igTabBarQueueReorder(ImGuiTabBar* tab_bar, const ImGuiTabItem* tab, int dir);
 void igDummy(const ImVec2 size);
 ImGuiID igGetItemID();
@@ -2508,6 +2873,7 @@ void igFocusableItemUnregister(ImGuiWindow* window);
 void igNavMoveRequestForward(ImGuiDir move_dir, ImGuiDir clip_dir, const ImRect bb_rel, ImGuiNavMoveFlags move_flags);
 void igSetNavIDWithRectRel(ImGuiID id, int nav_layer, ImGuiID focus_scope_id, const ImRect rect_rel);
 void igNavInitWindow(ImGuiWindow* window, bool force_reinit);
+void igDockContextUpdateDocking(ImGuiContext* ctx);
 ImFileHandle igImFileOpen(const char* filename, const char* mode);
 void igEndDragDropTarget();
 ImGuiWindowSettings* ImGuiWindowSettings_ImGuiWindowSettings();
@@ -2529,12 +2895,15 @@ void igSetScrollFromPosYFloat(float local_y, float center_y_ratio);
 void igSetScrollFromPosYWindowPtr(ImGuiWindow* window, float local_y, float center_y_ratio);
 bool igColorButton(const char* desc_id, const ImVec4 col, ImGuiColorEditFlags flags, ImVec2 size);
 const ImGuiPayload* igAcceptDragDropPayload(const char* type, ImGuiDragDropFlags flags);
+void igDockContextShutdown(ImGuiContext* ctx);
 void ImDrawList_PopClipRect(ImDrawList* self);
 float igGetScrollMaxY();
 ImGuiStoragePair* ImGuiStoragePair_ImGuiStoragePairInt(ImGuiID _key, int _val_i);
 ImGuiStoragePair* ImGuiStoragePair_ImGuiStoragePairFloat(ImGuiID _key, float _val_f);
 ImGuiStoragePair* ImGuiStoragePair_ImGuiStoragePairPtr(ImGuiID _key, void* _val_p);
 void igEndMainMenuBar();
+ImGuiPlatformMonitor* ImGuiPlatformMonitor_ImGuiPlatformMonitor();
+void ImGuiViewportP_GetMainRect(ImRect* pOut, ImGuiViewportP* self);
 bool igIsItemActive();
 void igShowAboutWindow(bool* p_open);
 void igSetNextItemWidth(float item_width);
@@ -2550,15 +2919,15 @@ void igCalcWindowExpectedSize(ImVec2* pOut, ImGuiWindow* window);
 void igGcCompactTransientWindowBuffers(ImGuiWindow* window);
 void igNavMoveRequestTryWrapping(ImGuiWindow* window, ImGuiNavMoveFlags move_flags);
 ImGuiWindow* igGetCurrentWindow();
-void igPushStyleColorU32(ImGuiCol idx, ImU32 col);
-void igPushStyleColorVec4(ImGuiCol idx, const ImVec4 col);
+bool igIsWindowDocked();
 void ImVec2_destroy(ImVec2* self);
 ImGuiID igGetIDStr(const char* str_id);
 ImGuiID igGetIDStrStr(const char* str_id_begin, const char* str_id_end);
 ImGuiID igGetIDPtr(const void* ptr_id);
 void igImFontAtlasBuildMultiplyCalcLookupTable(char[256]*/*[256]*/ out_table, float in_multiply_factor);
 bool igSetDragDropPayload(const char* type, const void* data, size_t sz, ImGuiCond cond);
-void igSetColumnOffset(int column_index, float offset_x);
+void igPushStyleColorU32(ImGuiCol idx, ImU32 col);
+void igPushStyleColorVec4(ImGuiCol idx, const ImVec4 col);
 ImFontAtlas* ImFontAtlas_ImFontAtlas();
 void igBeginGroup();
 float ImGuiMenuColumns_CalcExtraSpace(ImGuiMenuColumns* self, float avail_w);
@@ -2569,7 +2938,9 @@ void igPopStyleVar(int count);
 void ImDrawList_PushClipRectFullScreen(ImDrawList* self);
 bool ImRect_ContainsVec2(ImRect* self, const ImVec2 p);
 bool ImRect_ContainsRect(ImRect* self, const ImRect r);
-ImDrawList* igGetBackgroundDrawList();
+ImDrawList* igGetBackgroundDrawListNil();
+ImDrawList* igGetBackgroundDrawListViewportPtr(ImGuiViewport* viewport);
+void igSetColumnOffset(int column_index, float offset_x);
 void igSetKeyboardFocusHere(int offset);
 void igLoadIniSettingsFromMemory(const char* ini_data, size_t ini_size);
 void igIndent(float indent_w);
@@ -2583,12 +2954,14 @@ float igImLengthSqrVec4(const ImVec4 lhs);
 bool ImGuiTextFilter_Draw(ImGuiTextFilter* self, const char* label, float width);
 void igFocusWindow(ImGuiWindow* window);
 void igPushClipRect(const ImVec2 clip_rect_min, const ImVec2 clip_rect_max, bool intersect_with_current_clip_rect);
-bool igCollapsingHeaderTreeNodeFlags(const char* label, ImGuiTreeNodeFlags flags);
-bool igCollapsingHeaderBoolPtr(const char* label, bool* p_open, ImGuiTreeNodeFlags flags);
+ImGuiViewportP* ImGuiViewportP_ImGuiViewportP();
 bool igBeginMainMenuBar();
 void ImRect_GetBR(ImVec2* pOut, ImRect* self);
+bool igCollapsingHeaderTreeNodeFlags(const char* label, ImGuiTreeNodeFlags flags);
+bool igCollapsingHeaderBoolPtr(const char* label, bool* p_open, ImGuiTreeNodeFlags flags);
 ImGuiWindow* igGetCurrentWindowRead();
 bool igSliderInt3(const char* label, int[3]*/*[3]*/ v, int v_min, int v_max, const char* format, ImGuiSliderFlags flags);
+void igTabBarAddTab(ImGuiTabBar* tab_bar, ImGuiTabItemFlags tab_flags, ImGuiWindow* window);
 bool igTabItemButton(const char* label, ImGuiTabItemFlags flags);
 int igImFormatString(char* buf, size_t buf_size, const char* fmt, ... );
 bool igIsMouseReleased(ImGuiMouseButton button);
@@ -2630,10 +3003,13 @@ void igSetNextItemOpen(bool is_open, ImGuiCond cond);
 int igDataTypeFormatString(char* buf, int buf_size, ImGuiDataType data_type, const void* p_data, const char* format);
 void igTabItemBackground(ImDrawList* draw_list, const ImRect bb, ImGuiTabItemFlags flags, ImU32 col);
 void ImDrawList_AddTriangle(ImDrawList* self, const ImVec2 p1, const ImVec2 p2, const ImVec2 p3, ImU32 col, float thickness);
-void igLogToFile(int auto_open_depth, const char* filename);
+void igDockContextClearNodes(ImGuiContext* ctx, ImGuiID root_id, bool clear_settings_refs);
 bool igTempInputIsActive(ImGuiID id);
+void igLogToFile(int auto_open_depth, const char* filename);
 void ImGuiNextItemData_destroy(ImGuiNextItemData* self);
+void ImGuiViewportP_ClearRequestFlags(ImGuiViewportP* self);
 ImGuiKeyModFlags igGetMergedKeyModFlags();
+void igSetNextWindowDockID(ImGuiID dock_id, ImGuiCond cond);
 void ImRect_ToVec4(ImVec4* pOut, ImRect* self);
 void igPushMultiItemsWidths(int components, float width_full);
 ImGuiContext* igCreateContext(ImFontAtlas* shared_font_atlas);
@@ -2642,6 +3018,7 @@ ImColor* ImColor_ImColorInt(int r, int g, int b, int a);
 ImColor* ImColor_ImColorU32(ImU32 rgba);
 ImColor* ImColor_ImColorFloat(float r, float g, float b, float a);
 ImColor* ImColor_ImColorVec4(const ImVec4 col);
+ImGuiID igDockContextGenNodeID(ImGuiContext* ctx);
 void ImDrawList__ClearFreeMemory(ImDrawList* self);
 void igSetNavID(ImGuiID id, int nav_layer, ImGuiID focus_scope_id);
 ImDrawList* igGetWindowDrawList();
@@ -2649,6 +3026,7 @@ void ImRect_GetBL(ImVec2* pOut, ImRect* self);
 void igImBezierClosestPointCasteljau(ImVec2* pOut, const ImVec2 p1, const ImVec2 p2, const ImVec2 p3, const ImVec2 p4, const ImVec2 p, float tess_tol);
 bool igIsMousePosValid(const ImVec2* mouse_pos);
 float ImGuiStorage_GetFloat(ImGuiStorage* self, ImGuiID key, float default_val);
+bool ImGuiDockNode_IsLeafNode(ImGuiDockNode* self);
 bool igSliderFloat4(const char* label, float[4]*/*[4]*/ v, float v_min, float v_max, const char* format, ImGuiSliderFlags flags);
 bool igIsItemDeactivatedAfterEdit();
 void igPlotHistogramFloatPtr(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2 graph_size, int stride);
@@ -2688,15 +3066,17 @@ void ImGuiStorage_SetInt(ImGuiStorage* self, ImGuiID key, int val);
 void ImGuiWindow_MenuBarRect(ImRect* pOut, ImGuiWindow* self);
 int ImGuiStorage_GetInt(ImGuiStorage* self, ImGuiID key, int default_val);
 void igShowFontSelector(const char* label);
+void igDestroyPlatformWindow(ImGuiViewportP* viewport);
 void igImMin(ImVec2* pOut, const ImVec2 lhs, const ImVec2 rhs);
 void igPushButtonRepeat(bool repeat);
 float igImAbsFloat(float x);
 double igImAbsdouble(double x);
 void ImGuiWindow_Rect(ImRect* pOut, ImGuiWindow* self);
+void ImGuiViewportP_GetWorkRect(ImRect* pOut, ImGuiViewportP* self);
 void ImRect_Floor(ImRect* self);
-ImU32 igColorConvertFloat4ToU32(const ImVec4 inItem);
 void igTreePushStr(const char* str_id);
 void igTreePushPtr(const void* ptr_id);
+ImU32 igColorConvertFloat4ToU32(const ImVec4 inItem);
 ImGuiStyle* igGetStyle();
 void igGetCursorPos(ImVec2* pOut);
 int igGetFrameCount();
@@ -2714,6 +3094,7 @@ bool igNavMoveRequestButNoResultYet();
 void ImGuiStyle_ScaleAllSizes(ImGuiStyle* self, float scale_factor);
 bool igArrowButton(const char* str_id, ImGuiDir dir);
 void igSetCursorPosY(float local_y);
+bool ImGuiDockNode_IsFloatingNode(ImGuiDockNode* self);
 ImGuiTextFilter* ImGuiTextFilter_ImGuiTextFilter(const char* default_filter);
 void ImGuiStorage_SetFloat(ImGuiStorage* self, ImGuiID key, float val);
 void igShadeVertsLinearUV(ImDrawList* draw_list, int vert_start_idx, int vert_end_idx, const ImVec2 a, const ImVec2 b, const ImVec2 uv_a, const ImVec2 uv_b, bool clamp);
@@ -2724,14 +3105,17 @@ bool igSliderScalarN(const char* label, ImGuiDataType data_type, void* p_data, i
 const ImWchar* ImFontAtlas_GetGlyphRangesChineseSimplifiedCommon(ImFontAtlas* self);
 void igGetMousePosOnOpeningCurrentPopup(ImVec2* pOut);
 bool igVSliderScalar(const char* label, const ImVec2 size, ImGuiDataType data_type, void* p_data, const void* p_min, const void* p_max, const char* format, ImGuiSliderFlags flags);
+void igDockBuilderSetNodePos(ImGuiID node_id, ImVec2 pos);
 void ImFont_RenderChar(ImFont* self, ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, ImWchar c);
 void ImFont_RenderText(ImFont* self, ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, const ImVec4 clip_rect, const char* text_begin, const char* text_end, float wrap_width, bool cpu_fine_clip);
 void igOpenPopupEx(ImGuiID id, ImGuiPopupFlags popup_flags);
 void ImFontAtlas_SetTexID(ImFontAtlas* self, ImTextureID id);
 void ImFontAtlas_Clear(ImFontAtlas* self);
+void igBeginDockableDragDropSource(ImGuiWindow* window);
 bool ImBitVector_TestBit(ImBitVector* self, int n);
 void ImGuiTextFilter_destroy(ImGuiTextFilter* self);
 bool igBeginPopupModal(const char* name, bool* p_open, ImGuiWindowFlags flags);
+float igGetWindowDpiScale();
 bool igInputFloat(const char* label, float* v, float step, float step_fast, const char* format, ImGuiInputTextFlags flags);
 bool igDragIntRange2(const char* label, int* v_current_min, int* v_current_max, float v_speed, int v_min, int v_max, const char* format, const char* format_max, ImGuiSliderFlags flags);
 void ImVec2ih_destroy(ImVec2ih* self);
@@ -2747,7 +3131,9 @@ const ImGuiDataTypeInfo* igDataTypeGetInfo(ImGuiDataType data_type);
 bool igVSliderInt(const char* label, const ImVec2 size, int* v, int v_min, int v_max, const char* format, ImGuiSliderFlags flags);
 void igSetWindowClipRectBeforeSetChannel(ImGuiWindow* window, const ImRect clip_rect);
 ImFontGlyphRangesBuilder* ImFontGlyphRangesBuilder_ImFontGlyphRangesBuilder();
+ImGuiID igGetWindowDockID();
 void igPopTextWrapPos();
+void ImGuiWindowClass_destroy(ImGuiWindowClass* self);
 float ImGuiWindow_TitleBarHeight(ImGuiWindow* self);
 void ImDrawList_GetClipRectMin(ImVec2* pOut, ImDrawList* self);
 void ImDrawList_PathStroke(ImDrawList* self, ImU32 col, bool closed, float thickness);
@@ -2759,12 +3145,15 @@ void ImColor_HSV(ImColor* pOut, float h, float s, float v, float a);
 void igSetTabItemClosed(const char* tab_or_docked_window_label);
 void ImFont_AddGlyph(ImFont* self, const ImFontConfig* src_cfg, ImWchar c, float x0, float y0, float x1, float y1, float u0, float v0, float u1, float v1, float advance_x);
 void igSetHoveredID(ImGuiID id);
+void igStartMouseMovingWindowOrNode(ImGuiWindow* window, ImGuiDockNode* node, bool undock_floating_node);
 void ImFontGlyphRangesBuilder_AddText(ImFontGlyphRangesBuilder* self, const char* text, const char* text_end);
 void ImGuiPtrOrIndex_destroy(ImGuiPtrOrIndex* self);
 ImGuiInputTextCallbackData* ImGuiInputTextCallbackData_ImGuiInputTextCallbackData();
 char* igImStrdupcpy(char* dst, size_t* p_dst_size, const char* str);
-bool igColorPicker4(const char* label, float[4]*/*[4]*/ col, ImGuiColorEditFlags flags, const float* ref_col);
+bool ImGuiDockNode_IsNoTabBar(ImGuiDockNode* self);
 void igColorConvertHSVtoRGB(float h, float s, float v, float* out_r, float* out_g, float* out_b);
+ImGuiID igDockBuilderSplitNode(ImGuiID node_id, ImGuiDir split_dir, float size_ratio_for_node_at_dir, ImGuiID* out_id_at_dir, ImGuiID* out_id_at_opposite_dir);
+bool igColorPicker4(const char* label, float[4]*/*[4]*/ col, ImGuiColorEditFlags flags, const float* ref_col);
 bool igImBitArrayTestBit(const ImU32* arr, int n);
 ImGuiWindow* igFindWindowByID(ImGuiID id);
 bool igBeginDragDropTargetCustom(const ImRect bb, ImGuiID id);
@@ -2787,8 +3176,9 @@ ImFontAtlasCustomRect* ImFontAtlas_GetCustomRectByIndex(ImFontAtlas* self, int i
 void ImFontAtlas_GetTexDataAsAlpha8(ImFontAtlas* self, char** out_pixels, int* out_width, int* out_height, int* out_bytes_per_pixel);
 void igGcAwakeTransientWindowBuffers(ImGuiWindow* window);
 void ImDrawList__OnChangedClipRect(ImDrawList* self);
+ImGuiWindowClass* ImGuiWindowClass_ImGuiWindowClass();
+void igDockBuilderRemoveNodeChildNodes(ImGuiID node_id);
 ImGuiID igGetColumnsID(const char* str_id, int count);
-void igGetCursorScreenPos(ImVec2* pOut);
 void igPushAllowKeyboardFocus(bool allow_keyboard_focus);
 void ImDrawList_PopTextureID(ImDrawList* self);
 void igColumns(int count, const char* id, bool border);
@@ -2798,6 +3188,7 @@ void igBringWindowToDisplayBack(ImGuiWindow* window);
 void ImDrawList_PrimVtx(ImDrawList* self, const ImVec2 pos, const ImVec2 uv, ImU32 col);
 void ImDrawListSplitter_Clear(ImDrawListSplitter* self);
 void ImDrawList_AddConvexPolyFilled(ImDrawList* self, const ImVec2* points, int num_points, ImU32 col);
+void igGetCursorScreenPos(ImVec2* pOut);
 bool igListBoxStr_arr(const char* label, int* current_item, const(char)** items, int items_count, int height_in_items);
 bool igListBoxFnBoolPtr(const char* label, int* current_item, bool function(void* data,int idx,const char** out_text) items_getter, void* data, int items_count, int height_in_items);
 void igPopItemFlag();
@@ -2815,6 +3206,7 @@ void igValueInt(const char* prefix, int v);
 void igValueUint(const char* prefix, uint v);
 void igValueFloat(const char* prefix, float v, const char* float_format);
 bool igBeginTabItem(const char* label, bool* p_open, ImGuiTabItemFlags flags);
+void ImGuiViewport_destroy(ImGuiViewport* self);
 bool igIsNavInputDown(ImGuiNavInput n);
 void ImGuiInputTextState_ClearFreeMemory(ImGuiInputTextState* self);
 void igRenderBullet(ImDrawList* draw_list, ImVec2 pos, ImU32 col);
@@ -2827,6 +3219,7 @@ void igPushIDPtr(const void* ptr_id);
 void igPushIDInt(int int_id);
 bool igItemHoverable(const ImRect bb, ImGuiID id);
 ImFont* ImFontAtlas_AddFontFromMemoryTTF(ImFontAtlas* self, void* font_data, int font_size, float size_pixels, const ImFontConfig* font_cfg, const ImWchar* glyph_ranges);
+void igDockBuilderDockWindow(const char* window_name, ImGuiID node_id);
 void igImFontAtlasBuildMultiplyRectAlpha8(const char[256]*/*[256]*/ table, char* pixels, int x, int y, int w, int h, int stride);
 void igTextDisabledV(const char* fmt, va_list args);
 bool igInputScalar(const char* label, ImGuiDataType data_type, void* p_data, const void* p_step, const void* p_step_fast, const char* format, ImGuiInputTextFlags flags);
@@ -2864,6 +3257,7 @@ const char* igSaveIniSettingsToMemory(size_t* out_ini_size);
 ImGuiNavMoveResult* ImGuiNavMoveResult_ImGuiNavMoveResult();
 void igTabBarRemoveTab(ImGuiTabBar* tab_bar, ImGuiID tab_id);
 float igGetWindowHeight();
+ImGuiViewport* igGetMainViewport();
 bool ImGuiTextFilter_PassFilter(ImGuiTextFilter* self, const char* text, const char* text_end);
 ImFont* ImFontAtlas_AddFontFromMemoryCompressedBase85TTF(ImFontAtlas* self, const char* compressed_font_data_base85, float size_pixels, const ImFontConfig* font_cfg, const ImWchar* glyph_ranges);
 ImFont* ImFontAtlas_AddFontFromFileTTF(ImFontAtlas* self, const char* filename, float size_pixels, const ImFontConfig* font_cfg, const ImWchar* glyph_ranges);
@@ -2898,6 +3292,7 @@ ImVec2* ImVec2_ImVec2Nil();
 ImVec2* ImVec2_ImVec2Float(float _x, float _y);
 int ImGuiTextBuffer_size(ImGuiTextBuffer* self);
 const ImWchar* ImFontAtlas_GetGlyphRangesDefault(ImFontAtlas* self);
+void igUpdatePlatformWindows();
 void ImFontAtlas_ClearTexData(ImFontAtlas* self);
 float ImFont_GetCharAdvance(ImFont* self, ImWchar c);
 bool igSliderFloat3(const char* label, float[3]*/*[3]*/ v, float v_min, float v_max, const char* format, ImGuiSliderFlags flags);
@@ -2911,11 +3306,14 @@ void igSetWindowPosStr(const char* name, const ImVec2 pos, ImGuiCond cond);
 void igSetWindowPosWindowPtr(ImGuiWindow* window, const ImVec2 pos, ImGuiCond cond);
 bool igTempInputText(const ImRect bb, ImGuiID id, const char* label, char* buf, int buf_size, ImGuiInputTextFlags flags);
 void igSetScrollHereY(float center_y_ratio);
+void igDockContextUpdateUndocking(ImGuiContext* ctx);
+ImGuiViewport* ImGuiViewport_ImGuiViewport();
 void igProgressBar(float fraction, const ImVec2 size_arg, const char* overlay);
 ImDrawList* ImDrawList_CloneOutput(ImDrawList* self);
 void ImFontGlyphRangesBuilder_destroy(ImFontGlyphRangesBuilder* self);
 void ImVec1_destroy(ImVec1* self);
 void igPushColumnClipRect(int column_index);
+void igDockBuilderCopyWindowSettings(const char* src_name, const char* dst_name);
 int igImTextCharFromUtf8(uint* out_char, const char* in_text, const char* in_text_end);
 ImRect* ImRect_ImRectNil();
 ImRect* ImRect_ImRectVec2(const ImVec2 min, const ImVec2 max);
@@ -2924,15 +3322,16 @@ ImRect* ImRect_ImRectFloat(float x1, float y1, float x2, float y2);
 ImGuiWindow* igGetTopMostPopupModal();
 void ImDrawListSplitter_Split(ImDrawListSplitter* self, ImDrawList* draw_list, int count);
 void igBulletText(const char* fmt, ... );
-void igUpdateWindowParentAndRootLinks(ImGuiWindow* window, ImGuiWindowFlags flags, ImGuiWindow* parent_window);
 void igImFontAtlasBuildFinish(ImFontAtlas* atlas);
 void ImDrawList_AddQuad(ImDrawList* self, const ImVec2 p1, const ImVec2 p2, const ImVec2 p3, const ImVec2 p4, ImU32 col, float thickness);
-bool igIsItemDeactivated();
+void igDockSpace(ImGuiID id, const ImVec2 size, ImGuiDockNodeFlags flags, const ImGuiWindowClass* window_class);
 ImU32 igGetColorU32Col(ImGuiCol idx, float alpha_mul);
 ImU32 igGetColorU32Vec4(const ImVec4 col);
 ImU32 igGetColorU32U32(ImU32 col);
 ImGuiID ImGuiWindow_GetIDFromRectangle(ImGuiWindow* self, const ImRect r_abs);
 void ImDrawList_AddDrawCmd(ImDrawList* self);
+void igUpdateWindowParentAndRootLinks(ImGuiWindow* window, ImGuiWindowFlags flags, ImGuiWindow* parent_window);
+bool igIsItemDeactivated();
 void igSetCursorPosX(float local_x);
 bool igInputFloat4(const char* label, float[4]*/*[4]*/ v, const char* format, ImGuiInputTextFlags flags);
 void igSeparator();
@@ -2941,21 +3340,24 @@ void ImDrawList_PrimUnreserve(ImDrawList* self, int idx_count, int vtx_count);
 void igColorPickerOptionsPopup(const float* ref_col, ImGuiColorEditFlags flags);
 bool ImRect_IsInverted(ImRect* self);
 int igGetKeyIndex(ImGuiKey imgui_key);
+ImGuiViewport* igFindViewportByID(ImGuiID id);
 void igPushItemFlag(ImGuiItemFlags option, bool enabled);
 void igScrollbar(ImGuiAxis axis);
 bool igImFontAtlasBuildWithStbTruetype(ImFontAtlas* atlas);
 void ImDrawList_PrimWriteVtx(ImDrawList* self, const ImVec2 pos, const ImVec2 uv, ImU32 col);
-void igSetActiveID(ImGuiID id, ImGuiWindow* window);
+void ImGuiDockContext_destroy(ImGuiDockContext* self);
 bool ImGuiPayload_IsDataType(ImGuiPayload* self, const char* type);
+void igSetActiveID(ImGuiID id, ImGuiWindow* window);
+void ImFontGlyphRangesBuilder_BuildRanges(ImFontGlyphRangesBuilder* self, ImVector_ImWchar* out_ranges);
+void igTreePop();
 void igSetWindowSizeVec2(const ImVec2 size, ImGuiCond cond);
 void igSetWindowSizeStr(const char* name, const ImVec2 size, ImGuiCond cond);
 void igSetWindowSizeWindowPtr(ImGuiWindow* window, const ImVec2 size, ImGuiCond cond);
-void ImFontGlyphRangesBuilder_BuildRanges(ImFontGlyphRangesBuilder* self, ImVector_ImWchar* out_ranges);
-void igTreePop();
 void ImFont_AddRemapChar(ImFont* self, ImWchar dst, ImWchar src, bool overwrite_dst);
 void igNavMoveRequestCancel();
+void igTranslateWindowsInViewport(ImGuiViewportP* viewport, const ImVec2 old_pos, const ImVec2 new_pos);
 void igText(const char* fmt, ... );
-bool igCollapseButton(ImGuiID id, const ImVec2 pos);
+bool igCollapseButton(ImGuiID id, const ImVec2 pos, ImGuiDockNode* dock_node);
 void ImGuiWindow_TitleBarRect(ImRect* pOut, ImGuiWindow* self);
 bool igIsItemFocused();
 void* igMemAlloc(size_t size);
@@ -2984,10 +3386,12 @@ void igCalcTextSize(ImVec2* pOut, const char* text, const char* text_end, bool h
 void ImFont_CalcTextSizeA(ImVec2* pOut, ImFont* self, float size, float max_width, float wrap_width, const char* text_begin, const char* text_end, const char** remaining);
 void igImClamp(ImVec2* pOut, const ImVec2 v, const ImVec2 mn, ImVec2 mx);
 float igGetColumnWidth(int column_index);
+ImGuiTabItem* igTabBarFindMostRecentlySelectedTabForActiveWindow(ImGuiTabBar* tab_bar);
 void ImGuiPayload_Clear(ImGuiPayload* self);
 void ImGuiTextBuffer_reserve(ImGuiTextBuffer* self, int capacity);
 void ImGuiInputTextState_CursorAnimReset(ImGuiInputTextState* self);
 void ImRect_ClipWithFull(ImRect* self, const ImRect r);
+void ImGuiViewport_GetWorkPos(ImVec2* pOut, ImGuiViewport* self);
 void igGetFontTexUvWhitePixel(ImVec2* pOut);
 void ImDrawList_ChannelsSplit(ImDrawList* self, int count);
 void igPopFont();
@@ -2997,15 +3401,19 @@ float igImFloorFloat(float f);
 void igImFloorVec2(ImVec2* pOut, const ImVec2 v);
 void ImDrawList_AddRect(ImDrawList* self, const ImVec2 p_min, const ImVec2 p_max, ImU32 col, float rounding, ImDrawCornerFlags rounding_corners, float thickness);
 const char* igImParseFormatFindEnd(const char* format);
+void ImGuiPlatformIO_destroy(ImGuiPlatformIO* self);
 void ImDrawListSharedData_SetCircleSegmentMaxError(ImDrawListSharedData* self, float max_error);
 void ImGuiInputTextCallbackData_ClearSelection(ImGuiInputTextCallbackData* self);
 void ImGuiTextRange_split(ImGuiTextRange* self, char separator, ImVector_ImGuiTextRange* outItem);
 void ImBitVector_Clear(ImBitVector* self);
+ImGuiID igDockBuilderAddNode(ImGuiID node_id, ImGuiDockNodeFlags flags);
 ImGuiWindowSettings* igCreateNewWindowSettings(const char* name);
+bool ImGuiDockNode_IsRootNode(ImGuiDockNode* self);
+void igDockContextInitialize(ImGuiContext* ctx);
 ImDrawListSharedData* igGetDrawListSharedData();
-bool igImFileClose(ImFileHandle file);
 bool igBeginChildEx(const char* name, ImGuiID id, const ImVec2 size_arg, bool border, ImGuiWindowFlags flags);
 void ImGuiNextWindowData_ClearFlags(ImGuiNextWindowData* self);
+bool igImFileClose(ImFileHandle file);
 bool ImFontGlyphRangesBuilder_GetBit(ImFontGlyphRangesBuilder* self, size_t n);
 void igImRotate(ImVec2* pOut, const ImVec2 v, float cos_a, float sin_a);
 ImGuiDir igImGetDirQuadrantFromDelta(float dx, float dy);
@@ -3019,6 +3427,7 @@ bool ImGui_ImplSDL2_InitForMetal(SDL_Window* window);
 bool ImGui_ImplSDL2_InitForOpenGL(SDL_Window* window, void* sdl_gl_context);
 bool ImGui_ImplSDL2_InitForVulkan(SDL_Window* window);
 bool ImGui_ImplOpenGL3_CreateFontsTexture();
+void ImGui_ImplGlfw_MonitorCallback(GLFWmonitor* monitor, int event);
 void ImGui_ImplGlfw_NewFrame();
 bool ImGui_ImplOpenGL2_CreateDeviceObjects();
 bool ImGui_ImplSDL2_InitForD3D(SDL_Window* window);
@@ -3049,7 +3458,10 @@ void ImGui_ImplOpenGL2_DestroyFontsTexture();
 else {
 extern(C) @nogc nothrow {
 alias pImDrawList_AddCircleFilled = void function(ImDrawList* self, const ImVec2 center, float radius, ImU32 col, int num_segments);
+alias pImGuiPlatformIO_ImGuiPlatformIO = ImGuiPlatformIO* function();
+alias pigDockContextQueueUndockWindow = void function(ImGuiContext* ctx, ImGuiWindow* window);
 alias pigGetForegroundDrawListNil = ImDrawList* function();
+alias pigGetForegroundDrawListViewportPtr = ImDrawList* function(ImGuiViewport* viewport);
 alias pigGetForegroundDrawListWindowPtr = ImDrawList* function(ImGuiWindow* window);
 alias pImFontAtlas_GetGlyphRangesChineseFull = const ImWchar* function(ImFontAtlas* self);
 alias pigBringWindowToDisplayFront = void function(ImGuiWindow* window);
@@ -3058,6 +3470,7 @@ alias pImFontAtlas_AddCustomRectRegular = int function(ImFontAtlas* self, int wi
 alias pigIsMouseDragPastThreshold = bool function(ImGuiMouseButton button, float lock_threshold);
 alias pigSetWindowFontScale = void function(float scale);
 alias pigSliderFloat = bool function(const char* label, float* v, float v_min, float v_max, const char* format, ImGuiSliderFlags flags);
+alias pigDestroyPlatformWindows = void function();
 alias pigImMax = void function(ImVec2* pOut, const ImVec2 lhs, const ImVec2 rhs);
 alias pImRect_GetTR = void function(ImVec2* pOut, ImRect* self);
 alias pImFontAtlas_GetGlyphRangesThai = const ImWchar* function(ImFontAtlas* self);
@@ -3071,6 +3484,7 @@ alias pigLoadIniSettingsFromDisk = void function(const char* ini_filename);
 alias pigImBitArraySetBit = void function(ImU32* arr, int n);
 alias pImGuiTextBuffer_end = const char* function(ImGuiTextBuffer* self);
 alias pImGuiTabBar_destroy = void function(ImGuiTabBar* self);
+alias pigDockContextCalcDropPosForDocking = bool function(ImGuiWindow* target, ImGuiDockNode* target_node, ImGuiWindow* payload, ImGuiDir split_dir, bool split_outer, ImVec2* out_pos);
 alias pigSetClipboardText = void function(const char* text);
 alias pigRenderColorRectWithAlphaCheckerboard = void function(ImDrawList* draw_list, ImVec2 p_min, ImVec2 p_max, ImU32 fill_col, float grid_step, ImVec2 grid_off, float rounding, int rounding_corners_flags);
 alias pigFindBestWindowPosForPopup = void function(ImVec2* pOut, ImGuiWindow* window);
@@ -3092,6 +3506,7 @@ alias pigGetDrawData = ImDrawData* function();
 alias pigRenderRectFilledRangeH = void function(ImDrawList* draw_list, const ImRect rect, ImU32 col, float x_start_norm, float x_end_norm, float rounding);
 alias pigPopItemWidth = void function();
 alias pigIsWindowAppearing = bool function();
+alias pigSetWindowDock = void function(ImGuiWindow* window, ImGuiID dock_id, ImGuiCond cond);
 alias pigFindOrCreateColumns = ImGuiColumns* function(ImGuiWindow* window, ImGuiID id);
 alias pImGuiStorage_GetVoidPtr = void* function(ImGuiStorage* self, ImGuiID key);
 alias pImGuiInputTextState_GetRedoAvailCount = int function(ImGuiInputTextState* self);
@@ -3116,9 +3531,12 @@ alias pImGuiWindow_GetIDStr = ImGuiID function(ImGuiWindow* self, const char* st
 alias pImGuiWindow_GetIDPtr = ImGuiID function(ImGuiWindow* self, const void* ptr);
 alias pImGuiWindow_GetIDInt = ImGuiID function(ImGuiWindow* self, int n);
 alias pigImFontAtlasBuildPackCustomRects = void function(ImFontAtlas* atlas, void* stbrp_context_opaque);
+alias pImGuiDockNode_Rect = void function(ImRect* pOut, ImGuiDockNode* self);
+alias pigDockBuilderGetNode = ImGuiDockNode* function(ImGuiID node_id);
 alias pigIsActiveIdUsingKey = bool function(ImGuiKey key);
 alias pigSetCursorScreenPos = void function(const ImVec2 pos);
 alias pigImStristr = const char* function(const char* haystack, const char* haystack_end, const char* needle, const char* needle_end);
+alias pigSetNextWindowViewport = void function(ImGuiID viewport_id);
 alias pImFont_GetDebugName = const char* function(ImFont* self);
 alias pigBeginPopupContextWindow = bool function(const char* str_id, ImGuiPopupFlags popup_flags);
 alias pigButtonEx = bool function(const char* label, const ImVec2 size_arg, ImGuiButtonFlags flags);
@@ -3132,12 +3550,14 @@ alias pigGetScrollMaxX = float function();
 alias pImBitVector_Create = void function(ImBitVector* self, int sz);
 alias pigCloseCurrentPopup = void function();
 alias pigImBitArraySetBitRange = void function(ImU32* arr, int n, int n2);
-alias pigSplitterBehavior = bool function(const ImRect bb, ImGuiID id, ImGuiAxis axis, float* size1, float* size2, float min_size1, float min_size2, float hover_extend, float hover_visibility_delay);
+alias pigFindViewportByPlatformHandle = ImGuiViewport* function(void* platform_handle);
 alias pigGetMouseDragDelta = void function(ImVec2* pOut, ImGuiMouseButton button, float lock_threshold);
 alias pigSetWindowCollapsedBool = void function(bool collapsed, ImGuiCond cond);
 alias pigSetWindowCollapsedStr = void function(const char* name, bool collapsed, ImGuiCond cond);
 alias pigSetWindowCollapsedWindowPtr = void function(ImGuiWindow* window, bool collapsed, ImGuiCond cond);
+alias pigSplitterBehavior = bool function(const ImRect bb, ImGuiID id, ImGuiAxis axis, float* size1, float* size2, float min_size1, float min_size2, float hover_extend, float hover_visibility_delay);
 alias pigImBezierCalc = void function(ImVec2* pOut, const ImVec2 p1, const ImVec2 p2, const ImVec2 p3, const ImVec2 p4, float t);
+alias pImGuiDockNode_IsDockSpace = bool function(ImGuiDockNode* self);
 alias pigTextDisabled = void function(const char* fmt, ... );
 alias pigFindBestWindowPosForPopupEx = void function(ImVec2* pOut, const ImVec2 ref_pos, const ImVec2 size, ImGuiDir* last_dir, const ImRect r_outer, const ImRect r_avoid, ImGuiPopupPositionPolicy policy);
 alias pigShowUserGuide = void function();
@@ -3168,23 +3588,25 @@ alias pImGuiListClipper_ImGuiListClipper = ImGuiListClipper* function();
 alias pigListBoxHeaderVec2 = bool function(const char* label, const ImVec2 size);
 alias pigListBoxHeaderInt = bool function(const char* label, int items_count, int height_in_items);
 alias pigImStrlenW = int function(const ImWchar* str);
+alias pigGetWindowDockNode = ImGuiDockNode* function();
 alias pigBeginPopup = bool function(const char* str_id, ImGuiWindowFlags flags);
 alias pigImFileGetSize = ImU64 function(ImFileHandle file);
 alias pImGuiSettingsHandler_ImGuiSettingsHandler = ImGuiSettingsHandler* function();
 alias pigMenuItemBool = bool function(const char* label, const char* shortcut, bool selected, bool enabled);
 alias pigMenuItemBoolPtr = bool function(const char* label, const char* shortcut, bool* p_selected, bool enabled);
-alias pigImStrTrimBlanks = void function(char* str);
+alias pigDockBuilderFinish = void function(ImGuiID node_id);
 alias pImGuiStyleMod_ImGuiStyleModInt = ImGuiStyleMod* function(ImGuiStyleVar idx, int v);
 alias pImGuiStyleMod_ImGuiStyleModFloat = ImGuiStyleMod* function(ImGuiStyleVar idx, float v);
 alias pImGuiStyleMod_ImGuiStyleModVec2 = ImGuiStyleMod* function(ImGuiStyleVar idx, ImVec2 v);
 alias pImFontConfig_destroy = void function(ImFontConfig* self);
 alias pigBeginPopupEx = bool function(ImGuiID id, ImGuiWindowFlags extra_flags);
 alias pigImCharIsBlankA = bool function(char c);
-alias pigResetMouseDragDelta = void function(ImGuiMouseButton button);
+alias pigImStrTrimBlanks = void function(char* str);
 alias pImGuiListClipper_End = void function(ImGuiListClipper* self);
-alias pigSaveIniSettingsToDisk = void function(const char* ini_filename);
+alias pigResetMouseDragDelta = void function(ImGuiMouseButton button);
 alias pigDestroyContext = void function(ImGuiContext* ctx);
 alias pigSetNextWindowContentSize = void function(const ImVec2 size);
+alias pigSaveIniSettingsToDisk = void function(const char* ini_filename);
 alias pigGetWindowScrollbarRect = void function(ImRect* pOut, ImGuiWindow* window, ImGuiAxis axis);
 alias pigInputTextMultiline = bool function(const char* label, char* buf, size_t buf_size, const ImVec2 size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data);
 alias pigIsClippedEx = bool function(const ImRect bb, ImGuiID id, bool clip_even_when_logged);
@@ -3193,14 +3615,17 @@ alias pImGuiTextFilter_IsActive = bool function(ImGuiTextFilter* self);
 alias pImDrawListSharedData_ImDrawListSharedData = ImDrawListSharedData* function();
 alias pImFontAtlas_GetMouseCursorTexData = bool function(ImFontAtlas* self, ImGuiMouseCursor cursor, ImVec2* out_offset, ImVec2* out_size, ImVec2[2]*/*[2]*/ out_uv_border, ImVec2[2]*/*[2]*/ out_uv_fill);
 alias pigLogText = void function(const char* fmt, ... );
+alias pigGetWindowAlwaysWantOwnTabBar = bool function(ImGuiWindow* window);
 alias pigTabItemLabelAndCloseButton = bool function(ImDrawList* draw_list, const ImRect bb, ImGuiTabItemFlags flags, ImVec2 frame_padding, const char* label, ImGuiID tab_id, ImGuiID close_button_id, bool is_contents_visible);
-alias pigImStrnicmp = int function(const char* str1, const char* str2, size_t count);
+alias pigBeginDockableDragDropTarget = void function(ImGuiWindow* window);
+alias pImGuiPlatformMonitor_destroy = void function(ImGuiPlatformMonitor* self);
 alias pigColorEditOptionsPopup = void function(const float* col, ImGuiColorEditFlags flags);
 alias pigGetTextLineHeightWithSpacing = float function();
 alias pImGuiColumnData_ImGuiColumnData = ImGuiColumnData* function();
 alias pigPushStyleVarFloat = void function(ImGuiStyleVar idx, float val);
 alias pigPushStyleVarVec2 = void function(ImGuiStyleVar idx, const ImVec2 val);
 alias pigIsActiveIdUsingNavInput = bool function(ImGuiNavInput input);
+alias pigImStrnicmp = int function(const char* str1, const char* str2, size_t count);
 alias pigGetInputTextState = ImGuiInputTextState* function(ImGuiID id);
 alias pigFindRenderedTextEnd = const char* function(const char* text, const char* text_end);
 alias pImFontAtlas_ClearFonts = void function(ImFontAtlas* self);
@@ -3232,30 +3657,36 @@ alias pigGetStyleColorVec4 = const ImVec4* function(ImGuiCol idx);
 alias pigPopFocusScope = void function();
 alias pigTextColored = void function(const ImVec4 col, const char* fmt, ... );
 alias pigShutdown = void function(ImGuiContext* context);
+alias pigDockBuilderRemoveNodeDockedWindows = void function(ImGuiID node_id, bool clear_settings_refs);
 alias pImRect_ClipWith = void function(ImRect* self, const ImRect r);
 alias pImRect_GetTL = void function(ImVec2* pOut, ImRect* self);
 alias pImDrawListSplitter_ImDrawListSplitter = ImDrawListSplitter* function();
 alias pigInvisibleButton = bool function(const char* str_id, const ImVec2 size, ImGuiButtonFlags flags);
 alias pigSetWindowFocusNil = void function();
 alias pigSetWindowFocusStr = void function(const char* name);
+alias pigScaleWindowsInViewport = void function(ImGuiViewportP* viewport, float scale);
 alias pigRenderMouseCursor = void function(ImDrawList* draw_list, ImVec2 pos, float scale, ImGuiMouseCursor mouse_cursor, ImU32 col_fill, ImU32 col_border, ImU32 col_shadow);
 alias pigImFontAtlasBuildInit = void function(ImFontAtlas* atlas);
+alias pigRenderPlatformWindowsDefault = void function(void* platform_render_arg, void* renderer_render_arg);
 alias pImDrawListSplitter_ClearFreeMemory = void function(ImDrawListSplitter* self);
 alias pImGuiStyle_ImGuiStyle = ImGuiStyle* function();
+alias pImGuiDockNode_IsHiddenTabBar = bool function(ImGuiDockNode* self);
 alias pigIsMouseDown = bool function(ImGuiMouseButton button);
 alias pImFontConfig_ImFontConfig = ImFontConfig* function();
 alias pImGuiTabBar_GetTabName = const char* function(ImGuiTabBar* self, const ImGuiTabItem* tab);
 alias pigNewLine = void function();
+alias pigGetPlatformIO = ImGuiPlatformIO* function();
 alias pigMemFree = void function(void* ptr);
 alias pigCalcTypematicRepeatAmount = int function(float t0, float t1, float repeat_delay, float repeat_rate);
 alias pigNextColumn = void function();
 alias pigRenderFrame = void function(ImVec2 p_min, ImVec2 p_max, ImU32 fill_col, bool border, float rounding);
 alias pigLogButtons = void function();
-alias pigEndTabItem = void function();
+alias pigDockBuilderRemoveNode = void function(ImGuiID node_id);
 alias pImFont_ClearOutputData = void function(ImFont* self);
 alias pImFont_ImFont = ImFont* function();
-alias pigRenderArrowPointingAt = void function(ImDrawList* draw_list, ImVec2 pos, ImVec2 half_sz, ImGuiDir direction, ImU32 col);
+alias pigEndTabItem = void function();
 alias pigVSliderFloat = bool function(const char* label, const ImVec2 size, float* v, float v_min, float v_max, const char* format, ImGuiSliderFlags flags);
+alias pigRenderArrowPointingAt = void function(ImDrawList* draw_list, ImVec2 pos, ImVec2 half_sz, ImGuiDir direction, ImU32 col);
 alias pigEndGroup = void function();
 alias pigTreeNodeBehavior = bool function(ImGuiID id, ImGuiTreeNodeFlags flags, const char* label, const char* label_end);
 alias pigPlotLinesFloatPtr = void function(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2 graph_size, int stride);
@@ -3263,6 +3694,7 @@ alias pigPlotLinesFnFloatPtr = void function(const char* label, float function(v
 alias pigGetColumnNormFromOffset = float function(const ImGuiColumns* columns, float offset);
 alias pigSetCurrentFont = void function(ImFont* font);
 alias pigSetItemAllowOverlap = void function();
+alias pImGuiDockNode_IsCentralNode = bool function(ImGuiDockNode* self);
 alias pImGuiStorage_GetVoidPtrRef = void** function(ImGuiStorage* self, ImGuiID key, void* default_val);
 alias pigCheckboxFlags = bool function(const char* label, uint* flags, uint flags_value);
 alias pImGuiColumns_ImGuiColumns = ImGuiColumns* function();
@@ -3293,7 +3725,9 @@ alias pImGuiInputTextState_SelectAll = void function(ImGuiInputTextState* self);
 alias pigImParseFormatTrimDecorations = const char* function(const char* format, char* buf, size_t buf_size);
 alias pigImTextCountUtf8BytesFromChar = int function(const char* in_text, const char* in_text_end);
 alias pImGuiTabBar_ImGuiTabBar = ImGuiTabBar* function();
+alias pImGuiViewport_GetCenter = void function(ImVec2* pOut, ImGuiViewport* self);
 alias pigDebugDrawItemRect = void function(ImU32 col);
+alias pigDockBuilderSetNodeSize = void function(ImGuiID node_id, ImVec2 size);
 alias pigTreeNodeBehaviorIsOpen = bool function(ImGuiID id, ImGuiTreeNodeFlags flags);
 alias pigSetMouseCursor = void function(ImGuiMouseCursor cursor_type);
 alias pigBeginColumns = void function(const char* str_id, int count, ImGuiColumnsFlags flags);
@@ -3311,8 +3745,10 @@ alias pImDrawList_AddRectFilled = void function(ImDrawList* self, const ImVec2 p
 alias pImGuiPopupData_destroy = void function(ImGuiPopupData* self);
 alias pigFindSettingsHandler = ImGuiSettingsHandler* function(const char* type_name);
 alias pigDragInt2 = bool function(const char* label, int[2]*/*[2]*/ v, float v_speed, int v_min, int v_max, const char* format, ImGuiSliderFlags flags);
+alias pigBeginDocked = void function(ImGuiWindow* window, bool* p_open);
 alias pigSetColorEditOptions = void function(ImGuiColorEditFlags flags);
 alias pigIsAnyMouseDown = bool function();
+alias pImGuiDockContext_ImGuiDockContext = ImGuiDockContext* function();
 alias pImGuiTextFilter_Build = void function(ImGuiTextFilter* self);
 alias pigTabItemCalcSize = void function(ImVec2* pOut, const char* label, bool has_close_button);
 alias pigSetNextWindowCollapsed = void function(bool collapsed, ImGuiCond cond);
@@ -3329,31 +3765,40 @@ alias pigTreeNodeExStrStr = bool function(const char* str_id, ImGuiTreeNodeFlags
 alias pigTreeNodeExPtr = bool function(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, ... );
 alias pImBitVector_SetBit = void function(ImBitVector* self, int n);
 alias pigSetColumnWidth = void function(int column_index, float width);
+alias pImGuiDockNode_destroy = void function(ImGuiDockNode* self);
 alias pImGuiNavMoveResult_destroy = void function(ImGuiNavMoveResult* self);
 alias pigIsItemClicked = bool function(ImGuiMouseButton mouse_button);
 alias pImGuiColumnData_destroy = void function(ImGuiColumnData* self);
 alias pImDrawList_AddCallback = void function(ImDrawList* self, ImDrawCallback callback, void* callback_data);
 alias pigGetMousePos = void function(ImVec2* pOut);
 alias pigDataTypeCompare = int function(ImGuiDataType data_type, const void* arg_1, const void* arg_2);
+alias pigDockContextQueueUndockNode = void function(ImGuiContext* ctx, ImGuiDockNode* node);
 alias pigImageButtonEx = bool function(ImGuiID id, ImTextureID texture_id, const ImVec2 size, const ImVec2 uv0, const ImVec2 uv1, const ImVec2 padding, const ImVec4 bg_col, const ImVec4 tint_col);
 alias pigGetWindowResizeID = ImGuiID function(ImGuiWindow* window, int n);
 alias pigBullet = void function();
+alias pigRenderArrowDockMenu = void function(ImDrawList* draw_list, ImVec2 p_min, float sz, ImU32 col);
 alias pigGetHoveredID = ImGuiID function();
 alias pigGetWindowContentRegionMin = void function(ImVec2* pOut);
 alias pImDrawList_AddNgonFilled = void function(ImDrawList* self, const ImVec2 center, float radius, ImU32 col, int num_segments);
 alias pigDragScalar = bool function(const char* label, ImGuiDataType data_type, void* p_data, float v_speed, const void* p_min, const void* p_max, const char* format, ImGuiSliderFlags flags);
+alias pImGuiDockNode_ImGuiDockNode = ImGuiDockNode* function(ImGuiID id);
 alias pigSetCursorPos = void function(const ImVec2 local_pos);
 alias pigEndColumns = void function();
 alias pigSetTooltip = void function(const char* fmt, ... );
-alias pigBeginTabBarEx = bool function(ImGuiTabBar* tab_bar, const ImRect bb, ImGuiTabBarFlags flags);
+alias pImGuiViewportP_destroy = void function(ImGuiViewportP* self);
+alias pigBeginTabBarEx = bool function(ImGuiTabBar* tab_bar, const ImRect bb, ImGuiTabBarFlags flags, ImGuiDockNode* dock_node);
 alias pigShadeVertsLinearColorGradientKeepAlpha = void function(ImDrawList* draw_list, int vert_start_idx, int vert_end_idx, ImVec2 gradient_p0, ImVec2 gradient_p1, ImU32 col0, ImU32 col1);
 alias pImGuiInputTextState_HasSelection = bool function(ImGuiInputTextState* self);
+alias pigDockNodeGetRootNode = ImGuiDockNode* function(ImGuiDockNode* node);
+alias pImGuiDockNode_IsSplitNode = bool function(ImGuiDockNode* self);
 alias pigCalcItemWidth = float function();
+alias pigDockContextRebuildNodes = void function(ImGuiContext* ctx);
 alias pigPushItemWidth = void function(float item_width);
 alias pigScrollbarEx = bool function(const ImRect bb, ImGuiID id, ImGuiAxis axis, float* p_scroll_v, float avail_v, float contents_v, ImDrawCornerFlags rounding_corners);
 alias pImDrawList_ChannelsMerge = void function(ImDrawList* self);
 alias pigSetAllocatorFunctions = void function(void* function(size_t sz,void* user_data) alloc_func, void function(void* ptr,void* user_data) free_func, void* user_data);
 alias pImFont_FindGlyph = const ImFontGlyph* function(ImFont* self, ImWchar c);
+alias pigDockNodeGetDepth = int function(const ImGuiDockNode* node);
 alias pigDebugStartItemPicker = void function();
 alias pImGuiNextWindowData_destroy = void function(ImGuiNextWindowData* self);
 alias pImGuiPayload_IsDelivery = bool function(ImGuiPayload* self);
@@ -3370,6 +3815,7 @@ alias pImFont_destroy = void function(ImFont* self);
 alias pigEndMenuBar = void function();
 alias pigGetWindowSize = void function(ImVec2* pOut);
 alias pigInputInt4 = bool function(const char* label, int[4]*/*[4]*/ v, ImGuiInputTextFlags flags);
+alias pigShowViewportThumbnails = void function();
 alias pigImSignFloat = float function(float x);
 alias pigImSigndouble = double function(double x);
 alias pigLabelText = void function(const char* label, const char* fmt, ... );
@@ -3392,14 +3838,16 @@ alias pImDrawDataBuilder_Clear = void function(ImDrawDataBuilder* self);
 alias pImVec2ih_ImVec2ihNil = ImVec2ih* function();
 alias pImVec2ih_ImVec2ihshort = ImVec2ih* function(short _x, short _y);
 alias pImVec2ih_ImVec2ihVec2 = ImVec2ih* function(const ImVec2 rhs);
-alias pigPopStyleColor = void function(int count);
+alias pigDockContextQueueDock = void function(ImGuiContext* ctx, ImGuiWindow* target, ImGuiDockNode* target_node, ImGuiWindow* payload, ImGuiDir split_dir, float split_ratio, bool split_outer);
 alias pImVec1_ImVec1Nil = ImVec1* function();
 alias pImVec1_ImVec1Float = ImVec1* function(float _x);
 alias pigCalcItemSize = void function(ImVec2* pOut, ImVec2 size, float default_w, float default_h);
 alias pImFontAtlasCustomRect_IsPacked = bool function(ImFontAtlasCustomRect* self);
+alias pigPopStyleColor = void function(int count);
 alias pigColorEdit4 = bool function(const char* label, float[4]*/*[4]*/ col, ImGuiColorEditFlags flags);
 alias pigPlotEx = int function(ImGuiPlotType plot_type, const char* label, float function(void* data,int idx) values_getter, void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2 frame_size);
 alias pigGetCursorStartPos = void function(ImVec2* pOut);
+alias pigDockSpaceOverViewport = ImGuiID function(ImGuiViewport* viewport, ImGuiDockNodeFlags flags, const ImGuiWindowClass* window_class);
 alias pImGuiInputTextCallbackData_destroy = void function(ImGuiInputTextCallbackData* self);
 alias pImFontAtlas_IsBuilt = bool function(ImFontAtlas* self);
 alias pImGuiTextBuffer_begin = const char* function(ImGuiTextBuffer* self);
@@ -3411,11 +3859,13 @@ alias pImGuiWindow_GetIDNoKeepAliveInt = ImGuiID function(ImGuiWindow* self, int
 alias pImFont_BuildLookupTable = void function(ImFont* self);
 alias pImGuiTextBuffer_appendfv = void function(ImGuiTextBuffer* self, const char* fmt, va_list args);
 alias pigDragInt4 = bool function(const char* label, int[4]*/*[4]*/ v, float v_speed, int v_min, int v_max, const char* format, ImGuiSliderFlags flags);
+alias pImGuiDockNode_IsEmpty = bool function(ImGuiDockNode* self);
 alias pigClearIniSettings = void function();
-alias pigImTextCountCharsFromUtf8 = int function(const char* in_text, const char* in_text_end);
 alias pImDrawList_PathLineToMergeDuplicate = void function(ImDrawList* self, const ImVec2 pos);
 alias pImGuiIO_ImGuiIO = ImGuiIO* function();
+alias pigSetNextWindowClass = void function(const ImGuiWindowClass* window_class);
 alias pigBeginDragDropTarget = bool function();
+alias pigImTextCountCharsFromUtf8 = int function(const char* in_text, const char* in_text_end);
 alias pImGuiTextBuffer_clear = void function(ImGuiTextBuffer* self);
 alias pigImStricmp = int function(const char* str1, const char* str2);
 alias pigMarkItemEdited = void function(ImGuiID id);
@@ -3429,11 +3879,11 @@ alias pigSliderInt4 = bool function(const char* label, int[4]*/*[4]*/ v, int v_m
 alias pigGetItemRectMin = void function(ImVec2* pOut);
 alias pImDrawList_PrimReserve = void function(ImDrawList* self, int idx_count, int vtx_count);
 alias pImGuiMenuColumns_ImGuiMenuColumns = ImGuiMenuColumns* function();
+alias pigDockBuilderGetCentralNode = ImGuiDockNode* function(ImGuiID node_id);
 alias pImGuiWindowTempData_ImGuiWindowTempData = ImGuiWindowTempData* function();
 alias pImDrawList_AddRectFilledMultiColor = void function(ImDrawList* self, const ImVec2 p_min, const ImVec2 p_max, ImU32 col_upr_left, ImU32 col_upr_right, ImU32 col_bot_right, ImU32 col_bot_left);
-alias pigImPowFloat = float function(float x, float y);
-alias pigImPowdouble = double function(double x, double y);
-alias pigSeparatorEx = void function(ImGuiSeparatorFlags flags);
+alias pImGuiViewport_GetWorkSize = void function(ImVec2* pOut, ImGuiViewport* self);
+alias pigGetWindowViewport = ImGuiViewport* function();
 alias pigSetStateStorage = void function(ImGuiStorage* storage);
 alias pImGuiStorage_SetAllInt = void function(ImGuiStorage* self, int val);
 alias pImGuiListClipper_Step = bool function(ImGuiListClipper* self);
@@ -3442,6 +3892,8 @@ alias pImGuiInputTextCallbackData_DeleteChars = void function(ImGuiInputTextCall
 alias pigImFontAtlasBuildSetupFont = void function(ImFontAtlas* atlas, ImFont* font, ImFontConfig* font_config, float ascent, float descent);
 alias pImGuiTextBuffer_empty = bool function(ImGuiTextBuffer* self);
 alias pigShowDemoWindow = void function(bool* p_open);
+alias pigImPowFloat = float function(float x, float y);
+alias pigImPowdouble = double function(double x, double y);
 alias pImGuiTextRange_destroy = void function(ImGuiTextRange* self);
 alias pImGuiStorage_SetVoidPtr = void function(ImGuiStorage* self, ImGuiID key, void* val);
 alias pigImInvLength = float function(const ImVec2 lhs, float fail_value);
@@ -3449,6 +3901,7 @@ alias pigCloseButton = bool function(ImGuiID id, const ImVec2 pos);
 alias pImDrawList_PushTextureID = void function(ImDrawList* self, ImTextureID texture_id);
 alias pImDrawList_PathLineTo = void function(ImDrawList* self, const ImVec2 pos);
 alias pigSetWindowHitTestHole = void function(ImGuiWindow* window, const ImVec2 pos, const ImVec2 size);
+alias pigSeparatorEx = void function(ImGuiSeparatorFlags flags);
 alias pImRect_AddVec2 = void function(ImRect* self, const ImVec2 p);
 alias pImRect_AddRect = void function(ImRect* self, const ImRect r);
 alias pigShowMetricsWindow = void function(bool* p_open);
@@ -3460,8 +3913,9 @@ alias pImDrawList_PathRect = void function(ImDrawList* self, const ImVec2 rect_m
 alias pigInputTextEx = bool function(const char* label, const char* hint, char* buf, int buf_size, const ImVec2 size_arg, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data);
 alias pigColorEdit3 = bool function(const char* label, float[3]*/*[3]*/ col, ImGuiColorEditFlags flags);
 alias pImColor_destroy = void function(ImColor* self);
-alias pigTabItemEx = bool function(ImGuiTabBar* tab_bar, const char* label, bool* p_open, ImGuiTabItemFlags flags);
+alias pImGuiDockNode_GetMergedFlags = ImGuiDockNodeFlags function(ImGuiDockNode* self);
 alias pigIsItemToggledSelection = bool function();
+alias pigTabItemEx = bool function(ImGuiTabBar* tab_bar, const char* label, bool* p_open, ImGuiTabItemFlags flags, ImGuiWindow* docked_window);
 alias pigIsKeyPressedMap = bool function(ImGuiKey key, bool repeat);
 alias pigLogFinish = void function();
 alias pigGetItemRectSize = void function(ImVec2* pOut);
@@ -3474,19 +3928,21 @@ alias pigMarkIniSettingsDirtyNil = void function();
 alias pigMarkIniSettingsDirtyWindowPtr = void function(ImGuiWindow* window);
 alias pigGetWindowWidth = float function();
 alias pigBulletTextV = void function(const char* fmt, va_list args);
-alias pigPushTextWrapPos = void function(float wrap_local_pos_x);
+alias pigDockBuilderCopyNode = void function(ImGuiID src_node_id, ImGuiID dst_node_id, ImVector_ImGuiID* out_node_remap_pairs);
 alias pImDrawListSplitter_SetCurrentChannel = void function(ImDrawListSplitter* self, ImDrawList* draw_list, int channel_idx);
 alias pImGuiStorage_SetBool = void function(ImGuiStorage* self, ImGuiID key, bool val);
 alias pigAlignTextToFramePadding = void function();
 alias pigIsWindowHovered = bool function(ImGuiHoveredFlags flags);
+alias pigDockBuilderCopyDockSpace = void function(ImGuiID src_dockspace_id, ImGuiID dst_dockspace_id, ImVector_const_charPtr* in_window_remap_pairs);
 alias pImDrawList_PathBezierCurveTo = void function(ImDrawList* self, const ImVec2 p2, const ImVec2 p3, const ImVec2 p4, int num_segments);
 alias pImRect_GetCenter = void function(ImVec2* pOut, ImRect* self);
 alias pigGetWindowContentRegionWidth = float function();
 alias pImDrawList_PathArcTo = void function(ImDrawList* self, const ImVec2 center, float radius, float a_min, float a_max, int num_segments);
 alias pigIsAnyItemActive = bool function();
-alias pigStyleColorsDark = void function(ImGuiStyle* dst);
+alias pigPushTextWrapPos = void function(float wrap_local_pos_x);
 alias pigGetTreeNodeToLabelSpacing = float function();
 alias pigSameLine = void function(float offset_from_start_x, float spacing);
+alias pigStyleColorsDark = void function(ImGuiStyle* dst);
 alias pigTabBarQueueReorder = void function(ImGuiTabBar* tab_bar, const ImGuiTabItem* tab, int dir);
 alias pigDummy = void function(const ImVec2 size);
 alias pigGetItemID = ImGuiID function();
@@ -3502,6 +3958,7 @@ alias pigFocusableItemUnregister = void function(ImGuiWindow* window);
 alias pigNavMoveRequestForward = void function(ImGuiDir move_dir, ImGuiDir clip_dir, const ImRect bb_rel, ImGuiNavMoveFlags move_flags);
 alias pigSetNavIDWithRectRel = void function(ImGuiID id, int nav_layer, ImGuiID focus_scope_id, const ImRect rect_rel);
 alias pigNavInitWindow = void function(ImGuiWindow* window, bool force_reinit);
+alias pigDockContextUpdateDocking = void function(ImGuiContext* ctx);
 alias pigImFileOpen = ImFileHandle function(const char* filename, const char* mode);
 alias pigEndDragDropTarget = void function();
 alias pImGuiWindowSettings_ImGuiWindowSettings = ImGuiWindowSettings* function();
@@ -3523,12 +3980,15 @@ alias pigSetScrollFromPosYFloat = void function(float local_y, float center_y_ra
 alias pigSetScrollFromPosYWindowPtr = void function(ImGuiWindow* window, float local_y, float center_y_ratio);
 alias pigColorButton = bool function(const char* desc_id, const ImVec4 col, ImGuiColorEditFlags flags, ImVec2 size);
 alias pigAcceptDragDropPayload = const ImGuiPayload* function(const char* type, ImGuiDragDropFlags flags);
+alias pigDockContextShutdown = void function(ImGuiContext* ctx);
 alias pImDrawList_PopClipRect = void function(ImDrawList* self);
 alias pigGetScrollMaxY = float function();
 alias pImGuiStoragePair_ImGuiStoragePairInt = ImGuiStoragePair* function(ImGuiID _key, int _val_i);
 alias pImGuiStoragePair_ImGuiStoragePairFloat = ImGuiStoragePair* function(ImGuiID _key, float _val_f);
 alias pImGuiStoragePair_ImGuiStoragePairPtr = ImGuiStoragePair* function(ImGuiID _key, void* _val_p);
 alias pigEndMainMenuBar = void function();
+alias pImGuiPlatformMonitor_ImGuiPlatformMonitor = ImGuiPlatformMonitor* function();
+alias pImGuiViewportP_GetMainRect = void function(ImRect* pOut, ImGuiViewportP* self);
 alias pigIsItemActive = bool function();
 alias pigShowAboutWindow = void function(bool* p_open);
 alias pigSetNextItemWidth = void function(float item_width);
@@ -3544,15 +4004,15 @@ alias pigCalcWindowExpectedSize = void function(ImVec2* pOut, ImGuiWindow* windo
 alias pigGcCompactTransientWindowBuffers = void function(ImGuiWindow* window);
 alias pigNavMoveRequestTryWrapping = void function(ImGuiWindow* window, ImGuiNavMoveFlags move_flags);
 alias pigGetCurrentWindow = ImGuiWindow* function();
-alias pigPushStyleColorU32 = void function(ImGuiCol idx, ImU32 col);
-alias pigPushStyleColorVec4 = void function(ImGuiCol idx, const ImVec4 col);
+alias pigIsWindowDocked = bool function();
 alias pImVec2_destroy = void function(ImVec2* self);
 alias pigGetIDStr = ImGuiID function(const char* str_id);
 alias pigGetIDStrStr = ImGuiID function(const char* str_id_begin, const char* str_id_end);
 alias pigGetIDPtr = ImGuiID function(const void* ptr_id);
 alias pigImFontAtlasBuildMultiplyCalcLookupTable = void function(char[256]*/*[256]*/ out_table, float in_multiply_factor);
 alias pigSetDragDropPayload = bool function(const char* type, const void* data, size_t sz, ImGuiCond cond);
-alias pigSetColumnOffset = void function(int column_index, float offset_x);
+alias pigPushStyleColorU32 = void function(ImGuiCol idx, ImU32 col);
+alias pigPushStyleColorVec4 = void function(ImGuiCol idx, const ImVec4 col);
 alias pImFontAtlas_ImFontAtlas = ImFontAtlas* function();
 alias pigBeginGroup = void function();
 alias pImGuiMenuColumns_CalcExtraSpace = float function(ImGuiMenuColumns* self, float avail_w);
@@ -3563,7 +4023,9 @@ alias pigPopStyleVar = void function(int count);
 alias pImDrawList_PushClipRectFullScreen = void function(ImDrawList* self);
 alias pImRect_ContainsVec2 = bool function(ImRect* self, const ImVec2 p);
 alias pImRect_ContainsRect = bool function(ImRect* self, const ImRect r);
-alias pigGetBackgroundDrawList = ImDrawList* function();
+alias pigGetBackgroundDrawListNil = ImDrawList* function();
+alias pigGetBackgroundDrawListViewportPtr = ImDrawList* function(ImGuiViewport* viewport);
+alias pigSetColumnOffset = void function(int column_index, float offset_x);
 alias pigSetKeyboardFocusHere = void function(int offset);
 alias pigLoadIniSettingsFromMemory = void function(const char* ini_data, size_t ini_size);
 alias pigIndent = void function(float indent_w);
@@ -3577,12 +4039,14 @@ alias pigImLengthSqrVec4 = float function(const ImVec4 lhs);
 alias pImGuiTextFilter_Draw = bool function(ImGuiTextFilter* self, const char* label, float width);
 alias pigFocusWindow = void function(ImGuiWindow* window);
 alias pigPushClipRect = void function(const ImVec2 clip_rect_min, const ImVec2 clip_rect_max, bool intersect_with_current_clip_rect);
-alias pigCollapsingHeaderTreeNodeFlags = bool function(const char* label, ImGuiTreeNodeFlags flags);
-alias pigCollapsingHeaderBoolPtr = bool function(const char* label, bool* p_open, ImGuiTreeNodeFlags flags);
+alias pImGuiViewportP_ImGuiViewportP = ImGuiViewportP* function();
 alias pigBeginMainMenuBar = bool function();
 alias pImRect_GetBR = void function(ImVec2* pOut, ImRect* self);
+alias pigCollapsingHeaderTreeNodeFlags = bool function(const char* label, ImGuiTreeNodeFlags flags);
+alias pigCollapsingHeaderBoolPtr = bool function(const char* label, bool* p_open, ImGuiTreeNodeFlags flags);
 alias pigGetCurrentWindowRead = ImGuiWindow* function();
 alias pigSliderInt3 = bool function(const char* label, int[3]*/*[3]*/ v, int v_min, int v_max, const char* format, ImGuiSliderFlags flags);
+alias pigTabBarAddTab = void function(ImGuiTabBar* tab_bar, ImGuiTabItemFlags tab_flags, ImGuiWindow* window);
 alias pigTabItemButton = bool function(const char* label, ImGuiTabItemFlags flags);
 alias pigImFormatString = int function(char* buf, size_t buf_size, const char* fmt, ... );
 alias pigIsMouseReleased = bool function(ImGuiMouseButton button);
@@ -3624,10 +4088,13 @@ alias pigSetNextItemOpen = void function(bool is_open, ImGuiCond cond);
 alias pigDataTypeFormatString = int function(char* buf, int buf_size, ImGuiDataType data_type, const void* p_data, const char* format);
 alias pigTabItemBackground = void function(ImDrawList* draw_list, const ImRect bb, ImGuiTabItemFlags flags, ImU32 col);
 alias pImDrawList_AddTriangle = void function(ImDrawList* self, const ImVec2 p1, const ImVec2 p2, const ImVec2 p3, ImU32 col, float thickness);
-alias pigLogToFile = void function(int auto_open_depth, const char* filename);
+alias pigDockContextClearNodes = void function(ImGuiContext* ctx, ImGuiID root_id, bool clear_settings_refs);
 alias pigTempInputIsActive = bool function(ImGuiID id);
+alias pigLogToFile = void function(int auto_open_depth, const char* filename);
 alias pImGuiNextItemData_destroy = void function(ImGuiNextItemData* self);
+alias pImGuiViewportP_ClearRequestFlags = void function(ImGuiViewportP* self);
 alias pigGetMergedKeyModFlags = ImGuiKeyModFlags function();
+alias pigSetNextWindowDockID = void function(ImGuiID dock_id, ImGuiCond cond);
 alias pImRect_ToVec4 = void function(ImVec4* pOut, ImRect* self);
 alias pigPushMultiItemsWidths = void function(int components, float width_full);
 alias pigCreateContext = ImGuiContext* function(ImFontAtlas* shared_font_atlas);
@@ -3636,6 +4103,7 @@ alias pImColor_ImColorInt = ImColor* function(int r, int g, int b, int a);
 alias pImColor_ImColorU32 = ImColor* function(ImU32 rgba);
 alias pImColor_ImColorFloat = ImColor* function(float r, float g, float b, float a);
 alias pImColor_ImColorVec4 = ImColor* function(const ImVec4 col);
+alias pigDockContextGenNodeID = ImGuiID function(ImGuiContext* ctx);
 alias pImDrawList__ClearFreeMemory = void function(ImDrawList* self);
 alias pigSetNavID = void function(ImGuiID id, int nav_layer, ImGuiID focus_scope_id);
 alias pigGetWindowDrawList = ImDrawList* function();
@@ -3643,6 +4111,7 @@ alias pImRect_GetBL = void function(ImVec2* pOut, ImRect* self);
 alias pigImBezierClosestPointCasteljau = void function(ImVec2* pOut, const ImVec2 p1, const ImVec2 p2, const ImVec2 p3, const ImVec2 p4, const ImVec2 p, float tess_tol);
 alias pigIsMousePosValid = bool function(const ImVec2* mouse_pos);
 alias pImGuiStorage_GetFloat = float function(ImGuiStorage* self, ImGuiID key, float default_val);
+alias pImGuiDockNode_IsLeafNode = bool function(ImGuiDockNode* self);
 alias pigSliderFloat4 = bool function(const char* label, float[4]*/*[4]*/ v, float v_min, float v_max, const char* format, ImGuiSliderFlags flags);
 alias pigIsItemDeactivatedAfterEdit = bool function();
 alias pigPlotHistogramFloatPtr = void function(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2 graph_size, int stride);
@@ -3682,15 +4151,17 @@ alias pImGuiStorage_SetInt = void function(ImGuiStorage* self, ImGuiID key, int 
 alias pImGuiWindow_MenuBarRect = void function(ImRect* pOut, ImGuiWindow* self);
 alias pImGuiStorage_GetInt = int function(ImGuiStorage* self, ImGuiID key, int default_val);
 alias pigShowFontSelector = void function(const char* label);
+alias pigDestroyPlatformWindow = void function(ImGuiViewportP* viewport);
 alias pigImMin = void function(ImVec2* pOut, const ImVec2 lhs, const ImVec2 rhs);
 alias pigPushButtonRepeat = void function(bool repeat);
 alias pigImAbsFloat = float function(float x);
 alias pigImAbsdouble = double function(double x);
 alias pImGuiWindow_Rect = void function(ImRect* pOut, ImGuiWindow* self);
+alias pImGuiViewportP_GetWorkRect = void function(ImRect* pOut, ImGuiViewportP* self);
 alias pImRect_Floor = void function(ImRect* self);
-alias pigColorConvertFloat4ToU32 = ImU32 function(const ImVec4 inItem);
 alias pigTreePushStr = void function(const char* str_id);
 alias pigTreePushPtr = void function(const void* ptr_id);
+alias pigColorConvertFloat4ToU32 = ImU32 function(const ImVec4 inItem);
 alias pigGetStyle = ImGuiStyle* function();
 alias pigGetCursorPos = void function(ImVec2* pOut);
 alias pigGetFrameCount = int function();
@@ -3708,6 +4179,7 @@ alias pigNavMoveRequestButNoResultYet = bool function();
 alias pImGuiStyle_ScaleAllSizes = void function(ImGuiStyle* self, float scale_factor);
 alias pigArrowButton = bool function(const char* str_id, ImGuiDir dir);
 alias pigSetCursorPosY = void function(float local_y);
+alias pImGuiDockNode_IsFloatingNode = bool function(ImGuiDockNode* self);
 alias pImGuiTextFilter_ImGuiTextFilter = ImGuiTextFilter* function(const char* default_filter);
 alias pImGuiStorage_SetFloat = void function(ImGuiStorage* self, ImGuiID key, float val);
 alias pigShadeVertsLinearUV = void function(ImDrawList* draw_list, int vert_start_idx, int vert_end_idx, const ImVec2 a, const ImVec2 b, const ImVec2 uv_a, const ImVec2 uv_b, bool clamp);
@@ -3718,14 +4190,17 @@ alias pigSliderScalarN = bool function(const char* label, ImGuiDataType data_typ
 alias pImFontAtlas_GetGlyphRangesChineseSimplifiedCommon = const ImWchar* function(ImFontAtlas* self);
 alias pigGetMousePosOnOpeningCurrentPopup = void function(ImVec2* pOut);
 alias pigVSliderScalar = bool function(const char* label, const ImVec2 size, ImGuiDataType data_type, void* p_data, const void* p_min, const void* p_max, const char* format, ImGuiSliderFlags flags);
+alias pigDockBuilderSetNodePos = void function(ImGuiID node_id, ImVec2 pos);
 alias pImFont_RenderChar = void function(ImFont* self, ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, ImWchar c);
 alias pImFont_RenderText = void function(ImFont* self, ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col, const ImVec4 clip_rect, const char* text_begin, const char* text_end, float wrap_width, bool cpu_fine_clip);
 alias pigOpenPopupEx = void function(ImGuiID id, ImGuiPopupFlags popup_flags);
 alias pImFontAtlas_SetTexID = void function(ImFontAtlas* self, ImTextureID id);
 alias pImFontAtlas_Clear = void function(ImFontAtlas* self);
+alias pigBeginDockableDragDropSource = void function(ImGuiWindow* window);
 alias pImBitVector_TestBit = bool function(ImBitVector* self, int n);
 alias pImGuiTextFilter_destroy = void function(ImGuiTextFilter* self);
 alias pigBeginPopupModal = bool function(const char* name, bool* p_open, ImGuiWindowFlags flags);
+alias pigGetWindowDpiScale = float function();
 alias pigInputFloat = bool function(const char* label, float* v, float step, float step_fast, const char* format, ImGuiInputTextFlags flags);
 alias pigDragIntRange2 = bool function(const char* label, int* v_current_min, int* v_current_max, float v_speed, int v_min, int v_max, const char* format, const char* format_max, ImGuiSliderFlags flags);
 alias pImVec2ih_destroy = void function(ImVec2ih* self);
@@ -3741,7 +4216,9 @@ alias pigDataTypeGetInfo = const ImGuiDataTypeInfo* function(ImGuiDataType data_
 alias pigVSliderInt = bool function(const char* label, const ImVec2 size, int* v, int v_min, int v_max, const char* format, ImGuiSliderFlags flags);
 alias pigSetWindowClipRectBeforeSetChannel = void function(ImGuiWindow* window, const ImRect clip_rect);
 alias pImFontGlyphRangesBuilder_ImFontGlyphRangesBuilder = ImFontGlyphRangesBuilder* function();
+alias pigGetWindowDockID = ImGuiID function();
 alias pigPopTextWrapPos = void function();
+alias pImGuiWindowClass_destroy = void function(ImGuiWindowClass* self);
 alias pImGuiWindow_TitleBarHeight = float function(ImGuiWindow* self);
 alias pImDrawList_GetClipRectMin = void function(ImVec2* pOut, ImDrawList* self);
 alias pImDrawList_PathStroke = void function(ImDrawList* self, ImU32 col, bool closed, float thickness);
@@ -3753,12 +4230,15 @@ alias pImColor_HSV = void function(ImColor* pOut, float h, float s, float v, flo
 alias pigSetTabItemClosed = void function(const char* tab_or_docked_window_label);
 alias pImFont_AddGlyph = void function(ImFont* self, const ImFontConfig* src_cfg, ImWchar c, float x0, float y0, float x1, float y1, float u0, float v0, float u1, float v1, float advance_x);
 alias pigSetHoveredID = void function(ImGuiID id);
+alias pigStartMouseMovingWindowOrNode = void function(ImGuiWindow* window, ImGuiDockNode* node, bool undock_floating_node);
 alias pImFontGlyphRangesBuilder_AddText = void function(ImFontGlyphRangesBuilder* self, const char* text, const char* text_end);
 alias pImGuiPtrOrIndex_destroy = void function(ImGuiPtrOrIndex* self);
 alias pImGuiInputTextCallbackData_ImGuiInputTextCallbackData = ImGuiInputTextCallbackData* function();
 alias pigImStrdupcpy = char* function(char* dst, size_t* p_dst_size, const char* str);
-alias pigColorPicker4 = bool function(const char* label, float[4]*/*[4]*/ col, ImGuiColorEditFlags flags, const float* ref_col);
+alias pImGuiDockNode_IsNoTabBar = bool function(ImGuiDockNode* self);
 alias pigColorConvertHSVtoRGB = void function(float h, float s, float v, float* out_r, float* out_g, float* out_b);
+alias pigDockBuilderSplitNode = ImGuiID function(ImGuiID node_id, ImGuiDir split_dir, float size_ratio_for_node_at_dir, ImGuiID* out_id_at_dir, ImGuiID* out_id_at_opposite_dir);
+alias pigColorPicker4 = bool function(const char* label, float[4]*/*[4]*/ col, ImGuiColorEditFlags flags, const float* ref_col);
 alias pigImBitArrayTestBit = bool function(const ImU32* arr, int n);
 alias pigFindWindowByID = ImGuiWindow* function(ImGuiID id);
 alias pigBeginDragDropTargetCustom = bool function(const ImRect bb, ImGuiID id);
@@ -3781,8 +4261,9 @@ alias pImFontAtlas_GetCustomRectByIndex = ImFontAtlasCustomRect* function(ImFont
 alias pImFontAtlas_GetTexDataAsAlpha8 = void function(ImFontAtlas* self, char** out_pixels, int* out_width, int* out_height, int* out_bytes_per_pixel);
 alias pigGcAwakeTransientWindowBuffers = void function(ImGuiWindow* window);
 alias pImDrawList__OnChangedClipRect = void function(ImDrawList* self);
+alias pImGuiWindowClass_ImGuiWindowClass = ImGuiWindowClass* function();
+alias pigDockBuilderRemoveNodeChildNodes = void function(ImGuiID node_id);
 alias pigGetColumnsID = ImGuiID function(const char* str_id, int count);
-alias pigGetCursorScreenPos = void function(ImVec2* pOut);
 alias pigPushAllowKeyboardFocus = void function(bool allow_keyboard_focus);
 alias pImDrawList_PopTextureID = void function(ImDrawList* self);
 alias pigColumns = void function(int count, const char* id, bool border);
@@ -3792,6 +4273,7 @@ alias pigBringWindowToDisplayBack = void function(ImGuiWindow* window);
 alias pImDrawList_PrimVtx = void function(ImDrawList* self, const ImVec2 pos, const ImVec2 uv, ImU32 col);
 alias pImDrawListSplitter_Clear = void function(ImDrawListSplitter* self);
 alias pImDrawList_AddConvexPolyFilled = void function(ImDrawList* self, const ImVec2* points, int num_points, ImU32 col);
+alias pigGetCursorScreenPos = void function(ImVec2* pOut);
 alias pigListBoxStr_arr = bool function(const char* label, int* current_item, const(char)** items, int items_count, int height_in_items);
 alias pigListBoxFnBoolPtr = bool function(const char* label, int* current_item, bool function(void* data,int idx,const char** out_text) items_getter, void* data, int items_count, int height_in_items);
 alias pigPopItemFlag = void function();
@@ -3809,6 +4291,7 @@ alias pigValueInt = void function(const char* prefix, int v);
 alias pigValueUint = void function(const char* prefix, uint v);
 alias pigValueFloat = void function(const char* prefix, float v, const char* float_format);
 alias pigBeginTabItem = bool function(const char* label, bool* p_open, ImGuiTabItemFlags flags);
+alias pImGuiViewport_destroy = void function(ImGuiViewport* self);
 alias pigIsNavInputDown = bool function(ImGuiNavInput n);
 alias pImGuiInputTextState_ClearFreeMemory = void function(ImGuiInputTextState* self);
 alias pigRenderBullet = void function(ImDrawList* draw_list, ImVec2 pos, ImU32 col);
@@ -3821,6 +4304,7 @@ alias pigPushIDPtr = void function(const void* ptr_id);
 alias pigPushIDInt = void function(int int_id);
 alias pigItemHoverable = bool function(const ImRect bb, ImGuiID id);
 alias pImFontAtlas_AddFontFromMemoryTTF = ImFont* function(ImFontAtlas* self, void* font_data, int font_size, float size_pixels, const ImFontConfig* font_cfg, const ImWchar* glyph_ranges);
+alias pigDockBuilderDockWindow = void function(const char* window_name, ImGuiID node_id);
 alias pigImFontAtlasBuildMultiplyRectAlpha8 = void function(const char[256]*/*[256]*/ table, char* pixels, int x, int y, int w, int h, int stride);
 alias pigTextDisabledV = void function(const char* fmt, va_list args);
 alias pigInputScalar = bool function(const char* label, ImGuiDataType data_type, void* p_data, const void* p_step, const void* p_step_fast, const char* format, ImGuiInputTextFlags flags);
@@ -3858,6 +4342,7 @@ alias pigSaveIniSettingsToMemory = const char* function(size_t* out_ini_size);
 alias pImGuiNavMoveResult_ImGuiNavMoveResult = ImGuiNavMoveResult* function();
 alias pigTabBarRemoveTab = void function(ImGuiTabBar* tab_bar, ImGuiID tab_id);
 alias pigGetWindowHeight = float function();
+alias pigGetMainViewport = ImGuiViewport* function();
 alias pImGuiTextFilter_PassFilter = bool function(ImGuiTextFilter* self, const char* text, const char* text_end);
 alias pImFontAtlas_AddFontFromMemoryCompressedBase85TTF = ImFont* function(ImFontAtlas* self, const char* compressed_font_data_base85, float size_pixels, const ImFontConfig* font_cfg, const ImWchar* glyph_ranges);
 alias pImFontAtlas_AddFontFromFileTTF = ImFont* function(ImFontAtlas* self, const char* filename, float size_pixels, const ImFontConfig* font_cfg, const ImWchar* glyph_ranges);
@@ -3892,6 +4377,7 @@ alias pImVec2_ImVec2Nil = ImVec2* function();
 alias pImVec2_ImVec2Float = ImVec2* function(float _x, float _y);
 alias pImGuiTextBuffer_size = int function(ImGuiTextBuffer* self);
 alias pImFontAtlas_GetGlyphRangesDefault = const ImWchar* function(ImFontAtlas* self);
+alias pigUpdatePlatformWindows = void function();
 alias pImFontAtlas_ClearTexData = void function(ImFontAtlas* self);
 alias pImFont_GetCharAdvance = float function(ImFont* self, ImWchar c);
 alias pigSliderFloat3 = bool function(const char* label, float[3]*/*[3]*/ v, float v_min, float v_max, const char* format, ImGuiSliderFlags flags);
@@ -3905,11 +4391,14 @@ alias pigSetWindowPosStr = void function(const char* name, const ImVec2 pos, ImG
 alias pigSetWindowPosWindowPtr = void function(ImGuiWindow* window, const ImVec2 pos, ImGuiCond cond);
 alias pigTempInputText = bool function(const ImRect bb, ImGuiID id, const char* label, char* buf, int buf_size, ImGuiInputTextFlags flags);
 alias pigSetScrollHereY = void function(float center_y_ratio);
+alias pigDockContextUpdateUndocking = void function(ImGuiContext* ctx);
+alias pImGuiViewport_ImGuiViewport = ImGuiViewport* function();
 alias pigProgressBar = void function(float fraction, const ImVec2 size_arg, const char* overlay);
 alias pImDrawList_CloneOutput = ImDrawList* function(ImDrawList* self);
 alias pImFontGlyphRangesBuilder_destroy = void function(ImFontGlyphRangesBuilder* self);
 alias pImVec1_destroy = void function(ImVec1* self);
 alias pigPushColumnClipRect = void function(int column_index);
+alias pigDockBuilderCopyWindowSettings = void function(const char* src_name, const char* dst_name);
 alias pigImTextCharFromUtf8 = int function(uint* out_char, const char* in_text, const char* in_text_end);
 alias pImRect_ImRectNil = ImRect* function();
 alias pImRect_ImRectVec2 = ImRect* function(const ImVec2 min, const ImVec2 max);
@@ -3918,15 +4407,16 @@ alias pImRect_ImRectFloat = ImRect* function(float x1, float y1, float x2, float
 alias pigGetTopMostPopupModal = ImGuiWindow* function();
 alias pImDrawListSplitter_Split = void function(ImDrawListSplitter* self, ImDrawList* draw_list, int count);
 alias pigBulletText = void function(const char* fmt, ... );
-alias pigUpdateWindowParentAndRootLinks = void function(ImGuiWindow* window, ImGuiWindowFlags flags, ImGuiWindow* parent_window);
 alias pigImFontAtlasBuildFinish = void function(ImFontAtlas* atlas);
 alias pImDrawList_AddQuad = void function(ImDrawList* self, const ImVec2 p1, const ImVec2 p2, const ImVec2 p3, const ImVec2 p4, ImU32 col, float thickness);
-alias pigIsItemDeactivated = bool function();
+alias pigDockSpace = void function(ImGuiID id, const ImVec2 size, ImGuiDockNodeFlags flags, const ImGuiWindowClass* window_class);
 alias pigGetColorU32Col = ImU32 function(ImGuiCol idx, float alpha_mul);
 alias pigGetColorU32Vec4 = ImU32 function(const ImVec4 col);
 alias pigGetColorU32U32 = ImU32 function(ImU32 col);
 alias pImGuiWindow_GetIDFromRectangle = ImGuiID function(ImGuiWindow* self, const ImRect r_abs);
 alias pImDrawList_AddDrawCmd = void function(ImDrawList* self);
+alias pigUpdateWindowParentAndRootLinks = void function(ImGuiWindow* window, ImGuiWindowFlags flags, ImGuiWindow* parent_window);
+alias pigIsItemDeactivated = bool function();
 alias pigSetCursorPosX = void function(float local_x);
 alias pigInputFloat4 = bool function(const char* label, float[4]*/*[4]*/ v, const char* format, ImGuiInputTextFlags flags);
 alias pigSeparator = void function();
@@ -3935,21 +4425,24 @@ alias pImDrawList_PrimUnreserve = void function(ImDrawList* self, int idx_count,
 alias pigColorPickerOptionsPopup = void function(const float* ref_col, ImGuiColorEditFlags flags);
 alias pImRect_IsInverted = bool function(ImRect* self);
 alias pigGetKeyIndex = int function(ImGuiKey imgui_key);
+alias pigFindViewportByID = ImGuiViewport* function(ImGuiID id);
 alias pigPushItemFlag = void function(ImGuiItemFlags option, bool enabled);
 alias pigScrollbar = void function(ImGuiAxis axis);
 alias pigImFontAtlasBuildWithStbTruetype = bool function(ImFontAtlas* atlas);
 alias pImDrawList_PrimWriteVtx = void function(ImDrawList* self, const ImVec2 pos, const ImVec2 uv, ImU32 col);
-alias pigSetActiveID = void function(ImGuiID id, ImGuiWindow* window);
+alias pImGuiDockContext_destroy = void function(ImGuiDockContext* self);
 alias pImGuiPayload_IsDataType = bool function(ImGuiPayload* self, const char* type);
+alias pigSetActiveID = void function(ImGuiID id, ImGuiWindow* window);
+alias pImFontGlyphRangesBuilder_BuildRanges = void function(ImFontGlyphRangesBuilder* self, ImVector_ImWchar* out_ranges);
+alias pigTreePop = void function();
 alias pigSetWindowSizeVec2 = void function(const ImVec2 size, ImGuiCond cond);
 alias pigSetWindowSizeStr = void function(const char* name, const ImVec2 size, ImGuiCond cond);
 alias pigSetWindowSizeWindowPtr = void function(ImGuiWindow* window, const ImVec2 size, ImGuiCond cond);
-alias pImFontGlyphRangesBuilder_BuildRanges = void function(ImFontGlyphRangesBuilder* self, ImVector_ImWchar* out_ranges);
-alias pigTreePop = void function();
 alias pImFont_AddRemapChar = void function(ImFont* self, ImWchar dst, ImWchar src, bool overwrite_dst);
 alias pigNavMoveRequestCancel = void function();
+alias pigTranslateWindowsInViewport = void function(ImGuiViewportP* viewport, const ImVec2 old_pos, const ImVec2 new_pos);
 alias pigText = void function(const char* fmt, ... );
-alias pigCollapseButton = bool function(ImGuiID id, const ImVec2 pos);
+alias pigCollapseButton = bool function(ImGuiID id, const ImVec2 pos, ImGuiDockNode* dock_node);
 alias pImGuiWindow_TitleBarRect = void function(ImRect* pOut, ImGuiWindow* self);
 alias pigIsItemFocused = bool function();
 alias pigMemAlloc = void* function(size_t size);
@@ -3978,10 +4471,12 @@ alias pigCalcTextSize = void function(ImVec2* pOut, const char* text, const char
 alias pImFont_CalcTextSizeA = void function(ImVec2* pOut, ImFont* self, float size, float max_width, float wrap_width, const char* text_begin, const char* text_end, const char** remaining);
 alias pigImClamp = void function(ImVec2* pOut, const ImVec2 v, const ImVec2 mn, ImVec2 mx);
 alias pigGetColumnWidth = float function(int column_index);
+alias pigTabBarFindMostRecentlySelectedTabForActiveWindow = ImGuiTabItem* function(ImGuiTabBar* tab_bar);
 alias pImGuiPayload_Clear = void function(ImGuiPayload* self);
 alias pImGuiTextBuffer_reserve = void function(ImGuiTextBuffer* self, int capacity);
 alias pImGuiInputTextState_CursorAnimReset = void function(ImGuiInputTextState* self);
 alias pImRect_ClipWithFull = void function(ImRect* self, const ImRect r);
+alias pImGuiViewport_GetWorkPos = void function(ImVec2* pOut, ImGuiViewport* self);
 alias pigGetFontTexUvWhitePixel = void function(ImVec2* pOut);
 alias pImDrawList_ChannelsSplit = void function(ImDrawList* self, int count);
 alias pigPopFont = void function();
@@ -3991,15 +4486,19 @@ alias pigImFloorFloat = float function(float f);
 alias pigImFloorVec2 = void function(ImVec2* pOut, const ImVec2 v);
 alias pImDrawList_AddRect = void function(ImDrawList* self, const ImVec2 p_min, const ImVec2 p_max, ImU32 col, float rounding, ImDrawCornerFlags rounding_corners, float thickness);
 alias pigImParseFormatFindEnd = const char* function(const char* format);
+alias pImGuiPlatformIO_destroy = void function(ImGuiPlatformIO* self);
 alias pImDrawListSharedData_SetCircleSegmentMaxError = void function(ImDrawListSharedData* self, float max_error);
 alias pImGuiInputTextCallbackData_ClearSelection = void function(ImGuiInputTextCallbackData* self);
 alias pImGuiTextRange_split = void function(ImGuiTextRange* self, char separator, ImVector_ImGuiTextRange* outItem);
 alias pImBitVector_Clear = void function(ImBitVector* self);
+alias pigDockBuilderAddNode = ImGuiID function(ImGuiID node_id, ImGuiDockNodeFlags flags);
 alias pigCreateNewWindowSettings = ImGuiWindowSettings* function(const char* name);
+alias pImGuiDockNode_IsRootNode = bool function(ImGuiDockNode* self);
+alias pigDockContextInitialize = void function(ImGuiContext* ctx);
 alias pigGetDrawListSharedData = ImDrawListSharedData* function();
-alias pigImFileClose = bool function(ImFileHandle file);
 alias pigBeginChildEx = bool function(const char* name, ImGuiID id, const ImVec2 size_arg, bool border, ImGuiWindowFlags flags);
 alias pImGuiNextWindowData_ClearFlags = void function(ImGuiNextWindowData* self);
+alias pigImFileClose = bool function(ImFileHandle file);
 alias pImFontGlyphRangesBuilder_GetBit = bool function(ImFontGlyphRangesBuilder* self, size_t n);
 alias pigImRotate = void function(ImVec2* pOut, const ImVec2 v, float cos_a, float sin_a);
 alias pigImGetDirQuadrantFromDelta = ImGuiDir function(float dx, float dy);
@@ -4007,7 +4506,10 @@ alias pImFontAtlas_AddFont = ImFont* function(ImFontAtlas* self, const ImFontCon
 alias pigGetNavInputAmount2d = void function(ImVec2* pOut, ImGuiNavDirSourceFlags dir_sources, ImGuiInputReadMode mode, float slow_factor, float fast_factor);
 __gshared {
 pImDrawList_AddCircleFilled ImDrawList_AddCircleFilled;
+pImGuiPlatformIO_ImGuiPlatformIO ImGuiPlatformIO_ImGuiPlatformIO;
+pigDockContextQueueUndockWindow igDockContextQueueUndockWindow;
 pigGetForegroundDrawListNil igGetForegroundDrawListNil;
+pigGetForegroundDrawListViewportPtr igGetForegroundDrawListViewportPtr;
 pigGetForegroundDrawListWindowPtr igGetForegroundDrawListWindowPtr;
 pImFontAtlas_GetGlyphRangesChineseFull ImFontAtlas_GetGlyphRangesChineseFull;
 pigBringWindowToDisplayFront igBringWindowToDisplayFront;
@@ -4016,6 +4518,7 @@ pImFontAtlas_AddCustomRectRegular ImFontAtlas_AddCustomRectRegular;
 pigIsMouseDragPastThreshold igIsMouseDragPastThreshold;
 pigSetWindowFontScale igSetWindowFontScale;
 pigSliderFloat igSliderFloat;
+pigDestroyPlatformWindows igDestroyPlatformWindows;
 pigImMax igImMax;
 pImRect_GetTR ImRect_GetTR;
 pImFontAtlas_GetGlyphRangesThai ImFontAtlas_GetGlyphRangesThai;
@@ -4029,6 +4532,7 @@ pigLoadIniSettingsFromDisk igLoadIniSettingsFromDisk;
 pigImBitArraySetBit igImBitArraySetBit;
 pImGuiTextBuffer_end ImGuiTextBuffer_end;
 pImGuiTabBar_destroy ImGuiTabBar_destroy;
+pigDockContextCalcDropPosForDocking igDockContextCalcDropPosForDocking;
 pigSetClipboardText igSetClipboardText;
 pigRenderColorRectWithAlphaCheckerboard igRenderColorRectWithAlphaCheckerboard;
 pigFindBestWindowPosForPopup igFindBestWindowPosForPopup;
@@ -4050,6 +4554,7 @@ pigGetDrawData igGetDrawData;
 pigRenderRectFilledRangeH igRenderRectFilledRangeH;
 pigPopItemWidth igPopItemWidth;
 pigIsWindowAppearing igIsWindowAppearing;
+pigSetWindowDock igSetWindowDock;
 pigFindOrCreateColumns igFindOrCreateColumns;
 pImGuiStorage_GetVoidPtr ImGuiStorage_GetVoidPtr;
 pImGuiInputTextState_GetRedoAvailCount ImGuiInputTextState_GetRedoAvailCount;
@@ -4074,9 +4579,12 @@ pImGuiWindow_GetIDStr ImGuiWindow_GetIDStr;
 pImGuiWindow_GetIDPtr ImGuiWindow_GetIDPtr;
 pImGuiWindow_GetIDInt ImGuiWindow_GetIDInt;
 pigImFontAtlasBuildPackCustomRects igImFontAtlasBuildPackCustomRects;
+pImGuiDockNode_Rect ImGuiDockNode_Rect;
+pigDockBuilderGetNode igDockBuilderGetNode;
 pigIsActiveIdUsingKey igIsActiveIdUsingKey;
 pigSetCursorScreenPos igSetCursorScreenPos;
 pigImStristr igImStristr;
+pigSetNextWindowViewport igSetNextWindowViewport;
 pImFont_GetDebugName ImFont_GetDebugName;
 pigBeginPopupContextWindow igBeginPopupContextWindow;
 pigButtonEx igButtonEx;
@@ -4090,12 +4598,14 @@ pigGetScrollMaxX igGetScrollMaxX;
 pImBitVector_Create ImBitVector_Create;
 pigCloseCurrentPopup igCloseCurrentPopup;
 pigImBitArraySetBitRange igImBitArraySetBitRange;
-pigSplitterBehavior igSplitterBehavior;
+pigFindViewportByPlatformHandle igFindViewportByPlatformHandle;
 pigGetMouseDragDelta igGetMouseDragDelta;
 pigSetWindowCollapsedBool igSetWindowCollapsedBool;
 pigSetWindowCollapsedStr igSetWindowCollapsedStr;
 pigSetWindowCollapsedWindowPtr igSetWindowCollapsedWindowPtr;
+pigSplitterBehavior igSplitterBehavior;
 pigImBezierCalc igImBezierCalc;
+pImGuiDockNode_IsDockSpace ImGuiDockNode_IsDockSpace;
 pigTextDisabled igTextDisabled;
 pigFindBestWindowPosForPopupEx igFindBestWindowPosForPopupEx;
 pigShowUserGuide igShowUserGuide;
@@ -4126,23 +4636,25 @@ pImGuiListClipper_ImGuiListClipper ImGuiListClipper_ImGuiListClipper;
 pigListBoxHeaderVec2 igListBoxHeaderVec2;
 pigListBoxHeaderInt igListBoxHeaderInt;
 pigImStrlenW igImStrlenW;
+pigGetWindowDockNode igGetWindowDockNode;
 pigBeginPopup igBeginPopup;
 pigImFileGetSize igImFileGetSize;
 pImGuiSettingsHandler_ImGuiSettingsHandler ImGuiSettingsHandler_ImGuiSettingsHandler;
 pigMenuItemBool igMenuItemBool;
 pigMenuItemBoolPtr igMenuItemBoolPtr;
-pigImStrTrimBlanks igImStrTrimBlanks;
+pigDockBuilderFinish igDockBuilderFinish;
 pImGuiStyleMod_ImGuiStyleModInt ImGuiStyleMod_ImGuiStyleModInt;
 pImGuiStyleMod_ImGuiStyleModFloat ImGuiStyleMod_ImGuiStyleModFloat;
 pImGuiStyleMod_ImGuiStyleModVec2 ImGuiStyleMod_ImGuiStyleModVec2;
 pImFontConfig_destroy ImFontConfig_destroy;
 pigBeginPopupEx igBeginPopupEx;
 pigImCharIsBlankA igImCharIsBlankA;
-pigResetMouseDragDelta igResetMouseDragDelta;
+pigImStrTrimBlanks igImStrTrimBlanks;
 pImGuiListClipper_End ImGuiListClipper_End;
-pigSaveIniSettingsToDisk igSaveIniSettingsToDisk;
+pigResetMouseDragDelta igResetMouseDragDelta;
 pigDestroyContext igDestroyContext;
 pigSetNextWindowContentSize igSetNextWindowContentSize;
+pigSaveIniSettingsToDisk igSaveIniSettingsToDisk;
 pigGetWindowScrollbarRect igGetWindowScrollbarRect;
 pigInputTextMultiline igInputTextMultiline;
 pigIsClippedEx igIsClippedEx;
@@ -4151,14 +4663,17 @@ pImGuiTextFilter_IsActive ImGuiTextFilter_IsActive;
 pImDrawListSharedData_ImDrawListSharedData ImDrawListSharedData_ImDrawListSharedData;
 pImFontAtlas_GetMouseCursorTexData ImFontAtlas_GetMouseCursorTexData;
 pigLogText igLogText;
+pigGetWindowAlwaysWantOwnTabBar igGetWindowAlwaysWantOwnTabBar;
 pigTabItemLabelAndCloseButton igTabItemLabelAndCloseButton;
-pigImStrnicmp igImStrnicmp;
+pigBeginDockableDragDropTarget igBeginDockableDragDropTarget;
+pImGuiPlatformMonitor_destroy ImGuiPlatformMonitor_destroy;
 pigColorEditOptionsPopup igColorEditOptionsPopup;
 pigGetTextLineHeightWithSpacing igGetTextLineHeightWithSpacing;
 pImGuiColumnData_ImGuiColumnData ImGuiColumnData_ImGuiColumnData;
 pigPushStyleVarFloat igPushStyleVarFloat;
 pigPushStyleVarVec2 igPushStyleVarVec2;
 pigIsActiveIdUsingNavInput igIsActiveIdUsingNavInput;
+pigImStrnicmp igImStrnicmp;
 pigGetInputTextState igGetInputTextState;
 pigFindRenderedTextEnd igFindRenderedTextEnd;
 pImFontAtlas_ClearFonts ImFontAtlas_ClearFonts;
@@ -4190,30 +4705,36 @@ pigGetStyleColorVec4 igGetStyleColorVec4;
 pigPopFocusScope igPopFocusScope;
 pigTextColored igTextColored;
 pigShutdown igShutdown;
+pigDockBuilderRemoveNodeDockedWindows igDockBuilderRemoveNodeDockedWindows;
 pImRect_ClipWith ImRect_ClipWith;
 pImRect_GetTL ImRect_GetTL;
 pImDrawListSplitter_ImDrawListSplitter ImDrawListSplitter_ImDrawListSplitter;
 pigInvisibleButton igInvisibleButton;
 pigSetWindowFocusNil igSetWindowFocusNil;
 pigSetWindowFocusStr igSetWindowFocusStr;
+pigScaleWindowsInViewport igScaleWindowsInViewport;
 pigRenderMouseCursor igRenderMouseCursor;
 pigImFontAtlasBuildInit igImFontAtlasBuildInit;
+pigRenderPlatformWindowsDefault igRenderPlatformWindowsDefault;
 pImDrawListSplitter_ClearFreeMemory ImDrawListSplitter_ClearFreeMemory;
 pImGuiStyle_ImGuiStyle ImGuiStyle_ImGuiStyle;
+pImGuiDockNode_IsHiddenTabBar ImGuiDockNode_IsHiddenTabBar;
 pigIsMouseDown igIsMouseDown;
 pImFontConfig_ImFontConfig ImFontConfig_ImFontConfig;
 pImGuiTabBar_GetTabName ImGuiTabBar_GetTabName;
 pigNewLine igNewLine;
+pigGetPlatformIO igGetPlatformIO;
 pigMemFree igMemFree;
 pigCalcTypematicRepeatAmount igCalcTypematicRepeatAmount;
 pigNextColumn igNextColumn;
 pigRenderFrame igRenderFrame;
 pigLogButtons igLogButtons;
-pigEndTabItem igEndTabItem;
+pigDockBuilderRemoveNode igDockBuilderRemoveNode;
 pImFont_ClearOutputData ImFont_ClearOutputData;
 pImFont_ImFont ImFont_ImFont;
-pigRenderArrowPointingAt igRenderArrowPointingAt;
+pigEndTabItem igEndTabItem;
 pigVSliderFloat igVSliderFloat;
+pigRenderArrowPointingAt igRenderArrowPointingAt;
 pigEndGroup igEndGroup;
 pigTreeNodeBehavior igTreeNodeBehavior;
 pigPlotLinesFloatPtr igPlotLinesFloatPtr;
@@ -4221,6 +4742,7 @@ pigPlotLinesFnFloatPtr igPlotLinesFnFloatPtr;
 pigGetColumnNormFromOffset igGetColumnNormFromOffset;
 pigSetCurrentFont igSetCurrentFont;
 pigSetItemAllowOverlap igSetItemAllowOverlap;
+pImGuiDockNode_IsCentralNode ImGuiDockNode_IsCentralNode;
 pImGuiStorage_GetVoidPtrRef ImGuiStorage_GetVoidPtrRef;
 pigCheckboxFlags igCheckboxFlags;
 pImGuiColumns_ImGuiColumns ImGuiColumns_ImGuiColumns;
@@ -4251,7 +4773,9 @@ pImGuiInputTextState_SelectAll ImGuiInputTextState_SelectAll;
 pigImParseFormatTrimDecorations igImParseFormatTrimDecorations;
 pigImTextCountUtf8BytesFromChar igImTextCountUtf8BytesFromChar;
 pImGuiTabBar_ImGuiTabBar ImGuiTabBar_ImGuiTabBar;
+pImGuiViewport_GetCenter ImGuiViewport_GetCenter;
 pigDebugDrawItemRect igDebugDrawItemRect;
+pigDockBuilderSetNodeSize igDockBuilderSetNodeSize;
 pigTreeNodeBehaviorIsOpen igTreeNodeBehaviorIsOpen;
 pigSetMouseCursor igSetMouseCursor;
 pigBeginColumns igBeginColumns;
@@ -4269,8 +4793,10 @@ pImDrawList_AddRectFilled ImDrawList_AddRectFilled;
 pImGuiPopupData_destroy ImGuiPopupData_destroy;
 pigFindSettingsHandler igFindSettingsHandler;
 pigDragInt2 igDragInt2;
+pigBeginDocked igBeginDocked;
 pigSetColorEditOptions igSetColorEditOptions;
 pigIsAnyMouseDown igIsAnyMouseDown;
+pImGuiDockContext_ImGuiDockContext ImGuiDockContext_ImGuiDockContext;
 pImGuiTextFilter_Build ImGuiTextFilter_Build;
 pigTabItemCalcSize igTabItemCalcSize;
 pigSetNextWindowCollapsed igSetNextWindowCollapsed;
@@ -4287,31 +4813,40 @@ pigTreeNodeExStrStr igTreeNodeExStrStr;
 pigTreeNodeExPtr igTreeNodeExPtr;
 pImBitVector_SetBit ImBitVector_SetBit;
 pigSetColumnWidth igSetColumnWidth;
+pImGuiDockNode_destroy ImGuiDockNode_destroy;
 pImGuiNavMoveResult_destroy ImGuiNavMoveResult_destroy;
 pigIsItemClicked igIsItemClicked;
 pImGuiColumnData_destroy ImGuiColumnData_destroy;
 pImDrawList_AddCallback ImDrawList_AddCallback;
 pigGetMousePos igGetMousePos;
 pigDataTypeCompare igDataTypeCompare;
+pigDockContextQueueUndockNode igDockContextQueueUndockNode;
 pigImageButtonEx igImageButtonEx;
 pigGetWindowResizeID igGetWindowResizeID;
 pigBullet igBullet;
+pigRenderArrowDockMenu igRenderArrowDockMenu;
 pigGetHoveredID igGetHoveredID;
 pigGetWindowContentRegionMin igGetWindowContentRegionMin;
 pImDrawList_AddNgonFilled ImDrawList_AddNgonFilled;
 pigDragScalar igDragScalar;
+pImGuiDockNode_ImGuiDockNode ImGuiDockNode_ImGuiDockNode;
 pigSetCursorPos igSetCursorPos;
 pigEndColumns igEndColumns;
 pigSetTooltip igSetTooltip;
+pImGuiViewportP_destroy ImGuiViewportP_destroy;
 pigBeginTabBarEx igBeginTabBarEx;
 pigShadeVertsLinearColorGradientKeepAlpha igShadeVertsLinearColorGradientKeepAlpha;
 pImGuiInputTextState_HasSelection ImGuiInputTextState_HasSelection;
+pigDockNodeGetRootNode igDockNodeGetRootNode;
+pImGuiDockNode_IsSplitNode ImGuiDockNode_IsSplitNode;
 pigCalcItemWidth igCalcItemWidth;
+pigDockContextRebuildNodes igDockContextRebuildNodes;
 pigPushItemWidth igPushItemWidth;
 pigScrollbarEx igScrollbarEx;
 pImDrawList_ChannelsMerge ImDrawList_ChannelsMerge;
 pigSetAllocatorFunctions igSetAllocatorFunctions;
 pImFont_FindGlyph ImFont_FindGlyph;
+pigDockNodeGetDepth igDockNodeGetDepth;
 pigDebugStartItemPicker igDebugStartItemPicker;
 pImGuiNextWindowData_destroy ImGuiNextWindowData_destroy;
 pImGuiPayload_IsDelivery ImGuiPayload_IsDelivery;
@@ -4328,6 +4863,7 @@ pImFont_destroy ImFont_destroy;
 pigEndMenuBar igEndMenuBar;
 pigGetWindowSize igGetWindowSize;
 pigInputInt4 igInputInt4;
+pigShowViewportThumbnails igShowViewportThumbnails;
 pigImSignFloat igImSignFloat;
 pigImSigndouble igImSigndouble;
 pigLabelText igLabelText;
@@ -4350,14 +4886,16 @@ pImDrawDataBuilder_Clear ImDrawDataBuilder_Clear;
 pImVec2ih_ImVec2ihNil ImVec2ih_ImVec2ihNil;
 pImVec2ih_ImVec2ihshort ImVec2ih_ImVec2ihshort;
 pImVec2ih_ImVec2ihVec2 ImVec2ih_ImVec2ihVec2;
-pigPopStyleColor igPopStyleColor;
+pigDockContextQueueDock igDockContextQueueDock;
 pImVec1_ImVec1Nil ImVec1_ImVec1Nil;
 pImVec1_ImVec1Float ImVec1_ImVec1Float;
 pigCalcItemSize igCalcItemSize;
 pImFontAtlasCustomRect_IsPacked ImFontAtlasCustomRect_IsPacked;
+pigPopStyleColor igPopStyleColor;
 pigColorEdit4 igColorEdit4;
 pigPlotEx igPlotEx;
 pigGetCursorStartPos igGetCursorStartPos;
+pigDockSpaceOverViewport igDockSpaceOverViewport;
 pImGuiInputTextCallbackData_destroy ImGuiInputTextCallbackData_destroy;
 pImFontAtlas_IsBuilt ImFontAtlas_IsBuilt;
 pImGuiTextBuffer_begin ImGuiTextBuffer_begin;
@@ -4369,11 +4907,13 @@ pImGuiWindow_GetIDNoKeepAliveInt ImGuiWindow_GetIDNoKeepAliveInt;
 pImFont_BuildLookupTable ImFont_BuildLookupTable;
 pImGuiTextBuffer_appendfv ImGuiTextBuffer_appendfv;
 pigDragInt4 igDragInt4;
+pImGuiDockNode_IsEmpty ImGuiDockNode_IsEmpty;
 pigClearIniSettings igClearIniSettings;
-pigImTextCountCharsFromUtf8 igImTextCountCharsFromUtf8;
 pImDrawList_PathLineToMergeDuplicate ImDrawList_PathLineToMergeDuplicate;
 pImGuiIO_ImGuiIO ImGuiIO_ImGuiIO;
+pigSetNextWindowClass igSetNextWindowClass;
 pigBeginDragDropTarget igBeginDragDropTarget;
+pigImTextCountCharsFromUtf8 igImTextCountCharsFromUtf8;
 pImGuiTextBuffer_clear ImGuiTextBuffer_clear;
 pigImStricmp igImStricmp;
 pigMarkItemEdited igMarkItemEdited;
@@ -4387,11 +4927,11 @@ pigSliderInt4 igSliderInt4;
 pigGetItemRectMin igGetItemRectMin;
 pImDrawList_PrimReserve ImDrawList_PrimReserve;
 pImGuiMenuColumns_ImGuiMenuColumns ImGuiMenuColumns_ImGuiMenuColumns;
+pigDockBuilderGetCentralNode igDockBuilderGetCentralNode;
 pImGuiWindowTempData_ImGuiWindowTempData ImGuiWindowTempData_ImGuiWindowTempData;
 pImDrawList_AddRectFilledMultiColor ImDrawList_AddRectFilledMultiColor;
-pigImPowFloat igImPowFloat;
-pigImPowdouble igImPowdouble;
-pigSeparatorEx igSeparatorEx;
+pImGuiViewport_GetWorkSize ImGuiViewport_GetWorkSize;
+pigGetWindowViewport igGetWindowViewport;
 pigSetStateStorage igSetStateStorage;
 pImGuiStorage_SetAllInt ImGuiStorage_SetAllInt;
 pImGuiListClipper_Step ImGuiListClipper_Step;
@@ -4400,6 +4940,8 @@ pImGuiInputTextCallbackData_DeleteChars ImGuiInputTextCallbackData_DeleteChars;
 pigImFontAtlasBuildSetupFont igImFontAtlasBuildSetupFont;
 pImGuiTextBuffer_empty ImGuiTextBuffer_empty;
 pigShowDemoWindow igShowDemoWindow;
+pigImPowFloat igImPowFloat;
+pigImPowdouble igImPowdouble;
 pImGuiTextRange_destroy ImGuiTextRange_destroy;
 pImGuiStorage_SetVoidPtr ImGuiStorage_SetVoidPtr;
 pigImInvLength igImInvLength;
@@ -4407,6 +4949,7 @@ pigCloseButton igCloseButton;
 pImDrawList_PushTextureID ImDrawList_PushTextureID;
 pImDrawList_PathLineTo ImDrawList_PathLineTo;
 pigSetWindowHitTestHole igSetWindowHitTestHole;
+pigSeparatorEx igSeparatorEx;
 pImRect_AddVec2 ImRect_AddVec2;
 pImRect_AddRect ImRect_AddRect;
 pigShowMetricsWindow igShowMetricsWindow;
@@ -4418,8 +4961,9 @@ pImDrawList_PathRect ImDrawList_PathRect;
 pigInputTextEx igInputTextEx;
 pigColorEdit3 igColorEdit3;
 pImColor_destroy ImColor_destroy;
-pigTabItemEx igTabItemEx;
+pImGuiDockNode_GetMergedFlags ImGuiDockNode_GetMergedFlags;
 pigIsItemToggledSelection igIsItemToggledSelection;
+pigTabItemEx igTabItemEx;
 pigIsKeyPressedMap igIsKeyPressedMap;
 pigLogFinish igLogFinish;
 pigGetItemRectSize igGetItemRectSize;
@@ -4432,19 +4976,21 @@ pigMarkIniSettingsDirtyNil igMarkIniSettingsDirtyNil;
 pigMarkIniSettingsDirtyWindowPtr igMarkIniSettingsDirtyWindowPtr;
 pigGetWindowWidth igGetWindowWidth;
 pigBulletTextV igBulletTextV;
-pigPushTextWrapPos igPushTextWrapPos;
+pigDockBuilderCopyNode igDockBuilderCopyNode;
 pImDrawListSplitter_SetCurrentChannel ImDrawListSplitter_SetCurrentChannel;
 pImGuiStorage_SetBool ImGuiStorage_SetBool;
 pigAlignTextToFramePadding igAlignTextToFramePadding;
 pigIsWindowHovered igIsWindowHovered;
+pigDockBuilderCopyDockSpace igDockBuilderCopyDockSpace;
 pImDrawList_PathBezierCurveTo ImDrawList_PathBezierCurveTo;
 pImRect_GetCenter ImRect_GetCenter;
 pigGetWindowContentRegionWidth igGetWindowContentRegionWidth;
 pImDrawList_PathArcTo ImDrawList_PathArcTo;
 pigIsAnyItemActive igIsAnyItemActive;
-pigStyleColorsDark igStyleColorsDark;
+pigPushTextWrapPos igPushTextWrapPos;
 pigGetTreeNodeToLabelSpacing igGetTreeNodeToLabelSpacing;
 pigSameLine igSameLine;
+pigStyleColorsDark igStyleColorsDark;
 pigTabBarQueueReorder igTabBarQueueReorder;
 pigDummy igDummy;
 pigGetItemID igGetItemID;
@@ -4460,6 +5006,7 @@ pigFocusableItemUnregister igFocusableItemUnregister;
 pigNavMoveRequestForward igNavMoveRequestForward;
 pigSetNavIDWithRectRel igSetNavIDWithRectRel;
 pigNavInitWindow igNavInitWindow;
+pigDockContextUpdateDocking igDockContextUpdateDocking;
 pigImFileOpen igImFileOpen;
 pigEndDragDropTarget igEndDragDropTarget;
 pImGuiWindowSettings_ImGuiWindowSettings ImGuiWindowSettings_ImGuiWindowSettings;
@@ -4481,12 +5028,15 @@ pigSetScrollFromPosYFloat igSetScrollFromPosYFloat;
 pigSetScrollFromPosYWindowPtr igSetScrollFromPosYWindowPtr;
 pigColorButton igColorButton;
 pigAcceptDragDropPayload igAcceptDragDropPayload;
+pigDockContextShutdown igDockContextShutdown;
 pImDrawList_PopClipRect ImDrawList_PopClipRect;
 pigGetScrollMaxY igGetScrollMaxY;
 pImGuiStoragePair_ImGuiStoragePairInt ImGuiStoragePair_ImGuiStoragePairInt;
 pImGuiStoragePair_ImGuiStoragePairFloat ImGuiStoragePair_ImGuiStoragePairFloat;
 pImGuiStoragePair_ImGuiStoragePairPtr ImGuiStoragePair_ImGuiStoragePairPtr;
 pigEndMainMenuBar igEndMainMenuBar;
+pImGuiPlatformMonitor_ImGuiPlatformMonitor ImGuiPlatformMonitor_ImGuiPlatformMonitor;
+pImGuiViewportP_GetMainRect ImGuiViewportP_GetMainRect;
 pigIsItemActive igIsItemActive;
 pigShowAboutWindow igShowAboutWindow;
 pigSetNextItemWidth igSetNextItemWidth;
@@ -4502,15 +5052,15 @@ pigCalcWindowExpectedSize igCalcWindowExpectedSize;
 pigGcCompactTransientWindowBuffers igGcCompactTransientWindowBuffers;
 pigNavMoveRequestTryWrapping igNavMoveRequestTryWrapping;
 pigGetCurrentWindow igGetCurrentWindow;
-pigPushStyleColorU32 igPushStyleColorU32;
-pigPushStyleColorVec4 igPushStyleColorVec4;
+pigIsWindowDocked igIsWindowDocked;
 pImVec2_destroy ImVec2_destroy;
 pigGetIDStr igGetIDStr;
 pigGetIDStrStr igGetIDStrStr;
 pigGetIDPtr igGetIDPtr;
 pigImFontAtlasBuildMultiplyCalcLookupTable igImFontAtlasBuildMultiplyCalcLookupTable;
 pigSetDragDropPayload igSetDragDropPayload;
-pigSetColumnOffset igSetColumnOffset;
+pigPushStyleColorU32 igPushStyleColorU32;
+pigPushStyleColorVec4 igPushStyleColorVec4;
 pImFontAtlas_ImFontAtlas ImFontAtlas_ImFontAtlas;
 pigBeginGroup igBeginGroup;
 pImGuiMenuColumns_CalcExtraSpace ImGuiMenuColumns_CalcExtraSpace;
@@ -4521,7 +5071,9 @@ pigPopStyleVar igPopStyleVar;
 pImDrawList_PushClipRectFullScreen ImDrawList_PushClipRectFullScreen;
 pImRect_ContainsVec2 ImRect_ContainsVec2;
 pImRect_ContainsRect ImRect_ContainsRect;
-pigGetBackgroundDrawList igGetBackgroundDrawList;
+pigGetBackgroundDrawListNil igGetBackgroundDrawListNil;
+pigGetBackgroundDrawListViewportPtr igGetBackgroundDrawListViewportPtr;
+pigSetColumnOffset igSetColumnOffset;
 pigSetKeyboardFocusHere igSetKeyboardFocusHere;
 pigLoadIniSettingsFromMemory igLoadIniSettingsFromMemory;
 pigIndent igIndent;
@@ -4535,12 +5087,14 @@ pigImLengthSqrVec4 igImLengthSqrVec4;
 pImGuiTextFilter_Draw ImGuiTextFilter_Draw;
 pigFocusWindow igFocusWindow;
 pigPushClipRect igPushClipRect;
-pigCollapsingHeaderTreeNodeFlags igCollapsingHeaderTreeNodeFlags;
-pigCollapsingHeaderBoolPtr igCollapsingHeaderBoolPtr;
+pImGuiViewportP_ImGuiViewportP ImGuiViewportP_ImGuiViewportP;
 pigBeginMainMenuBar igBeginMainMenuBar;
 pImRect_GetBR ImRect_GetBR;
+pigCollapsingHeaderTreeNodeFlags igCollapsingHeaderTreeNodeFlags;
+pigCollapsingHeaderBoolPtr igCollapsingHeaderBoolPtr;
 pigGetCurrentWindowRead igGetCurrentWindowRead;
 pigSliderInt3 igSliderInt3;
+pigTabBarAddTab igTabBarAddTab;
 pigTabItemButton igTabItemButton;
 pigImFormatString igImFormatString;
 pigIsMouseReleased igIsMouseReleased;
@@ -4582,10 +5136,13 @@ pigSetNextItemOpen igSetNextItemOpen;
 pigDataTypeFormatString igDataTypeFormatString;
 pigTabItemBackground igTabItemBackground;
 pImDrawList_AddTriangle ImDrawList_AddTriangle;
-pigLogToFile igLogToFile;
+pigDockContextClearNodes igDockContextClearNodes;
 pigTempInputIsActive igTempInputIsActive;
+pigLogToFile igLogToFile;
 pImGuiNextItemData_destroy ImGuiNextItemData_destroy;
+pImGuiViewportP_ClearRequestFlags ImGuiViewportP_ClearRequestFlags;
 pigGetMergedKeyModFlags igGetMergedKeyModFlags;
+pigSetNextWindowDockID igSetNextWindowDockID;
 pImRect_ToVec4 ImRect_ToVec4;
 pigPushMultiItemsWidths igPushMultiItemsWidths;
 pigCreateContext igCreateContext;
@@ -4594,6 +5151,7 @@ pImColor_ImColorInt ImColor_ImColorInt;
 pImColor_ImColorU32 ImColor_ImColorU32;
 pImColor_ImColorFloat ImColor_ImColorFloat;
 pImColor_ImColorVec4 ImColor_ImColorVec4;
+pigDockContextGenNodeID igDockContextGenNodeID;
 pImDrawList__ClearFreeMemory ImDrawList__ClearFreeMemory;
 pigSetNavID igSetNavID;
 pigGetWindowDrawList igGetWindowDrawList;
@@ -4601,6 +5159,7 @@ pImRect_GetBL ImRect_GetBL;
 pigImBezierClosestPointCasteljau igImBezierClosestPointCasteljau;
 pigIsMousePosValid igIsMousePosValid;
 pImGuiStorage_GetFloat ImGuiStorage_GetFloat;
+pImGuiDockNode_IsLeafNode ImGuiDockNode_IsLeafNode;
 pigSliderFloat4 igSliderFloat4;
 pigIsItemDeactivatedAfterEdit igIsItemDeactivatedAfterEdit;
 pigPlotHistogramFloatPtr igPlotHistogramFloatPtr;
@@ -4640,15 +5199,17 @@ pImGuiStorage_SetInt ImGuiStorage_SetInt;
 pImGuiWindow_MenuBarRect ImGuiWindow_MenuBarRect;
 pImGuiStorage_GetInt ImGuiStorage_GetInt;
 pigShowFontSelector igShowFontSelector;
+pigDestroyPlatformWindow igDestroyPlatformWindow;
 pigImMin igImMin;
 pigPushButtonRepeat igPushButtonRepeat;
 pigImAbsFloat igImAbsFloat;
 pigImAbsdouble igImAbsdouble;
 pImGuiWindow_Rect ImGuiWindow_Rect;
+pImGuiViewportP_GetWorkRect ImGuiViewportP_GetWorkRect;
 pImRect_Floor ImRect_Floor;
-pigColorConvertFloat4ToU32 igColorConvertFloat4ToU32;
 pigTreePushStr igTreePushStr;
 pigTreePushPtr igTreePushPtr;
+pigColorConvertFloat4ToU32 igColorConvertFloat4ToU32;
 pigGetStyle igGetStyle;
 pigGetCursorPos igGetCursorPos;
 pigGetFrameCount igGetFrameCount;
@@ -4666,6 +5227,7 @@ pigNavMoveRequestButNoResultYet igNavMoveRequestButNoResultYet;
 pImGuiStyle_ScaleAllSizes ImGuiStyle_ScaleAllSizes;
 pigArrowButton igArrowButton;
 pigSetCursorPosY igSetCursorPosY;
+pImGuiDockNode_IsFloatingNode ImGuiDockNode_IsFloatingNode;
 pImGuiTextFilter_ImGuiTextFilter ImGuiTextFilter_ImGuiTextFilter;
 pImGuiStorage_SetFloat ImGuiStorage_SetFloat;
 pigShadeVertsLinearUV igShadeVertsLinearUV;
@@ -4676,14 +5238,17 @@ pigSliderScalarN igSliderScalarN;
 pImFontAtlas_GetGlyphRangesChineseSimplifiedCommon ImFontAtlas_GetGlyphRangesChineseSimplifiedCommon;
 pigGetMousePosOnOpeningCurrentPopup igGetMousePosOnOpeningCurrentPopup;
 pigVSliderScalar igVSliderScalar;
+pigDockBuilderSetNodePos igDockBuilderSetNodePos;
 pImFont_RenderChar ImFont_RenderChar;
 pImFont_RenderText ImFont_RenderText;
 pigOpenPopupEx igOpenPopupEx;
 pImFontAtlas_SetTexID ImFontAtlas_SetTexID;
 pImFontAtlas_Clear ImFontAtlas_Clear;
+pigBeginDockableDragDropSource igBeginDockableDragDropSource;
 pImBitVector_TestBit ImBitVector_TestBit;
 pImGuiTextFilter_destroy ImGuiTextFilter_destroy;
 pigBeginPopupModal igBeginPopupModal;
+pigGetWindowDpiScale igGetWindowDpiScale;
 pigInputFloat igInputFloat;
 pigDragIntRange2 igDragIntRange2;
 pImVec2ih_destroy ImVec2ih_destroy;
@@ -4699,7 +5264,9 @@ pigDataTypeGetInfo igDataTypeGetInfo;
 pigVSliderInt igVSliderInt;
 pigSetWindowClipRectBeforeSetChannel igSetWindowClipRectBeforeSetChannel;
 pImFontGlyphRangesBuilder_ImFontGlyphRangesBuilder ImFontGlyphRangesBuilder_ImFontGlyphRangesBuilder;
+pigGetWindowDockID igGetWindowDockID;
 pigPopTextWrapPos igPopTextWrapPos;
+pImGuiWindowClass_destroy ImGuiWindowClass_destroy;
 pImGuiWindow_TitleBarHeight ImGuiWindow_TitleBarHeight;
 pImDrawList_GetClipRectMin ImDrawList_GetClipRectMin;
 pImDrawList_PathStroke ImDrawList_PathStroke;
@@ -4711,12 +5278,15 @@ pImColor_HSV ImColor_HSV;
 pigSetTabItemClosed igSetTabItemClosed;
 pImFont_AddGlyph ImFont_AddGlyph;
 pigSetHoveredID igSetHoveredID;
+pigStartMouseMovingWindowOrNode igStartMouseMovingWindowOrNode;
 pImFontGlyphRangesBuilder_AddText ImFontGlyphRangesBuilder_AddText;
 pImGuiPtrOrIndex_destroy ImGuiPtrOrIndex_destroy;
 pImGuiInputTextCallbackData_ImGuiInputTextCallbackData ImGuiInputTextCallbackData_ImGuiInputTextCallbackData;
 pigImStrdupcpy igImStrdupcpy;
-pigColorPicker4 igColorPicker4;
+pImGuiDockNode_IsNoTabBar ImGuiDockNode_IsNoTabBar;
 pigColorConvertHSVtoRGB igColorConvertHSVtoRGB;
+pigDockBuilderSplitNode igDockBuilderSplitNode;
+pigColorPicker4 igColorPicker4;
 pigImBitArrayTestBit igImBitArrayTestBit;
 pigFindWindowByID igFindWindowByID;
 pigBeginDragDropTargetCustom igBeginDragDropTargetCustom;
@@ -4739,8 +5309,9 @@ pImFontAtlas_GetCustomRectByIndex ImFontAtlas_GetCustomRectByIndex;
 pImFontAtlas_GetTexDataAsAlpha8 ImFontAtlas_GetTexDataAsAlpha8;
 pigGcAwakeTransientWindowBuffers igGcAwakeTransientWindowBuffers;
 pImDrawList__OnChangedClipRect ImDrawList__OnChangedClipRect;
+pImGuiWindowClass_ImGuiWindowClass ImGuiWindowClass_ImGuiWindowClass;
+pigDockBuilderRemoveNodeChildNodes igDockBuilderRemoveNodeChildNodes;
 pigGetColumnsID igGetColumnsID;
-pigGetCursorScreenPos igGetCursorScreenPos;
 pigPushAllowKeyboardFocus igPushAllowKeyboardFocus;
 pImDrawList_PopTextureID ImDrawList_PopTextureID;
 pigColumns igColumns;
@@ -4750,6 +5321,7 @@ pigBringWindowToDisplayBack igBringWindowToDisplayBack;
 pImDrawList_PrimVtx ImDrawList_PrimVtx;
 pImDrawListSplitter_Clear ImDrawListSplitter_Clear;
 pImDrawList_AddConvexPolyFilled ImDrawList_AddConvexPolyFilled;
+pigGetCursorScreenPos igGetCursorScreenPos;
 pigListBoxStr_arr igListBoxStr_arr;
 pigListBoxFnBoolPtr igListBoxFnBoolPtr;
 pigPopItemFlag igPopItemFlag;
@@ -4767,6 +5339,7 @@ pigValueInt igValueInt;
 pigValueUint igValueUint;
 pigValueFloat igValueFloat;
 pigBeginTabItem igBeginTabItem;
+pImGuiViewport_destroy ImGuiViewport_destroy;
 pigIsNavInputDown igIsNavInputDown;
 pImGuiInputTextState_ClearFreeMemory ImGuiInputTextState_ClearFreeMemory;
 pigRenderBullet igRenderBullet;
@@ -4779,6 +5352,7 @@ pigPushIDPtr igPushIDPtr;
 pigPushIDInt igPushIDInt;
 pigItemHoverable igItemHoverable;
 pImFontAtlas_AddFontFromMemoryTTF ImFontAtlas_AddFontFromMemoryTTF;
+pigDockBuilderDockWindow igDockBuilderDockWindow;
 pigImFontAtlasBuildMultiplyRectAlpha8 igImFontAtlasBuildMultiplyRectAlpha8;
 pigTextDisabledV igTextDisabledV;
 pigInputScalar igInputScalar;
@@ -4816,6 +5390,7 @@ pigSaveIniSettingsToMemory igSaveIniSettingsToMemory;
 pImGuiNavMoveResult_ImGuiNavMoveResult ImGuiNavMoveResult_ImGuiNavMoveResult;
 pigTabBarRemoveTab igTabBarRemoveTab;
 pigGetWindowHeight igGetWindowHeight;
+pigGetMainViewport igGetMainViewport;
 pImGuiTextFilter_PassFilter ImGuiTextFilter_PassFilter;
 pImFontAtlas_AddFontFromMemoryCompressedBase85TTF ImFontAtlas_AddFontFromMemoryCompressedBase85TTF;
 pImFontAtlas_AddFontFromFileTTF ImFontAtlas_AddFontFromFileTTF;
@@ -4850,6 +5425,7 @@ pImVec2_ImVec2Nil ImVec2_ImVec2Nil;
 pImVec2_ImVec2Float ImVec2_ImVec2Float;
 pImGuiTextBuffer_size ImGuiTextBuffer_size;
 pImFontAtlas_GetGlyphRangesDefault ImFontAtlas_GetGlyphRangesDefault;
+pigUpdatePlatformWindows igUpdatePlatformWindows;
 pImFontAtlas_ClearTexData ImFontAtlas_ClearTexData;
 pImFont_GetCharAdvance ImFont_GetCharAdvance;
 pigSliderFloat3 igSliderFloat3;
@@ -4863,11 +5439,14 @@ pigSetWindowPosStr igSetWindowPosStr;
 pigSetWindowPosWindowPtr igSetWindowPosWindowPtr;
 pigTempInputText igTempInputText;
 pigSetScrollHereY igSetScrollHereY;
+pigDockContextUpdateUndocking igDockContextUpdateUndocking;
+pImGuiViewport_ImGuiViewport ImGuiViewport_ImGuiViewport;
 pigProgressBar igProgressBar;
 pImDrawList_CloneOutput ImDrawList_CloneOutput;
 pImFontGlyphRangesBuilder_destroy ImFontGlyphRangesBuilder_destroy;
 pImVec1_destroy ImVec1_destroy;
 pigPushColumnClipRect igPushColumnClipRect;
+pigDockBuilderCopyWindowSettings igDockBuilderCopyWindowSettings;
 pigImTextCharFromUtf8 igImTextCharFromUtf8;
 pImRect_ImRectNil ImRect_ImRectNil;
 pImRect_ImRectVec2 ImRect_ImRectVec2;
@@ -4876,15 +5455,16 @@ pImRect_ImRectFloat ImRect_ImRectFloat;
 pigGetTopMostPopupModal igGetTopMostPopupModal;
 pImDrawListSplitter_Split ImDrawListSplitter_Split;
 pigBulletText igBulletText;
-pigUpdateWindowParentAndRootLinks igUpdateWindowParentAndRootLinks;
 pigImFontAtlasBuildFinish igImFontAtlasBuildFinish;
 pImDrawList_AddQuad ImDrawList_AddQuad;
-pigIsItemDeactivated igIsItemDeactivated;
+pigDockSpace igDockSpace;
 pigGetColorU32Col igGetColorU32Col;
 pigGetColorU32Vec4 igGetColorU32Vec4;
 pigGetColorU32U32 igGetColorU32U32;
 pImGuiWindow_GetIDFromRectangle ImGuiWindow_GetIDFromRectangle;
 pImDrawList_AddDrawCmd ImDrawList_AddDrawCmd;
+pigUpdateWindowParentAndRootLinks igUpdateWindowParentAndRootLinks;
+pigIsItemDeactivated igIsItemDeactivated;
 pigSetCursorPosX igSetCursorPosX;
 pigInputFloat4 igInputFloat4;
 pigSeparator igSeparator;
@@ -4893,19 +5473,22 @@ pImDrawList_PrimUnreserve ImDrawList_PrimUnreserve;
 pigColorPickerOptionsPopup igColorPickerOptionsPopup;
 pImRect_IsInverted ImRect_IsInverted;
 pigGetKeyIndex igGetKeyIndex;
+pigFindViewportByID igFindViewportByID;
 pigPushItemFlag igPushItemFlag;
 pigScrollbar igScrollbar;
 pigImFontAtlasBuildWithStbTruetype igImFontAtlasBuildWithStbTruetype;
 pImDrawList_PrimWriteVtx ImDrawList_PrimWriteVtx;
-pigSetActiveID igSetActiveID;
+pImGuiDockContext_destroy ImGuiDockContext_destroy;
 pImGuiPayload_IsDataType ImGuiPayload_IsDataType;
+pigSetActiveID igSetActiveID;
+pImFontGlyphRangesBuilder_BuildRanges ImFontGlyphRangesBuilder_BuildRanges;
+pigTreePop igTreePop;
 pigSetWindowSizeVec2 igSetWindowSizeVec2;
 pigSetWindowSizeStr igSetWindowSizeStr;
 pigSetWindowSizeWindowPtr igSetWindowSizeWindowPtr;
-pImFontGlyphRangesBuilder_BuildRanges ImFontGlyphRangesBuilder_BuildRanges;
-pigTreePop igTreePop;
 pImFont_AddRemapChar ImFont_AddRemapChar;
 pigNavMoveRequestCancel igNavMoveRequestCancel;
+pigTranslateWindowsInViewport igTranslateWindowsInViewport;
 pigText igText;
 pigCollapseButton igCollapseButton;
 pImGuiWindow_TitleBarRect ImGuiWindow_TitleBarRect;
@@ -4936,10 +5519,12 @@ pigCalcTextSize igCalcTextSize;
 pImFont_CalcTextSizeA ImFont_CalcTextSizeA;
 pigImClamp igImClamp;
 pigGetColumnWidth igGetColumnWidth;
+pigTabBarFindMostRecentlySelectedTabForActiveWindow igTabBarFindMostRecentlySelectedTabForActiveWindow;
 pImGuiPayload_Clear ImGuiPayload_Clear;
 pImGuiTextBuffer_reserve ImGuiTextBuffer_reserve;
 pImGuiInputTextState_CursorAnimReset ImGuiInputTextState_CursorAnimReset;
 pImRect_ClipWithFull ImRect_ClipWithFull;
+pImGuiViewport_GetWorkPos ImGuiViewport_GetWorkPos;
 pigGetFontTexUvWhitePixel igGetFontTexUvWhitePixel;
 pImDrawList_ChannelsSplit ImDrawList_ChannelsSplit;
 pigPopFont igPopFont;
@@ -4949,15 +5534,19 @@ pigImFloorFloat igImFloorFloat;
 pigImFloorVec2 igImFloorVec2;
 pImDrawList_AddRect ImDrawList_AddRect;
 pigImParseFormatFindEnd igImParseFormatFindEnd;
+pImGuiPlatformIO_destroy ImGuiPlatformIO_destroy;
 pImDrawListSharedData_SetCircleSegmentMaxError ImDrawListSharedData_SetCircleSegmentMaxError;
 pImGuiInputTextCallbackData_ClearSelection ImGuiInputTextCallbackData_ClearSelection;
 pImGuiTextRange_split ImGuiTextRange_split;
 pImBitVector_Clear ImBitVector_Clear;
+pigDockBuilderAddNode igDockBuilderAddNode;
 pigCreateNewWindowSettings igCreateNewWindowSettings;
+pImGuiDockNode_IsRootNode ImGuiDockNode_IsRootNode;
+pigDockContextInitialize igDockContextInitialize;
 pigGetDrawListSharedData igGetDrawListSharedData;
-pigImFileClose igImFileClose;
 pigBeginChildEx igBeginChildEx;
 pImGuiNextWindowData_ClearFlags ImGuiNextWindowData_ClearFlags;
+pigImFileClose igImFileClose;
 pImFontGlyphRangesBuilder_GetBit ImFontGlyphRangesBuilder_GetBit;
 pigImRotate igImRotate;
 pigImGetDirQuadrantFromDelta igImGetDirQuadrantFromDelta;
@@ -4972,6 +5561,7 @@ alias pImGui_ImplSDL2_InitForMetal = bool function(SDL_Window* window);
 alias pImGui_ImplSDL2_InitForOpenGL = bool function(SDL_Window* window, void* sdl_gl_context);
 alias pImGui_ImplSDL2_InitForVulkan = bool function(SDL_Window* window);
 alias pImGui_ImplOpenGL3_CreateFontsTexture = bool function();
+alias pImGui_ImplGlfw_MonitorCallback = void function(GLFWmonitor* monitor, int event);
 alias pImGui_ImplGlfw_NewFrame = void function();
 alias pImGui_ImplOpenGL2_CreateDeviceObjects = bool function();
 alias pImGui_ImplSDL2_InitForD3D = bool function(SDL_Window* window);
@@ -5004,6 +5594,7 @@ pImGui_ImplSDL2_InitForMetal ImGui_ImplSDL2_InitForMetal;
 pImGui_ImplSDL2_InitForOpenGL ImGui_ImplSDL2_InitForOpenGL;
 pImGui_ImplSDL2_InitForVulkan ImGui_ImplSDL2_InitForVulkan;
 pImGui_ImplOpenGL3_CreateFontsTexture ImGui_ImplOpenGL3_CreateFontsTexture;
+pImGui_ImplGlfw_MonitorCallback ImGui_ImplGlfw_MonitorCallback;
 pImGui_ImplGlfw_NewFrame ImGui_ImplGlfw_NewFrame;
 pImGui_ImplOpenGL2_CreateDeviceObjects ImGui_ImplOpenGL2_CreateDeviceObjects;
 pImGui_ImplSDL2_InitForD3D ImGui_ImplSDL2_InitForD3D;

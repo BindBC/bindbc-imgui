@@ -39,9 +39,11 @@ void main()
 
     
     igCreateContext(null);
-    ImGuiIO* io = igGetIO();;
+    ImGuiIO* io = igGetIO();
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 
     // Setup Dear ImGui style
     igStyleColorsDark(null);
@@ -95,6 +97,8 @@ void main()
         ImGui_ImplSDL2_NewFrame(window);
         igNewFrame();
 
+        igDockSpaceOverViewport(null, cast(ImGuiDockNodeFlags)0, null);
+
         // 1. Show the big demo window (Most of the sample code is in igShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
             igShowDemoWindow(&show_demo_window);
@@ -139,6 +143,7 @@ void main()
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
         SDL_GL_SwapWindow(window);
+        igUpdatePlatformWindows();
     }
 
     // Cleanup

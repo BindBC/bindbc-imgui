@@ -240,6 +240,9 @@ string get_imvector_structs(Appender!string strBuilder, JSONValue definitions)
 {
     string[string] imTemplateTypes;
     auto structs = definitions["structs"];
+
+    imTemplateTypes["ImVector_const_charPtr"] =  "const char*";
+
     foreach (string structName, JSONValue structMembers; structs) 
     {
         foreach (JSONValue value; structMembers.array)
@@ -275,7 +278,7 @@ string get_imvector_structs(Appender!string strBuilder, JSONValue definitions)
     return strBuilder.data;
 }
 
-string get_typedefs(Appender!string strBuilder, JSONValue typedefs)
+string get_typedefs(Appender!string strBuilder, JSONValue typedefs, JSONValue structs_and_enums)
 {
     foreach (string typedefName, JSONValue typeDefValue; typedefs) 
     {
@@ -287,6 +290,9 @@ string get_typedefs(Appender!string strBuilder, JSONValue typedefs)
 
         if (originalTypeName != typedefName)
             strBuilder.put(format("alias %s = %s;\n", typedefName,originalTypeName));
+
+        if ((originalTypeName == typedefName) && !(typedefName in structs_and_enums["structs"]))
+            strBuilder.put(format("struct %s;\n", typedefName));
     }
 
     return strBuilder.data;
@@ -481,7 +487,7 @@ void write_imgui_file(
     strBuilder.put("import bindbc.sdl;\n\n");
     strBuilder.put("import bindbc.glfw;\n\n");
 
-    get_typedefs(strBuilder, typedefs_dict);
+    get_typedefs(strBuilder, typedefs_dict, structs_and_enums);
     strBuilder.put("\n\n");
     get_imvector_structs(strBuilder, structs_and_enums);
     strBuilder.put("\n\n");
