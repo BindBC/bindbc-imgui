@@ -101,7 +101,7 @@ ImGuiSupport loadImGui()
 {
     // #1778 prevents me from using static arrays here :(
     version(Windows) {
-        const(char)[][3] libNames = [
+        const(char)[][2] libNames = [
             "cimgui.dll",
             "cimguid.dll",
         ];
@@ -112,7 +112,7 @@ ImGuiSupport loadImGui()
         ];
     }
     else version(Posix) {
-        const(char)[][2] libNames = [
+        const(char)[][1] libNames = [
             "cimgui.so"
         ];
     }

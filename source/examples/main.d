@@ -28,15 +28,7 @@ void main()
     SDL_GL_MakeCurrent(window, gl_context);
     SDL_GL_SetSwapInterval(1); // Enable vsync
 
-
-
-
-
-
-
-
-
-
+    loadOpenGL();
 
 
 
@@ -115,15 +107,15 @@ void main()
 
             igText("This is some useful text.");               // Display some text (you can use a format strings too)
             igCheckbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            //igCheckbox("Another Window", &show_another_window);
+            igCheckbox("Another Window", &show_another_window);
 
-            //igSliderFloat("float", &f, 0.0f, 1.0f, null, 0);            // Edit 1 float using a slider from 0.0f to 1.0f
-            //igColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+            igSliderFloat("float", &f, 0.0f, 1.0f, null, 0);            // Edit 1 float using a slider from 0.0f to 1.0f
+            //igColorEdit3("clear color", cast(float*)&clear_color.x); // Edit 3 floats representing a color
 
-            //if (igButton("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-            //    counter++;
-            //igSameLine();
-            //igText("counter = %d", counter);
+            if (igButton("Button", ImVec2(0,0)))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++;
+            igSameLine(0,0);
+            igText("counter = %d", counter);
 
             igText("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / igGetIO().Framerate, igGetIO().Framerate);
             igEnd();

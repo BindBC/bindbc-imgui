@@ -32,14 +32,13 @@ ImGuiSupport loadImGui()
 {
     // #1778 prevents me from using static arrays here :(
     version(Windows) {
-        const(char)[][3] libNames = [
+        const(char)[][2] libNames = [
             "cimgui.dll",
-            "cimgui.dll",
-            "cimgui.dll"
+            "cimguid.dll",
         ];
     }
     else version(OSX) {
-        const(char)[][6] libNames = [
+        const(char)[][1] libNames = [
             "cimgui.dylib"
         ];
     }
