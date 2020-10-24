@@ -1,0 +1,6 @@
+name "helloworld"
+description "imgui hello world"
+authors "Luna"
+copyright "Copyright © 2020, Luna"
+license "BSL-1.0"
+dependency "bindbc-imgui" version="~master"

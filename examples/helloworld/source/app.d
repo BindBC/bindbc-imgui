@@ -1,4 +1,4 @@
-module examples.main;
+module app;
 
 import std.stdio;
 import bindbc.sdl,
