@@ -29,6 +29,7 @@ void main()
     SDL_GL_SetSwapInterval(1); // Enable vsync
 
     loadOpenGL();
+    InitOpenGLForImGui();
 
 
 

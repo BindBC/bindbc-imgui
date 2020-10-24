@@ -83,6 +83,55 @@ private {
     ImGuiSupport loadedVersion;
 }
 
+alias pInitOpenGLForImGui = void function();
+
+__gshared {
+pInitOpenGLForImGui InitOpenGLForImGui;
+}
+
+bool loadImGuiSupport()
+{
+    // #1778 prevents me from using static arrays here :(
+    version(Windows) {
+        const(char)[][1] libNames = [
+            "imgui_gl_loader.dll",
+        ];
+    }
+    else version(OSX) {
+        const(char)[][1] libNames = [
+            "imgui_gl_loader.dylib"
+        ];
+    }
+    else version(Posix) {
+        const(char)[][2] libNames = [
+            "imgui_gl_loader.so"
+        ];
+    }
+    else static assert(0, "bindbc-ImGui is not yet supported on this platform.");
+
+    bool ret;
+    foreach(name; libNames) {
+        ret = loadImGuiSupport(name.ptr);
+        if(!ret) break;
+    }
+    return ret;
+}
+
+bool loadImGuiSupport(const(char)* libName)
+{
+    lib = load("imgui_gl_loader.dll");
+    if(lib == invalidHandle) {
+        return false;
+    }
+
+    auto errCount = errorCount();
+    loadedVersion = ImGuiSupport.badLibrary;
+
+    lib.bindSymbol(cast(void**)&InitOpenGLForImGui, "InitOpenGLForImGui");
+
+    return true;
+}
+
 void unloadImGui()
 {
     if(lib != invalidHandle) {
@@ -107,12 +156,12 @@ ImGuiSupport loadImGui()
         ];
     }
     else version(OSX) {
-        const(char)[][6] libNames = [
+        const(char)[][1] libNames = [
             "cimgui.dylib"
         ];
     }
     else version(Posix) {
-        const(char)[][1] libNames = [
+        const(char)[][2] libNames = [
             "cimgui.so"
         ];
     }
@@ -123,6 +172,9 @@ ImGuiSupport loadImGui()
         ret = loadImGui(name.ptr);
         if(ret != ImGuiSupport.noLibrary) break;
     }
+
+    loadImGuiSupport();
+
     return ret;
 }
 
