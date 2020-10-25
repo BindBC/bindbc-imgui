@@ -6,17 +6,17 @@ license "Boost"
 
 configuration "dynamic" {
     dependency "bindbc-loader" version="~>0.3.0"
-    dependency "bindbc-sdl" version="~>0.1.0"
-    dependency "bindbc-glfw" version="~>0.5.0"
-    dependency "bindbc-opengl" version="~>0.1.0"
+    dependency "bindbc-sdl" version="~>0.19.1"
+    dependency "bindbc-glfw" version="~>0.10.1"
+    dependency "bindbc-opengl" version="~>0.13.0"
 }
 
 configuration "dynamicBC" {
     dependency "bindbc-loader" version="~>0.3.0"
     subConfiguration "bindbc-loader" "yesBC"
-    dependency "bindbc-sdl" version="~>0.1.0"
-    dependency "bindbc-glfw" version="~>0.5.0"
-    dependency "bindbc-opengl" version="~>0.1.0"
+    dependency "bindbc-sdl" version="~>0.19.1"
+    dependency "bindbc-glfw" version="~>0.10.1"
+    dependency "bindbc-opengl" version="~>0.13.0"
     dflags "-betterC"
 }
 

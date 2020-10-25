@@ -1,5 +1,5 @@
 # BindBC Imgui
-D binding to CImgui with additional OpenGL backend
+D binding to CImgui with additional OpenGL and SDL backends
 
 # Adding to your project
 To add bindbc-imgui to your project run
