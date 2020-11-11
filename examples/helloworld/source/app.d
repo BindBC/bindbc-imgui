@@ -129,9 +129,9 @@ void main()
         // 3. Show another simple window.
         if (show_another_window)
         {
-            igBegin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            igBegin("Another Window", &show_another_window, 0);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
             igText("Hello from another window!");
-            if (igButton("Close Me"))
+            if (igButton("Close Me", ImVec2(0,0)))
                 show_another_window = false;
             igEnd();
         }
