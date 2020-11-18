@@ -34,7 +34,7 @@ bool loadImGuiSupport()
         ];
     }
     else version(Posix) {
-        const(char)[][2] libNames = [
+        const(char)[][1] libNames = [
             "imgui_gl_loader.so"
         ];
     }
@@ -92,7 +92,7 @@ ImGuiSupport loadImGui()
         ];
     }
     else version(Posix) {
-        const(char)[][2] libNames = [
+        const(char)[][1] libNames = [
             "cimgui.so"
         ];
     }
@@ -1169,38 +1169,46 @@ ImGuiSupport loadImGui(const(char)* libName)
 
 
 // Backends
-    lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_Shutdown, "ImGui_ImplSDL2_Shutdown");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_DestroyFontsTexture, "ImGui_ImplOpenGL3_DestroyFontsTexture");
-    lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_InitForMetal, "ImGui_ImplSDL2_InitForMetal");
-    lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_InitForOpenGL, "ImGui_ImplSDL2_InitForOpenGL");
-    lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_InitForVulkan, "ImGui_ImplSDL2_InitForVulkan");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_CreateFontsTexture, "ImGui_ImplOpenGL3_CreateFontsTexture");
-    lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_MonitorCallback, "ImGui_ImplGlfw_MonitorCallback");
-    lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_NewFrame, "ImGui_ImplGlfw_NewFrame");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_CreateDeviceObjects, "ImGui_ImplOpenGL2_CreateDeviceObjects");
-    lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_InitForD3D, "ImGui_ImplSDL2_InitForD3D");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_Init, "ImGui_ImplOpenGL2_Init");
-    lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_InitForVulkan, "ImGui_ImplGlfw_InitForVulkan");
-    lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_ProcessEvent, "ImGui_ImplSDL2_ProcessEvent");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_CreateDeviceObjects, "ImGui_ImplOpenGL3_CreateDeviceObjects");
-    lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_CharCallback, "ImGui_ImplGlfw_CharCallback");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_DestroyDeviceObjects, "ImGui_ImplOpenGL2_DestroyDeviceObjects");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_Init, "ImGui_ImplOpenGL3_Init");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_DestroyDeviceObjects, "ImGui_ImplOpenGL3_DestroyDeviceObjects");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_NewFrame, "ImGui_ImplOpenGL3_NewFrame");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_NewFrame, "ImGui_ImplOpenGL2_NewFrame");
-    lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_InitForOpenGL, "ImGui_ImplGlfw_InitForOpenGL");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_RenderDrawData, "ImGui_ImplOpenGL2_RenderDrawData");
-    lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_KeyCallback, "ImGui_ImplGlfw_KeyCallback");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_Shutdown, "ImGui_ImplOpenGL3_Shutdown");
-    lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_ScrollCallback, "ImGui_ImplGlfw_ScrollCallback");
-    lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_NewFrame, "ImGui_ImplSDL2_NewFrame");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_CreateFontsTexture, "ImGui_ImplOpenGL2_CreateFontsTexture");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_Shutdown, "ImGui_ImplOpenGL2_Shutdown");
-    lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_MouseButtonCallback, "ImGui_ImplGlfw_MouseButtonCallback");
-    lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_Shutdown, "ImGui_ImplGlfw_Shutdown");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_RenderDrawData, "ImGui_ImplOpenGL3_RenderDrawData");
-    lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_DestroyFontsTexture, "ImGui_ImplOpenGL2_DestroyFontsTexture");
+    version(USE_SDL2) {
+        lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_Shutdown, "ImGui_ImplSDL2_Shutdown");
+        lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_InitForMetal, "ImGui_ImplSDL2_InitForMetal");
+        lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_InitForOpenGL, "ImGui_ImplSDL2_InitForOpenGL");
+        lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_InitForVulkan, "ImGui_ImplSDL2_InitForVulkan");
+        lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_InitForD3D, "ImGui_ImplSDL2_InitForD3D");
+        lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_ProcessEvent, "ImGui_ImplSDL2_ProcessEvent");
+        lib.bindSymbol(cast(void**)&ImGui_ImplSDL2_NewFrame, "ImGui_ImplSDL2_NewFrame");
+    }
+
+    version(USE_GLFW) {
+        lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_MonitorCallback, "ImGui_ImplGlfw_MonitorCallback");
+        lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_NewFrame, "ImGui_ImplGlfw_NewFrame");
+        lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_InitForVulkan, "ImGui_ImplGlfw_InitForVulkan");
+        lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_CharCallback, "ImGui_ImplGlfw_CharCallback");
+        lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_InitForOpenGL, "ImGui_ImplGlfw_InitForOpenGL");
+        lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_KeyCallback, "ImGui_ImplGlfw_KeyCallback");
+        lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_ScrollCallback, "ImGui_ImplGlfw_ScrollCallback");
+        lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_MouseButtonCallback, "ImGui_ImplGlfw_MouseButtonCallback");
+        lib.bindSymbol(cast(void**)&ImGui_ImplGlfw_Shutdown, "ImGui_ImplGlfw_Shutdown");
+    }
+
+    version(USE_GL) {
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_DestroyFontsTexture, "ImGui_ImplOpenGL3_DestroyFontsTexture");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_CreateFontsTexture, "ImGui_ImplOpenGL3_CreateFontsTexture");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_CreateDeviceObjects, "ImGui_ImplOpenGL2_CreateDeviceObjects");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_Init, "ImGui_ImplOpenGL2_Init");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_CreateDeviceObjects, "ImGui_ImplOpenGL3_CreateDeviceObjects");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_DestroyDeviceObjects, "ImGui_ImplOpenGL2_DestroyDeviceObjects");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_Init, "ImGui_ImplOpenGL3_Init");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_DestroyDeviceObjects, "ImGui_ImplOpenGL3_DestroyDeviceObjects");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_NewFrame, "ImGui_ImplOpenGL3_NewFrame");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_NewFrame, "ImGui_ImplOpenGL2_NewFrame");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_RenderDrawData, "ImGui_ImplOpenGL2_RenderDrawData");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_Shutdown, "ImGui_ImplOpenGL3_Shutdown");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_CreateFontsTexture, "ImGui_ImplOpenGL2_CreateFontsTexture");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_Shutdown, "ImGui_ImplOpenGL2_Shutdown");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL3_RenderDrawData, "ImGui_ImplOpenGL3_RenderDrawData");
+        lib.bindSymbol(cast(void**)&ImGui_ImplOpenGL2_DestroyFontsTexture, "ImGui_ImplOpenGL2_DestroyFontsTexture");
+    }
 
 
     return loadedVersion;
