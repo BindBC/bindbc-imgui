@@ -187,6 +187,7 @@ shared static this()
         "int64_t" : "long",
         "uint64_t" : "ulong",
         "union { int BackupInt[2]; float BackupFloat[2];}": "union { int[2] BackupInt; float[2] BackupFloat;}",
+        "const char*" : "const(char)*",
         "const char* const[]" : "const(char)**",
         "unsigned char[256]" : "char[256]",
         "unsigned char**" : "char**",
