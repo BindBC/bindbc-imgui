@@ -18,6 +18,11 @@ struct BackendData
     string VersionDefine; // USE_SDL
 }
 
+struct backend_function
+{
+    string functionName;
+    JSONValue cimguiFunction;
+}
 
 shared immutable string[string] cArgMap;
 shared immutable string[string] cTypeMap;
@@ -543,7 +548,71 @@ void write_function_loading(code_writer codeWriter, JSONValue definitions)
     }
 }
 
-// Return value is the type of the Function pointer, so that it can later be used if we're writing the global symbols to load into.
+
+backend_function[][string] get_backend_functions(JSONValue definitions)
+{
+    backend_function[][string] backendFunctionsMap;
+
+    foreach (string functionName, JSONValue functionDecl; definitions)
+    {
+        if (functionName == "ImVector_ImVector")
+            continue;
+
+        foreach (JSONValue cimguiFunction; functionDecl.array)
+        {
+            string implKey = functionName[0 .. std.string.indexOf(functionName, '_', 6)];
+
+            // Init the array if it's not already
+            if (!(implKey in backendFunctionsMap)) backendFunctionsMap[implKey] = [];
+
+            ++backendFunctionsMap[implKey].length;
+            backendFunctionsMap[implKey][backendFunctionsMap[implKey].length - 1] = backend_function(functionName, cimguiFunction);
+        }
+    }
+
+    return backendFunctionsMap;
+}
+
+
+void write_backend_function_loading(code_writer codeWriter, JSONValue definitions)
+{
+    // impl to a Backend
+    backend_function[][string] backendFunctionsMap = get_backend_functions(definitions);
+
+    foreach (implKey, backendFunctions; backendFunctionsMap)
+    {
+        if (!(implKey in cBackendMap))
+        {
+            writeln("WARNING UNKNOWN BACKEND IMPLEMENTATION " ~ implKey ~ ":");
+
+            foreach (backendFunction; backendFunctions)
+                writeln("  " ~ backendFunction.functionName);
+
+            continue;
+        }
+
+        const auto backendData = cBackendMap[implKey];
+        codeWriter.add_version(backendData.VersionDefine);
+
+        
+        foreach (backendFunction; backendFunctions)
+        {
+            if ("templated" in backendFunction.cimguiFunction && backendFunction.cimguiFunction["templated"].boolean)
+                continue;
+                
+            codeWriter.put_lines(
+                format(
+                    "lib.bindSymbol(cast(void**)&%s, \"%s\");", 
+                    backendFunction.cimguiFunction["ov_cimguiname"].str, 
+                    backendFunction.cimguiFunction["ov_cimguiname"].str));
+        }
+
+        codeWriter.remove_scope();  // version
+        codeWriter.line_break();
+    }
+}
+
+/// Return value is the type of the Function pointer, so that it can later be used if we're writing the global symbols to load into.
 string write_function(code_writer codeWriter, string functionName, JSONValue cimguiFunction, bool writeFunctionGlobals)
 {
     string returnType;
@@ -660,33 +729,8 @@ void write_functions(code_writer codeWriter, JSONValue definitions, bool writeFu
 
 void write_backend_functions(code_writer codeWriter, JSONValue definitions, bool writeFunctionGlobals)
 {
-    struct backend_function
-    {
-        string functionName;
-        JSONValue cimguiFunction;
-    }
-
     // impl to a Backend
-    backend_function[][string] backendFunctionsMap;
-
-    foreach (string functionName, JSONValue functionDecl; definitions)
-    {
-        if (functionName == "ImVector_ImVector")
-            continue;
-
-
-        foreach (JSONValue cimguiFunction; functionDecl.array)
-        {
-            string implKey = functionName[0 .. std.string.indexOf(functionName, '_', 6)];
-
-            // Init the array if it's not already
-            if (!(implKey in backendFunctionsMap)) backendFunctionsMap[implKey] = [];
-
-            ++backendFunctionsMap[implKey].length;
-            backendFunctionsMap[implKey][backendFunctionsMap[implKey].length - 1] = backend_function(functionName, cimguiFunction);
-        }
-    }
-
+    backend_function[][string] backendFunctionsMap = get_backend_functions(definitions);
     
     codeWriter.add_extern_c();
 
@@ -800,7 +844,7 @@ void write_loader(
     codeWriter.line_break();
     codeWriter.put_lines("// Backends");
 
-    write_function_loading(codeWriter, impl_definitions);
+    write_backend_function_loading(codeWriter, impl_definitions);
 
     codeWriter.remove_indent();
     codeWriter.put_lines(loaderEnd);
