@@ -4,8 +4,9 @@ import core.stdc.stdio;
 
 import core.stdc.stdarg;
 
+extern (C) {
 alias ImGuiTreeNodeFlags = int;
-struct ImGuiDockRequest;
+    struct ImGuiDockRequest;
 alias ImU32 = uint;
 alias ImGuiNavDirSourceFlags = int;
 alias ImGuiDockNodeFlags = int;
@@ -32,7 +33,7 @@ alias ImGuiTabItemFlags = int;
 alias ImGuiTooltipFlags = int;
 alias ImGuiStyleVar = int;
 alias ImDrawCallback = void function(const ImDrawList* parent_list,const ImDrawCmd* cmd);
-struct ImGuiDockNodeSettings;
+    struct ImGuiDockNodeSettings;
 alias ImDrawCornerFlags = int;
 alias ImGuiComboFlags = int;
 alias ImS32 = int;
@@ -69,2217 +70,2160 @@ alias ImFontAtlasFlags = int;
 alias ImGuiColorEditFlags = int;
 alias ImGuiNextItemDataFlags = int;
 alias ImS16 = short;
+    
+    struct ImVector(tType) {
+        int Size;
+        int Capacity;
+        tType* Data;
+    
+        import core.stdc.string;
+    
+    
+        bool empty() const                       
+        {
+            return Size == 0; 
+        }
+    
+        int size() const                        
+        {
+            return Size; 
+        }
+    
+        int size_in_bytes() const               
+        {
+            return Size * cast(int)tType.sizeof; 
+        }
+    
+        int max_size() const                    
+        {
+            return 0x7FFFFFFF / cast(int)tType.sizeof; 
+        }
+    
+        int capacity() const                    
+        {
+            return Capacity; 
+        }
+    
+        void clear()                             
+        {
+            if (Data) 
+            {
+                Size = Capacity = 0;
+                igMemFree(Data);
+                Data = null; 
+            } 
+        }
+    
+        void swap(ImVector* rhs)
+        {
+            int rhs_size = rhs.Size;
+            rhs.Size = Size;
+            Size = rhs_size;
+            int rhs_cap = rhs.Capacity;
+            rhs.Capacity = Capacity;
+            Capacity = rhs_cap;
+            tType* rhs_data = rhs.Data;
+            rhs.Data = Data;
+            Data = rhs_data;
+        }
+    
+        int _grow_capacity(int sz) const        
+        {
+            int new_capacity = Capacity ? (Capacity + Capacity / 2) : 8;
+            return new_capacity > sz ? new_capacity : sz; 
+        }
+    
+        void resize(int new_size)                
+        {
+            if (new_size > Capacity) 
+                reserve(_grow_capacity(new_size)); Size = new_size; 
+        }
+    
+        void resize(int new_size, const tType* v)    
+        {
+            if (new_size > Capacity)
+                reserve(_grow_capacity(new_size));
+            if (new_size > Size)
+                for (int n = Size; n < new_size; n++) 
+                    memcpy(&Data[n], v, tType.sizeof); 
+            
+            Size = new_size; 
+        }
+    
+        // Resize a vector to a smaller size, guaranteed not to cause a reallocation
+        void shrink(int new_size)                
+        {
+            //IM_ASSERT(new_size <= Size);
+            Size = new_size; 
+        } 
+    
+        void reserve(int new_capacity)           
+        {
+            if (new_capacity <= Capacity) 
+                return; 
+    
+            tType* new_data = cast(tType*)igMemAlloc(cast(size_t)new_capacity * tType.sizeof); 
+            
+            if (Data) 
+            {
+                memcpy(new_data, Data, cast(size_t)Size * tType.sizeof); 
+                igMemFree(Data);
+            } 
+    
+            Data = new_data; 
+            Capacity = new_capacity; 
+        }
+    
+    
+        // NB: It is illegal to call push_back/push_front/insert with a reference pointing inside the ImVector data itself! e.g. v.push_back(v[10]) is forbidden.
+        void push_back(const tType* v)               
+        {
+            if (Size == Capacity)
+                reserve(_grow_capacity(Size + 1)); 
+            
+            memcpy(&Data[Size], v, tType.sizeof);
+            Size++; 
+        }
+    
+        void pop_back()                          
+        {
+             //IM_ASSERT(Size > 0);
+             Size--; 
+        }
+    
+        void push_front(const tType* v)              
+        {
+            if (Size == 0)
+                push_back(v); 
+            else 
+                insert(Data, v); 
+        }
+    
+        tType* erase(const tType* it)
+        {
+             //IM_ASSERT(it >= Data && it < Data + Size);
+             const ptrdiff_t off = it - Data;
+             memmove(Data + off, Data + off + 1, (cast(size_t)Size - cast(size_t)off - 1) * tType.sizeof);
+             Size--;
+             return Data + off; 
+        }
+    
+        tType* erase(const tType* it, const tType* it_last)
+        {
+             //IM_ASSERT(it >= Data && it < Data + Size && it_last > it && it_last <= Data + Size);
+             const ptrdiff_t count = it_last - it;
+             const ptrdiff_t off = it - Data;
+             memmove(Data + off, Data + off + count, (cast(size_t)Size - cast(size_t)off - count) * tType.sizeof);
+             Size -= cast(int)count;
+             return Data + off; 
+        }
+    
+        tType* erase_unsorted(const tType* it)
+        {
+            //IM_ASSERT(it >= Data && it < Data + Size);
+            const ptrdiff_t off = it - Data;
+             
+            if (it < Data + Size - 1)
+                memcpy(Data + off, Data + Size - 1, tType.sizeof);
+            
+            Size--;
+            return Data + off; 
+        }
+    
+        tType* insert(const tType* it, const tType* v)
+        {
+             //IM_ASSERT(it >= Data && it <= Data + Size); 
+             const ptrdiff_t off = it - Data;
+             
+            if (Size == Capacity) 
+                reserve(_grow_capacity(Size + 1));
+            
+            if (off < cast(int)Size) 
+                memmove(Data + off + 1, Data + off, (cast(size_t)Size - cast(size_t)off) * tType.sizeof);
+    
+            memcpy(&Data[off], v, tType.sizeof);
+            Size++;
+            return Data + off; 
+        }
+    }
+    
+    
+    struct ImPool_ImGuiTabBar {
+        ImGuiTabBar Buf;
+        ImGuiStorage Map;
+        ImPoolIdx FreeIdx;
+    }
+    
+    
+    struct ImChunkStream_ImGuiWindowSettings {
+        ImGuiWindowSettings Buf;
+    }
+
+    alias ImGuiLayoutType_ = int;
+    enum {
+        ImGuiLayoutType_Horizontal = 0,
+        ImGuiLayoutType_Vertical = 1,
+    }
+
+    alias ImGuiNextItemDataFlags_ = int;
+    enum {
+        ImGuiNextItemDataFlags_None = 0,
+        ImGuiNextItemDataFlags_HasWidth = 1,
+        ImGuiNextItemDataFlags_HasOpen = 2,
+    }
+
+    alias ImGuiItemStatusFlags_ = int;
+    enum {
+        ImGuiItemStatusFlags_None = 0,
+        ImGuiItemStatusFlags_HoveredRect = 1,
+        ImGuiItemStatusFlags_HasDisplayRect = 2,
+        ImGuiItemStatusFlags_Edited = 4,
+        ImGuiItemStatusFlags_ToggledSelection = 8,
+        ImGuiItemStatusFlags_ToggledOpen = 16,
+        ImGuiItemStatusFlags_HasDeactivated = 32,
+        ImGuiItemStatusFlags_Deactivated = 64,
+    }
+
+    alias ImGuiSliderFlagsPrivate_ = int;
+    enum {
+        ImGuiSliderFlags_Vertical = 1048576,
+        ImGuiSliderFlags_ReadOnly = 2097152,
+    }
+
+    alias ImGuiInputReadMode = int;
+    enum {
+        ImGuiInputReadMode_Down = 0,
+        ImGuiInputReadMode_Pressed = 1,
+        ImGuiInputReadMode_Released = 2,
+        ImGuiInputReadMode_Repeat = 3,
+        ImGuiInputReadMode_RepeatSlow = 4,
+        ImGuiInputReadMode_RepeatFast = 5,
+    }
+
+    alias ImGuiMouseButton_ = int;
+    enum {
+        ImGuiMouseButton_Left = 0,
+        ImGuiMouseButton_Right = 1,
+        ImGuiMouseButton_Middle = 2,
+        ImGuiMouseButton_COUNT = 5,
+    }
+
+    alias ImGuiDockNodeFlagsPrivate_ = int;
+    enum {
+        ImGuiDockNodeFlags_DockSpace = 1024,
+        ImGuiDockNodeFlags_CentralNode = 2048,
+        ImGuiDockNodeFlags_NoTabBar = 4096,
+        ImGuiDockNodeFlags_HiddenTabBar = 8192,
+        ImGuiDockNodeFlags_NoWindowMenuButton = 16384,
+        ImGuiDockNodeFlags_NoCloseButton = 32768,
+        ImGuiDockNodeFlags_NoDocking = 65536,
+        ImGuiDockNodeFlags_NoDockingSplitMe = 131072,
+        ImGuiDockNodeFlags_NoDockingSplitOther = 262144,
+        ImGuiDockNodeFlags_NoDockingOverMe = 524288,
+        ImGuiDockNodeFlags_NoDockingOverOther = 1048576,
+        ImGuiDockNodeFlags_NoResizeX = 2097152,
+        ImGuiDockNodeFlags_NoResizeY = 4194304,
+        ImGuiDockNodeFlags_SharedFlagsInheritMask_ = -1,
+        ImGuiDockNodeFlags_NoResizeFlagsMask_ = 6291488,
+        ImGuiDockNodeFlags_LocalFlagsMask_ = 6421616,
+        ImGuiDockNodeFlags_LocalFlagsTransferMask_ = 6420592,
+        ImGuiDockNodeFlags_SavedFlagsMask_ = 6421536,
+    }
+
+    alias ImGuiDataAuthority_ = int;
+    enum {
+        ImGuiDataAuthority_Auto = 0,
+        ImGuiDataAuthority_DockNode = 1,
+        ImGuiDataAuthority_Window = 2,
+    }
+
+    alias ImGuiNavDirSourceFlags_ = int;
+    enum {
+        ImGuiNavDirSourceFlags_None = 0,
+        ImGuiNavDirSourceFlags_Keyboard = 1,
+        ImGuiNavDirSourceFlags_PadDPad = 2,
+        ImGuiNavDirSourceFlags_PadLStick = 4,
+    }
+
+    alias ImGuiTabBarFlagsPrivate_ = int;
+    enum {
+        ImGuiTabBarFlags_DockNode = 1048576,
+        ImGuiTabBarFlags_IsFocused = 2097152,
+        ImGuiTabBarFlags_SaveSettings = 4194304,
+    }
+
+    alias ImGuiTooltipFlags_ = int;
+    enum {
+        ImGuiTooltipFlags_None = 0,
+        ImGuiTooltipFlags_OverridePreviousTooltip = 1,
+    }
+
+    alias ImGuiTabItemFlags_ = int;
+    enum {
+        ImGuiTabItemFlags_None = 0,
+        ImGuiTabItemFlags_UnsavedDocument = 1,
+        ImGuiTabItemFlags_SetSelected = 2,
+        ImGuiTabItemFlags_NoCloseWithMiddleMouseButton = 4,
+        ImGuiTabItemFlags_NoPushId = 8,
+        ImGuiTabItemFlags_NoTooltip = 16,
+        ImGuiTabItemFlags_NoReorder = 32,
+        ImGuiTabItemFlags_Leading = 64,
+        ImGuiTabItemFlags_Trailing = 128,
+    }
+
+    alias ImGuiPopupPositionPolicy = int;
+    enum {
+        ImGuiPopupPositionPolicy_Default = 0,
+        ImGuiPopupPositionPolicy_ComboBox = 1,
+        ImGuiPopupPositionPolicy_Tooltip = 2,
+    }
+
+    alias ImGuiConfigFlags_ = int;
+    enum {
+        ImGuiConfigFlags_None = 0,
+        ImGuiConfigFlags_NavEnableKeyboard = 1,
+        ImGuiConfigFlags_NavEnableGamepad = 2,
+        ImGuiConfigFlags_NavEnableSetMousePos = 4,
+        ImGuiConfigFlags_NavNoCaptureKeyboard = 8,
+        ImGuiConfigFlags_NoMouse = 16,
+        ImGuiConfigFlags_NoMouseCursorChange = 32,
+        ImGuiConfigFlags_DockingEnable = 64,
+        ImGuiConfigFlags_ViewportsEnable = 1024,
+        ImGuiConfigFlags_DpiEnableScaleViewports = 16384,
+        ImGuiConfigFlags_DpiEnableScaleFonts = 32768,
+        ImGuiConfigFlags_IsSRGB = 1048576,
+        ImGuiConfigFlags_IsTouchScreen = 2097152,
+    }
+
+    alias ImGuiKeyModFlags_ = int;
+    enum {
+        ImGuiKeyModFlags_None = 0,
+        ImGuiKeyModFlags_Ctrl = 1,
+        ImGuiKeyModFlags_Shift = 2,
+        ImGuiKeyModFlags_Alt = 4,
+        ImGuiKeyModFlags_Super = 8,
+    }
+
+    alias ImGuiDataTypePrivate_ = int;
+    enum {
+        ImGuiDataType_String = 11,
+        ImGuiDataType_Pointer = 12,
+        ImGuiDataType_ID = 13,
+    }
+
+    alias ImGuiNavInput_ = int;
+    enum {
+        ImGuiNavInput_Activate = 0,
+        ImGuiNavInput_Cancel = 1,
+        ImGuiNavInput_Input = 2,
+        ImGuiNavInput_Menu = 3,
+        ImGuiNavInput_DpadLeft = 4,
+        ImGuiNavInput_DpadRight = 5,
+        ImGuiNavInput_DpadUp = 6,
+        ImGuiNavInput_DpadDown = 7,
+        ImGuiNavInput_LStickLeft = 8,
+        ImGuiNavInput_LStickRight = 9,
+        ImGuiNavInput_LStickUp = 10,
+        ImGuiNavInput_LStickDown = 11,
+        ImGuiNavInput_FocusPrev = 12,
+        ImGuiNavInput_FocusNext = 13,
+        ImGuiNavInput_TweakSlow = 14,
+        ImGuiNavInput_TweakFast = 15,
+        ImGuiNavInput_KeyMenu_ = 16,
+        ImGuiNavInput_KeyLeft_ = 17,
+        ImGuiNavInput_KeyRight_ = 18,
+        ImGuiNavInput_KeyUp_ = 19,
+        ImGuiNavInput_KeyDown_ = 20,
+        ImGuiNavInput_COUNT = 21,
+        ImGuiNavInput_InternalStart_ = 16,
+    }
+
+    alias ImGuiTreeNodeFlags_ = int;
+    enum {
+        ImGuiTreeNodeFlags_None = 0,
+        ImGuiTreeNodeFlags_Selected = 1,
+        ImGuiTreeNodeFlags_Framed = 2,
+        ImGuiTreeNodeFlags_AllowItemOverlap = 4,
+        ImGuiTreeNodeFlags_NoTreePushOnOpen = 8,
+        ImGuiTreeNodeFlags_NoAutoOpenOnLog = 16,
+        ImGuiTreeNodeFlags_DefaultOpen = 32,
+        ImGuiTreeNodeFlags_OpenOnDoubleClick = 64,
+        ImGuiTreeNodeFlags_OpenOnArrow = 128,
+        ImGuiTreeNodeFlags_Leaf = 256,
+        ImGuiTreeNodeFlags_Bullet = 512,
+        ImGuiTreeNodeFlags_FramePadding = 1024,
+        ImGuiTreeNodeFlags_SpanAvailWidth = 2048,
+        ImGuiTreeNodeFlags_SpanFullWidth = 4096,
+        ImGuiTreeNodeFlags_NavLeftJumpsBackHere = 8192,
+        ImGuiTreeNodeFlags_CollapsingHeader = 26,
+    }
+
+    alias ImGuiDir_ = int;
+    enum {
+        ImGuiDir_None = -1,
+        ImGuiDir_Left = 0,
+        ImGuiDir_Right = 1,
+        ImGuiDir_Up = 2,
+        ImGuiDir_Down = 3,
+        ImGuiDir_COUNT = 4,
+    }
+
+    alias ImGuiNavMoveFlags_ = int;
+    enum {
+        ImGuiNavMoveFlags_None = 0,
+        ImGuiNavMoveFlags_LoopX = 1,
+        ImGuiNavMoveFlags_LoopY = 2,
+        ImGuiNavMoveFlags_WrapX = 4,
+        ImGuiNavMoveFlags_WrapY = 8,
+        ImGuiNavMoveFlags_AllowCurrentNavId = 16,
+        ImGuiNavMoveFlags_AlsoScoreVisibleSet = 32,
+        ImGuiNavMoveFlags_ScrollToEdge = 64,
+    }
+
+    alias ImGuiTextFlags_ = int;
+    enum {
+        ImGuiTextFlags_None = 0,
+        ImGuiTextFlags_NoWidthForLargeClippedText = 1,
+    }
+
+    alias ImGuiColorEditFlags_ = int;
+    enum {
+        ImGuiColorEditFlags_None = 0,
+        ImGuiColorEditFlags_NoAlpha = 2,
+        ImGuiColorEditFlags_NoPicker = 4,
+        ImGuiColorEditFlags_NoOptions = 8,
+        ImGuiColorEditFlags_NoSmallPreview = 16,
+        ImGuiColorEditFlags_NoInputs = 32,
+        ImGuiColorEditFlags_NoTooltip = 64,
+        ImGuiColorEditFlags_NoLabel = 128,
+        ImGuiColorEditFlags_NoSidePreview = 256,
+        ImGuiColorEditFlags_NoDragDrop = 512,
+        ImGuiColorEditFlags_NoBorder = 1024,
+        ImGuiColorEditFlags_AlphaBar = 65536,
+        ImGuiColorEditFlags_AlphaPreview = 131072,
+        ImGuiColorEditFlags_AlphaPreviewHalf = 262144,
+        ImGuiColorEditFlags_HDR = 524288,
+        ImGuiColorEditFlags_DisplayRGB = 1048576,
+        ImGuiColorEditFlags_DisplayHSV = 2097152,
+        ImGuiColorEditFlags_DisplayHex = 4194304,
+        ImGuiColorEditFlags_Uint8 = 8388608,
+        ImGuiColorEditFlags_Float = 16777216,
+        ImGuiColorEditFlags_PickerHueBar = 33554432,
+        ImGuiColorEditFlags_PickerHueWheel = 67108864,
+        ImGuiColorEditFlags_InputRGB = 134217728,
+        ImGuiColorEditFlags_InputHSV = 268435456,
+        ImGuiColorEditFlags__OptionsDefault = 177209344,
+        ImGuiColorEditFlags__DisplayMask = 7340032,
+        ImGuiColorEditFlags__DataTypeMask = 25165824,
+        ImGuiColorEditFlags__PickerMask = 100663296,
+        ImGuiColorEditFlags__InputMask = 402653184,
+    }
+
+    alias ImGuiTabBarFlags_ = int;
+    enum {
+        ImGuiTabBarFlags_None = 0,
+        ImGuiTabBarFlags_Reorderable = 1,
+        ImGuiTabBarFlags_AutoSelectNewTabs = 2,
+        ImGuiTabBarFlags_TabListPopupButton = 4,
+        ImGuiTabBarFlags_NoCloseWithMiddleMouseButton = 8,
+        ImGuiTabBarFlags_NoTabListScrollingButtons = 16,
+        ImGuiTabBarFlags_NoTooltip = 32,
+        ImGuiTabBarFlags_FittingPolicyResizeDown = 64,
+        ImGuiTabBarFlags_FittingPolicyScroll = 128,
+        ImGuiTabBarFlags_FittingPolicyMask_ = 192,
+        ImGuiTabBarFlags_FittingPolicyDefault_ = 64,
+    }
+
+    alias ImDrawListFlags_ = int;
+    enum {
+        ImDrawListFlags_None = 0,
+        ImDrawListFlags_AntiAliasedLines = 1,
+        ImDrawListFlags_AntiAliasedLinesUseTex = 2,
+        ImDrawListFlags_AntiAliasedFill = 4,
+        ImDrawListFlags_AllowVtxOffset = 8,
+    }
+
+    alias ImGuiWindowFlags_ = int;
+    enum {
+        ImGuiWindowFlags_None = 0,
+        ImGuiWindowFlags_NoTitleBar = 1,
+        ImGuiWindowFlags_NoResize = 2,
+        ImGuiWindowFlags_NoMove = 4,
+        ImGuiWindowFlags_NoScrollbar = 8,
+        ImGuiWindowFlags_NoScrollWithMouse = 16,
+        ImGuiWindowFlags_NoCollapse = 32,
+        ImGuiWindowFlags_AlwaysAutoResize = 64,
+        ImGuiWindowFlags_NoBackground = 128,
+        ImGuiWindowFlags_NoSavedSettings = 256,
+        ImGuiWindowFlags_NoMouseInputs = 512,
+        ImGuiWindowFlags_MenuBar = 1024,
+        ImGuiWindowFlags_HorizontalScrollbar = 2048,
+        ImGuiWindowFlags_NoFocusOnAppearing = 4096,
+        ImGuiWindowFlags_NoBringToFrontOnFocus = 8192,
+        ImGuiWindowFlags_AlwaysVerticalScrollbar = 16384,
+        ImGuiWindowFlags_AlwaysHorizontalScrollbar = 32768,
+        ImGuiWindowFlags_AlwaysUseWindowPadding = 65536,
+        ImGuiWindowFlags_NoNavInputs = 262144,
+        ImGuiWindowFlags_NoNavFocus = 524288,
+        ImGuiWindowFlags_UnsavedDocument = 1048576,
+        ImGuiWindowFlags_NoDocking = 2097152,
+        ImGuiWindowFlags_NoNav = 786432,
+        ImGuiWindowFlags_NoDecoration = 43,
+        ImGuiWindowFlags_NoInputs = 786944,
+        ImGuiWindowFlags_NavFlattened = 8388608,
+        ImGuiWindowFlags_ChildWindow = 16777216,
+        ImGuiWindowFlags_Tooltip = 33554432,
+        ImGuiWindowFlags_Popup = 67108864,
+        ImGuiWindowFlags_Modal = 134217728,
+        ImGuiWindowFlags_ChildMenu = 268435456,
+        ImGuiWindowFlags_DockNodeHost = 536870912,
+    }
+
+    alias ImGuiCond_ = int;
+    enum {
+        ImGuiCond_None = 0,
+        ImGuiCond_Always = 1,
+        ImGuiCond_Once = 2,
+        ImGuiCond_FirstUseEver = 4,
+        ImGuiCond_Appearing = 8,
+    }
+
+    alias ImGuiSelectableFlags_ = int;
+    enum {
+        ImGuiSelectableFlags_None = 0,
+        ImGuiSelectableFlags_DontClosePopups = 1,
+        ImGuiSelectableFlags_SpanAllColumns = 2,
+        ImGuiSelectableFlags_AllowDoubleClick = 4,
+        ImGuiSelectableFlags_Disabled = 8,
+        ImGuiSelectableFlags_AllowItemOverlap = 16,
+    }
+
+    alias ImGuiNextWindowDataFlags_ = int;
+    enum {
+        ImGuiNextWindowDataFlags_None = 0,
+        ImGuiNextWindowDataFlags_HasPos = 1,
+        ImGuiNextWindowDataFlags_HasSize = 2,
+        ImGuiNextWindowDataFlags_HasContentSize = 4,
+        ImGuiNextWindowDataFlags_HasCollapsed = 8,
+        ImGuiNextWindowDataFlags_HasSizeConstraint = 16,
+        ImGuiNextWindowDataFlags_HasFocus = 32,
+        ImGuiNextWindowDataFlags_HasBgAlpha = 64,
+        ImGuiNextWindowDataFlags_HasScroll = 128,
+        ImGuiNextWindowDataFlags_HasViewport = 256,
+        ImGuiNextWindowDataFlags_HasDock = 512,
+        ImGuiNextWindowDataFlags_HasWindowClass = 1024,
+    }
+
+    alias ImGuiStyleVar_ = int;
+    enum {
+        ImGuiStyleVar_Alpha = 0,
+        ImGuiStyleVar_WindowPadding = 1,
+        ImGuiStyleVar_WindowRounding = 2,
+        ImGuiStyleVar_WindowBorderSize = 3,
+        ImGuiStyleVar_WindowMinSize = 4,
+        ImGuiStyleVar_WindowTitleAlign = 5,
+        ImGuiStyleVar_ChildRounding = 6,
+        ImGuiStyleVar_ChildBorderSize = 7,
+        ImGuiStyleVar_PopupRounding = 8,
+        ImGuiStyleVar_PopupBorderSize = 9,
+        ImGuiStyleVar_FramePadding = 10,
+        ImGuiStyleVar_FrameRounding = 11,
+        ImGuiStyleVar_FrameBorderSize = 12,
+        ImGuiStyleVar_ItemSpacing = 13,
+        ImGuiStyleVar_ItemInnerSpacing = 14,
+        ImGuiStyleVar_IndentSpacing = 15,
+        ImGuiStyleVar_ScrollbarSize = 16,
+        ImGuiStyleVar_ScrollbarRounding = 17,
+        ImGuiStyleVar_GrabMinSize = 18,
+        ImGuiStyleVar_GrabRounding = 19,
+        ImGuiStyleVar_TabRounding = 20,
+        ImGuiStyleVar_ButtonTextAlign = 21,
+        ImGuiStyleVar_SelectableTextAlign = 22,
+        ImGuiStyleVar_COUNT = 23,
+    }
+
+    alias ImDrawCornerFlags_ = int;
+    enum {
+        ImDrawCornerFlags_None = 0,
+        ImDrawCornerFlags_TopLeft = 1,
+        ImDrawCornerFlags_TopRight = 2,
+        ImDrawCornerFlags_BotLeft = 4,
+        ImDrawCornerFlags_BotRight = 8,
+        ImDrawCornerFlags_Top = 3,
+        ImDrawCornerFlags_Bot = 12,
+        ImDrawCornerFlags_Left = 5,
+        ImDrawCornerFlags_Right = 10,
+        ImDrawCornerFlags_All = 15,
+    }
+
+    alias ImGuiComboFlags_ = int;
+    enum {
+        ImGuiComboFlags_None = 0,
+        ImGuiComboFlags_PopupAlignLeft = 1,
+        ImGuiComboFlags_HeightSmall = 2,
+        ImGuiComboFlags_HeightRegular = 4,
+        ImGuiComboFlags_HeightLarge = 8,
+        ImGuiComboFlags_HeightLargest = 16,
+        ImGuiComboFlags_NoArrowButton = 32,
+        ImGuiComboFlags_NoPreview = 64,
+        ImGuiComboFlags_HeightMask_ = 30,
+    }
+
+    alias ImGuiBackendFlags_ = int;
+    enum {
+        ImGuiBackendFlags_None = 0,
+        ImGuiBackendFlags_HasGamepad = 1,
+        ImGuiBackendFlags_HasMouseCursors = 2,
+        ImGuiBackendFlags_HasSetMousePos = 4,
+        ImGuiBackendFlags_RendererHasVtxOffset = 8,
+        ImGuiBackendFlags_PlatformHasViewports = 1024,
+        ImGuiBackendFlags_HasMouseHoveredViewport = 2048,
+        ImGuiBackendFlags_RendererHasViewports = 4096,
+    }
+
+    alias ImFontAtlasFlags_ = int;
+    enum {
+        ImFontAtlasFlags_None = 0,
+        ImFontAtlasFlags_NoPowerOfTwoHeight = 1,
+        ImFontAtlasFlags_NoMouseCursors = 2,
+        ImFontAtlasFlags_NoBakedLines = 4,
+    }
+
+    alias ImGuiItemFlags_ = int;
+    enum {
+        ImGuiItemFlags_None = 0,
+        ImGuiItemFlags_NoTabStop = 1,
+        ImGuiItemFlags_ButtonRepeat = 2,
+        ImGuiItemFlags_Disabled = 4,
+        ImGuiItemFlags_NoNav = 8,
+        ImGuiItemFlags_NoNavDefaultFocus = 16,
+        ImGuiItemFlags_SelectableDontClosePopup = 32,
+        ImGuiItemFlags_MixedValue = 64,
+        ImGuiItemFlags_ReadOnly = 128,
+        ImGuiItemFlags_Default_ = 0,
+    }
+
+    alias ImGuiNavLayer = int;
+    enum {
+        ImGuiNavLayer_Main = 0,
+        ImGuiNavLayer_Menu = 1,
+        ImGuiNavLayer_COUNT = 2,
+    }
+
+    alias ImGuiDockNodeState = int;
+    enum {
+        ImGuiDockNodeState_Unknown = 0,
+        ImGuiDockNodeState_HostWindowHiddenBecauseSingleWindow = 1,
+        ImGuiDockNodeState_HostWindowHiddenBecauseWindowsAreResizing = 2,
+        ImGuiDockNodeState_HostWindowVisible = 3,
+    }
+
+    alias ImGuiAxis = int;
+    enum {
+        ImGuiAxis_None = -1,
+        ImGuiAxis_X = 0,
+        ImGuiAxis_Y = 1,
+    }
+
+    alias ImGuiButtonFlagsPrivate_ = int;
+    enum {
+        ImGuiButtonFlags_PressedOnClick = 16,
+        ImGuiButtonFlags_PressedOnClickRelease = 32,
+        ImGuiButtonFlags_PressedOnClickReleaseAnywhere = 64,
+        ImGuiButtonFlags_PressedOnRelease = 128,
+        ImGuiButtonFlags_PressedOnDoubleClick = 256,
+        ImGuiButtonFlags_PressedOnDragDropHold = 512,
+        ImGuiButtonFlags_Repeat = 1024,
+        ImGuiButtonFlags_FlattenChildren = 2048,
+        ImGuiButtonFlags_AllowItemOverlap = 4096,
+        ImGuiButtonFlags_DontClosePopups = 8192,
+        ImGuiButtonFlags_Disabled = 16384,
+        ImGuiButtonFlags_AlignTextBaseLine = 32768,
+        ImGuiButtonFlags_NoKeyModifiers = 65536,
+        ImGuiButtonFlags_NoHoldingActiveId = 131072,
+        ImGuiButtonFlags_NoNavFocus = 262144,
+        ImGuiButtonFlags_NoHoveredOnFocus = 524288,
+        ImGuiButtonFlags_PressedOnMask_ = 1008,
+        ImGuiButtonFlags_PressedOnDefault_ = 32,
+    }
+
+    alias ImGuiDragDropFlags_ = int;
+    enum {
+        ImGuiDragDropFlags_None = 0,
+        ImGuiDragDropFlags_SourceNoPreviewTooltip = 1,
+        ImGuiDragDropFlags_SourceNoDisableHover = 2,
+        ImGuiDragDropFlags_SourceNoHoldToOpenOthers = 4,
+        ImGuiDragDropFlags_SourceAllowNullID = 8,
+        ImGuiDragDropFlags_SourceExtern = 16,
+        ImGuiDragDropFlags_SourceAutoExpirePayload = 32,
+        ImGuiDragDropFlags_AcceptBeforeDelivery = 1024,
+        ImGuiDragDropFlags_AcceptNoDrawDefaultRect = 2048,
+        ImGuiDragDropFlags_AcceptNoPreviewTooltip = 4096,
+        ImGuiDragDropFlags_AcceptPeekOnly = 3072,
+    }
+
+    alias ImGuiLogType = int;
+    enum {
+        ImGuiLogType_None = 0,
+        ImGuiLogType_TTY = 1,
+        ImGuiLogType_File = 2,
+        ImGuiLogType_Buffer = 3,
+        ImGuiLogType_Clipboard = 4,
+    }
+
+    alias ImGuiNavForward = int;
+    enum {
+        ImGuiNavForward_None = 0,
+        ImGuiNavForward_ForwardQueued = 1,
+        ImGuiNavForward_ForwardActive = 2,
+    }
+
+    alias ImGuiNavHighlightFlags_ = int;
+    enum {
+        ImGuiNavHighlightFlags_None = 0,
+        ImGuiNavHighlightFlags_TypeDefault = 1,
+        ImGuiNavHighlightFlags_TypeThin = 2,
+        ImGuiNavHighlightFlags_AlwaysDraw = 4,
+        ImGuiNavHighlightFlags_NoRounding = 8,
+    }
+
+    alias ImGuiTreeNodeFlagsPrivate_ = int;
+    enum {
+        ImGuiTreeNodeFlags_ClipLabelForTrailingButton = 1048576,
+    }
+
+    alias ImGuiFocusedFlags_ = int;
+    enum {
+        ImGuiFocusedFlags_None = 0,
+        ImGuiFocusedFlags_ChildWindows = 1,
+        ImGuiFocusedFlags_RootWindow = 2,
+        ImGuiFocusedFlags_AnyWindow = 4,
+        ImGuiFocusedFlags_RootAndChildWindows = 3,
+    }
+
+    alias ImGuiTabItemFlagsPrivate_ = int;
+    enum {
+        ImGuiTabItemFlags_NoCloseButton = 1048576,
+        ImGuiTabItemFlags_Button = 2097152,
+        ImGuiTabItemFlags_Unsorted = 4194304,
+        ImGuiTabItemFlags_Preview = 8388608,
+    }
+
+    alias ImGuiSliderFlags_ = int;
+    enum {
+        ImGuiSliderFlags_None = 0,
+        ImGuiSliderFlags_AlwaysClamp = 16,
+        ImGuiSliderFlags_Logarithmic = 32,
+        ImGuiSliderFlags_NoRoundToFormat = 64,
+        ImGuiSliderFlags_NoInput = 128,
+        ImGuiSliderFlags_InvalidMask_ = 1879048207,
+    }
+
+    alias ImGuiDataType_ = int;
+    enum {
+        ImGuiDataType_S8 = 0,
+        ImGuiDataType_U8 = 1,
+        ImGuiDataType_S16 = 2,
+        ImGuiDataType_U16 = 3,
+        ImGuiDataType_S32 = 4,
+        ImGuiDataType_U32 = 5,
+        ImGuiDataType_S64 = 6,
+        ImGuiDataType_U64 = 7,
+        ImGuiDataType_Float = 8,
+        ImGuiDataType_Double = 9,
+        ImGuiDataType_COUNT = 10,
+    }
+
+    alias ImGuiKey_ = int;
+    enum {
+        ImGuiKey_Tab = 0,
+        ImGuiKey_LeftArrow = 1,
+        ImGuiKey_RightArrow = 2,
+        ImGuiKey_UpArrow = 3,
+        ImGuiKey_DownArrow = 4,
+        ImGuiKey_PageUp = 5,
+        ImGuiKey_PageDown = 6,
+        ImGuiKey_Home = 7,
+        ImGuiKey_End = 8,
+        ImGuiKey_Insert = 9,
+        ImGuiKey_Delete = 10,
+        ImGuiKey_Backspace = 11,
+        ImGuiKey_Space = 12,
+        ImGuiKey_Enter = 13,
+        ImGuiKey_Escape = 14,
+        ImGuiKey_KeyPadEnter = 15,
+        ImGuiKey_A = 16,
+        ImGuiKey_C = 17,
+        ImGuiKey_V = 18,
+        ImGuiKey_X = 19,
+        ImGuiKey_Y = 20,
+        ImGuiKey_Z = 21,
+        ImGuiKey_COUNT = 22,
+    }
+
+    alias ImGuiCol_ = int;
+    enum {
+        ImGuiCol_Text = 0,
+        ImGuiCol_TextDisabled = 1,
+        ImGuiCol_WindowBg = 2,
+        ImGuiCol_ChildBg = 3,
+        ImGuiCol_PopupBg = 4,
+        ImGuiCol_Border = 5,
+        ImGuiCol_BorderShadow = 6,
+        ImGuiCol_FrameBg = 7,
+        ImGuiCol_FrameBgHovered = 8,
+        ImGuiCol_FrameBgActive = 9,
+        ImGuiCol_TitleBg = 10,
+        ImGuiCol_TitleBgActive = 11,
+        ImGuiCol_TitleBgCollapsed = 12,
+        ImGuiCol_MenuBarBg = 13,
+        ImGuiCol_ScrollbarBg = 14,
+        ImGuiCol_ScrollbarGrab = 15,
+        ImGuiCol_ScrollbarGrabHovered = 16,
+        ImGuiCol_ScrollbarGrabActive = 17,
+        ImGuiCol_CheckMark = 18,
+        ImGuiCol_SliderGrab = 19,
+        ImGuiCol_SliderGrabActive = 20,
+        ImGuiCol_Button = 21,
+        ImGuiCol_ButtonHovered = 22,
+        ImGuiCol_ButtonActive = 23,
+        ImGuiCol_Header = 24,
+        ImGuiCol_HeaderHovered = 25,
+        ImGuiCol_HeaderActive = 26,
+        ImGuiCol_Separator = 27,
+        ImGuiCol_SeparatorHovered = 28,
+        ImGuiCol_SeparatorActive = 29,
+        ImGuiCol_ResizeGrip = 30,
+        ImGuiCol_ResizeGripHovered = 31,
+        ImGuiCol_ResizeGripActive = 32,
+        ImGuiCol_Tab = 33,
+        ImGuiCol_TabHovered = 34,
+        ImGuiCol_TabActive = 35,
+        ImGuiCol_TabUnfocused = 36,
+        ImGuiCol_TabUnfocusedActive = 37,
+        ImGuiCol_DockingPreview = 38,
+        ImGuiCol_DockingEmptyBg = 39,
+        ImGuiCol_PlotLines = 40,
+        ImGuiCol_PlotLinesHovered = 41,
+        ImGuiCol_PlotHistogram = 42,
+        ImGuiCol_PlotHistogramHovered = 43,
+        ImGuiCol_TextSelectedBg = 44,
+        ImGuiCol_DragDropTarget = 45,
+        ImGuiCol_NavHighlight = 46,
+        ImGuiCol_NavWindowingHighlight = 47,
+        ImGuiCol_NavWindowingDimBg = 48,
+        ImGuiCol_ModalWindowDimBg = 49,
+        ImGuiCol_COUNT = 50,
+    }
+
+    alias ImGuiButtonFlags_ = int;
+    enum {
+        ImGuiButtonFlags_None = 0,
+        ImGuiButtonFlags_MouseButtonLeft = 1,
+        ImGuiButtonFlags_MouseButtonRight = 2,
+        ImGuiButtonFlags_MouseButtonMiddle = 4,
+        ImGuiButtonFlags_MouseButtonMask_ = 7,
+        ImGuiButtonFlags_MouseButtonDefault_ = 1,
+    }
+
+    alias ImGuiViewportFlags_ = int;
+    enum {
+        ImGuiViewportFlags_None = 0,
+        ImGuiViewportFlags_NoDecoration = 1,
+        ImGuiViewportFlags_NoTaskBarIcon = 2,
+        ImGuiViewportFlags_NoFocusOnAppearing = 4,
+        ImGuiViewportFlags_NoFocusOnClick = 8,
+        ImGuiViewportFlags_NoInputs = 16,
+        ImGuiViewportFlags_NoRendererClear = 32,
+        ImGuiViewportFlags_TopMost = 64,
+        ImGuiViewportFlags_Minimized = 128,
+        ImGuiViewportFlags_NoAutoMerge = 256,
+        ImGuiViewportFlags_CanHostOtherWindows = 512,
+    }
+
+    alias ImGuiSelectableFlagsPrivate_ = int;
+    enum {
+        ImGuiSelectableFlags_NoHoldingActiveID = 1048576,
+        ImGuiSelectableFlags_SelectOnClick = 2097152,
+        ImGuiSelectableFlags_SelectOnRelease = 4194304,
+        ImGuiSelectableFlags_SpanAvailWidth = 8388608,
+        ImGuiSelectableFlags_DrawHoveredWhenHeld = 16777216,
+        ImGuiSelectableFlags_SetNavIdOnHover = 33554432,
+        ImGuiSelectableFlags_NoPadWithHalfSpacing = 67108864,
+    }
+
+    alias ImGuiInputSource = int;
+    enum {
+        ImGuiInputSource_None = 0,
+        ImGuiInputSource_Mouse = 1,
+        ImGuiInputSource_Nav = 2,
+        ImGuiInputSource_NavKeyboard = 3,
+        ImGuiInputSource_NavGamepad = 4,
+        ImGuiInputSource_COUNT = 5,
+    }
+
+    alias ImGuiMouseCursor_ = int;
+    enum {
+        ImGuiMouseCursor_None = -1,
+        ImGuiMouseCursor_Arrow = 0,
+        ImGuiMouseCursor_TextInput = 1,
+        ImGuiMouseCursor_ResizeAll = 2,
+        ImGuiMouseCursor_ResizeNS = 3,
+        ImGuiMouseCursor_ResizeEW = 4,
+        ImGuiMouseCursor_ResizeNESW = 5,
+        ImGuiMouseCursor_ResizeNWSE = 6,
+        ImGuiMouseCursor_Hand = 7,
+        ImGuiMouseCursor_NotAllowed = 8,
+        ImGuiMouseCursor_COUNT = 9,
+    }
+
+    alias ImGuiPlotType = int;
+    enum {
+        ImGuiPlotType_Lines = 0,
+        ImGuiPlotType_Histogram = 1,
+    }
+
+    alias ImGuiColumnsFlags_ = int;
+    enum {
+        ImGuiColumnsFlags_None = 0,
+        ImGuiColumnsFlags_NoBorder = 1,
+        ImGuiColumnsFlags_NoResize = 2,
+        ImGuiColumnsFlags_NoPreserveWidths = 4,
+        ImGuiColumnsFlags_NoForceWithinWindow = 8,
+        ImGuiColumnsFlags_GrowParentContentsSize = 16,
+    }
+
+    alias ImGuiDockNodeFlags_ = int;
+    enum {
+        ImGuiDockNodeFlags_None = 0,
+        ImGuiDockNodeFlags_KeepAliveOnly = 1,
+        ImGuiDockNodeFlags_NoDockingInCentralNode = 4,
+        ImGuiDockNodeFlags_PassthruCentralNode = 8,
+        ImGuiDockNodeFlags_NoSplit = 16,
+        ImGuiDockNodeFlags_NoResize = 32,
+        ImGuiDockNodeFlags_AutoHideTabBar = 64,
+    }
+
+    alias ImGuiInputTextFlags_ = int;
+    enum {
+        ImGuiInputTextFlags_None = 0,
+        ImGuiInputTextFlags_CharsDecimal = 1,
+        ImGuiInputTextFlags_CharsHexadecimal = 2,
+        ImGuiInputTextFlags_CharsUppercase = 4,
+        ImGuiInputTextFlags_CharsNoBlank = 8,
+        ImGuiInputTextFlags_AutoSelectAll = 16,
+        ImGuiInputTextFlags_EnterReturnsTrue = 32,
+        ImGuiInputTextFlags_CallbackCompletion = 64,
+        ImGuiInputTextFlags_CallbackHistory = 128,
+        ImGuiInputTextFlags_CallbackAlways = 256,
+        ImGuiInputTextFlags_CallbackCharFilter = 512,
+        ImGuiInputTextFlags_AllowTabInput = 1024,
+        ImGuiInputTextFlags_CtrlEnterForNewLine = 2048,
+        ImGuiInputTextFlags_NoHorizontalScroll = 4096,
+        ImGuiInputTextFlags_AlwaysInsertMode = 8192,
+        ImGuiInputTextFlags_ReadOnly = 16384,
+        ImGuiInputTextFlags_Password = 32768,
+        ImGuiInputTextFlags_NoUndoRedo = 65536,
+        ImGuiInputTextFlags_CharsScientific = 131072,
+        ImGuiInputTextFlags_CallbackResize = 262144,
+        ImGuiInputTextFlags_CallbackEdit = 524288,
+        ImGuiInputTextFlags_Multiline = 1048576,
+        ImGuiInputTextFlags_NoMarkEdited = 2097152,
+    }
+
+    alias ImGuiPopupFlags_ = int;
+    enum {
+        ImGuiPopupFlags_None = 0,
+        ImGuiPopupFlags_MouseButtonLeft = 0,
+        ImGuiPopupFlags_MouseButtonRight = 1,
+        ImGuiPopupFlags_MouseButtonMiddle = 2,
+        ImGuiPopupFlags_MouseButtonMask_ = 31,
+        ImGuiPopupFlags_MouseButtonDefault_ = 1,
+        ImGuiPopupFlags_NoOpenOverExistingPopup = 32,
+        ImGuiPopupFlags_NoOpenOverItems = 64,
+        ImGuiPopupFlags_AnyPopupId = 128,
+        ImGuiPopupFlags_AnyPopupLevel = 256,
+        ImGuiPopupFlags_AnyPopup = 384,
+    }
+
+    alias ImGuiSeparatorFlags_ = int;
+    enum {
+        ImGuiSeparatorFlags_None = 0,
+        ImGuiSeparatorFlags_Horizontal = 1,
+        ImGuiSeparatorFlags_Vertical = 2,
+        ImGuiSeparatorFlags_SpanAllColumns = 4,
+    }
+
+    alias ImGuiHoveredFlags_ = int;
+    enum {
+        ImGuiHoveredFlags_None = 0,
+        ImGuiHoveredFlags_ChildWindows = 1,
+        ImGuiHoveredFlags_RootWindow = 2,
+        ImGuiHoveredFlags_AnyWindow = 4,
+        ImGuiHoveredFlags_AllowWhenBlockedByPopup = 8,
+        ImGuiHoveredFlags_AllowWhenBlockedByActiveItem = 32,
+        ImGuiHoveredFlags_AllowWhenOverlapped = 64,
+        ImGuiHoveredFlags_AllowWhenDisabled = 128,
+        ImGuiHoveredFlags_RectOnly = 104,
+        ImGuiHoveredFlags_RootAndChildWindows = 3,
+    }
+
+
+    struct ImGuiSizeCallbackData {
+        void* UserData;
+        ImVec2 Pos;
+        ImVec2 CurrentSize;
+        ImVec2 DesiredSize;
+    }
+
+    struct ImGuiShrinkWidthItem {
+        int Index;
+        float Width;
+    }
+
+    struct ImGuiStyleMod {
+        ImGuiStyleVar VarIdx;
+        union { int[2] BackupInt; float[2] BackupFloat;} ;
+    }
+
+    struct ImRect {
+        ImVec2 Min;
+        ImVec2 Max;
+    }
+
+    struct ImFontGlyphRangesBuilder {
+        ImVector!ImU32 UsedChars;
+    }
+
+    struct ImGuiDataTypeTempStorage {
+        ImU8[8] Data;
+    }
+
+    struct ImGuiIO {
+        ImGuiConfigFlags ConfigFlags;
+        ImGuiBackendFlags BackendFlags;
+        ImVec2 DisplaySize;
+        float DeltaTime;
+        float IniSavingRate;
+        const(char)* IniFilename;
+        const(char)* LogFilename;
+        float MouseDoubleClickTime;
+        float MouseDoubleClickMaxDist;
+        float MouseDragThreshold;
+        int[ImGuiKey_COUNT] KeyMap;
+        float KeyRepeatDelay;
+        float KeyRepeatRate;
+        void* UserData;
+        ImFontAtlas* Fonts;
+        float FontGlobalScale;
+        bool FontAllowUserScaling;
+        ImFont* FontDefault;
+        ImVec2 DisplayFramebufferScale;
+        bool ConfigDockingNoSplit;
+        bool ConfigDockingWithShift;
+        bool ConfigDockingAlwaysTabBar;
+        bool ConfigDockingTransparentPayload;
+        bool ConfigViewportsNoAutoMerge;
+        bool ConfigViewportsNoTaskBarIcon;
+        bool ConfigViewportsNoDecoration;
+        bool ConfigViewportsNoDefaultParent;
+        bool MouseDrawCursor;
+        bool ConfigMacOSXBehaviors;
+        bool ConfigInputTextCursorBlink;
+        bool ConfigWindowsResizeFromEdges;
+        bool ConfigWindowsMoveFromTitleBarOnly;
+        float ConfigWindowsMemoryCompactTimer;
+        const(char)* BackendPlatformName;
+        const(char)* BackendRendererName;
+        void* BackendPlatformUserData;
+        void* BackendRendererUserData;
+        void* BackendLanguageUserData;
+        const(char)* function(void* user_data) GetClipboardTextFn;
+        void function(void* user_data,const(char)* text) SetClipboardTextFn;
+        void* ClipboardUserData;
+        void* RenderDrawListsFnUnused;
+        ImVec2 MousePos;
+        bool[5] MouseDown;
+        float MouseWheel;
+        float MouseWheelH;
+        ImGuiID MouseHoveredViewport;
+        bool KeyCtrl;
+        bool KeyShift;
+        bool KeyAlt;
+        bool KeySuper;
+        bool[512] KeysDown;
+        float[ImGuiNavInput_COUNT] NavInputs;
+        bool WantCaptureMouse;
+        bool WantCaptureKeyboard;
+        bool WantTextInput;
+        bool WantSetMousePos;
+        bool WantSaveIniSettings;
+        bool NavActive;
+        bool NavVisible;
+        float Framerate;
+        int MetricsRenderVertices;
+        int MetricsRenderIndices;
+        int MetricsRenderWindows;
+        int MetricsActiveWindows;
+        int MetricsActiveAllocations;
+        ImVec2 MouseDelta;
+        ImGuiKeyModFlags KeyMods;
+        ImVec2 MousePosPrev;
+        ImVec2[5] MouseClickedPos;
+        double[5] MouseClickedTime;
+        bool[5] MouseClicked;
+        bool[5] MouseDoubleClicked;
+        bool[5] MouseReleased;
+        bool[5] MouseDownOwned;
+        bool[5] MouseDownWasDoubleClick;
+        float[5] MouseDownDuration;
+        float[5] MouseDownDurationPrev;
+        ImVec2[5] MouseDragMaxDistanceAbs;
+        float[5] MouseDragMaxDistanceSqr;
+        float[512] KeysDownDuration;
+        float[512] KeysDownDurationPrev;
+        float[ImGuiNavInput_COUNT] NavInputsDownDuration;
+        float[ImGuiNavInput_COUNT] NavInputsDownDurationPrev;
+        float PenPressure;
+        ImWchar16 InputQueueSurrogate;
+        ImVector!ImWchar InputQueueCharacters;
+    }
+
+    struct ImGuiTextFilter {
+        char[256] InputBuf;
+        ImVector!ImGuiTextRange Filters;
+        int CountGrep;
+    }
+
+    struct ImGuiDataTypeInfo {
+        size_t Size;
+        const(char)* Name;
+        const(char)* PrintFmt;
+        const(char)* ScanFmt;
+    }
+
+    struct ImFontAtlasCustomRect {
+        ushort Width;
+        ushort Height;
+        ushort X;
+        ushort Y;
+        uint GlyphID;
+        float GlyphAdvanceX;
+        ImVec2 GlyphOffset;
+        ImFont* Font;
+    }
+
+    struct ImGuiColumns {
+        ImGuiID ID;
+        ImGuiColumnsFlags Flags;
+        bool IsFirstFrame;
+        bool IsBeingResized;
+        int Current;
+        int Count;
+        float OffMinX;
+        float OffMaxX;
+        float LineMinY;
+        float LineMaxY;
+        float HostCursorPosY;
+        float HostCursorMaxPosX;
+        ImRect HostInitialClipRect;
+        ImRect HostBackupClipRect;
+        ImRect HostBackupParentWorkRect;
+        ImVector!ImGuiColumnData Columns;
+        ImDrawListSplitter Splitter;
+    }
+
+    struct ImGuiWindow {
+        char* Name;
+        ImGuiID ID;
+        ImGuiWindowFlags Flags;
+        ImGuiWindowFlags FlagsPreviousFrame;
+        ImGuiWindowClass WindowClass;
+        ImGuiViewportP* Viewport;
+        ImGuiID ViewportId;
+        ImVec2 ViewportPos;
+        int ViewportAllowPlatformMonitorExtend;
+        ImVec2 Pos;
+        ImVec2 Size;
+        ImVec2 SizeFull;
+        ImVec2 ContentSize;
+        ImVec2 ContentSizeExplicit;
+        ImVec2 WindowPadding;
+        float WindowRounding;
+        float WindowBorderSize;
+        int NameBufLen;
+        ImGuiID MoveId;
+        ImGuiID ChildId;
+        ImVec2 Scroll;
+        ImVec2 ScrollMax;
+        ImVec2 ScrollTarget;
+        ImVec2 ScrollTargetCenterRatio;
+        ImVec2 ScrollTargetEdgeSnapDist;
+        ImVec2 ScrollbarSizes;
+        bool ScrollbarX;
+        bool ScrollbarY;
+        bool ViewportOwned;
+        bool Active;
+        bool WasActive;
+        bool WriteAccessed;
+        bool Collapsed;
+        bool WantCollapseToggle;
+        bool SkipItems;
+        bool Appearing;
+        bool Hidden;
+        bool IsFallbackWindow;
+        bool HasCloseButton;
+        byte ResizeBorderHeld;
+        short BeginCount;
+        short BeginOrderWithinParent;
+        short BeginOrderWithinContext;
+        ImGuiID PopupId;
+        ImS8 AutoFitFramesX;
+        ImS8 AutoFitFramesY;
+        ImS8 AutoFitChildAxises;
+        bool AutoFitOnlyGrows;
+        ImGuiDir AutoPosLastDirection;
+        int HiddenFramesCanSkipItems;
+        int HiddenFramesCannotSkipItems;
+        ImGuiCond SetWindowPosAllowFlags;
+        ImGuiCond SetWindowSizeAllowFlags;
+        ImGuiCond SetWindowCollapsedAllowFlags;
+        ImGuiCond SetWindowDockAllowFlags;
+        ImVec2 SetWindowPosVal;
+        ImVec2 SetWindowPosPivot;
+        ImVector!ImGuiID IDStack;
+        ImGuiWindowTempData DC;
+        ImRect OuterRectClipped;
+        ImRect InnerRect;
+        ImRect InnerClipRect;
+        ImRect WorkRect;
+        ImRect ParentWorkRect;
+        ImRect ClipRect;
+        ImRect ContentRegionRect;
+        ImVec2ih HitTestHoleSize;
+        ImVec2ih HitTestHoleOffset;
+        int LastFrameActive;
+        int LastFrameJustFocused;
+        float LastTimeActive;
+        float ItemWidthDefault;
+        ImGuiStorage StateStorage;
+        ImVector!ImGuiColumns ColumnsStorage;
+        float FontWindowScale;
+        float FontDpiScale;
+        int SettingsOffset;
+        ImDrawList* DrawList;
+        ImDrawList DrawListInst;
+        ImGuiWindow* ParentWindow;
+        ImGuiWindow* RootWindow;
+        ImGuiWindow* RootWindowDockStop;
+        ImGuiWindow* RootWindowForTitleBarHighlight;
+        ImGuiWindow* RootWindowForNav;
+        ImGuiWindow* NavLastChildNavWindow;
+        ImGuiID[ImGuiNavLayer_COUNT] NavLastIds;
+        ImRect[ImGuiNavLayer_COUNT] NavRectRel;
+        bool MemoryCompacted;
+        int MemoryDrawListIdxCapacity;
+        int MemoryDrawListVtxCapacity;
+        ImGuiDockNode* DockNode;
+        ImGuiDockNode* DockNodeAsHost;
+        ImGuiID DockId;
+        ImGuiItemStatusFlags DockTabItemStatusFlags;
+        ImRect DockTabItemRect;
+        short DockOrder;
+        bool DockIsActive;
+        bool DockTabIsVisible;
+        bool DockTabWantClose;
+    }
+
+    struct ImGuiPopupData {
+        ImGuiID PopupId;
+        ImGuiWindow* Window;
+        ImGuiWindow* SourceWindow;
+        int OpenFrameCount;
+        ImGuiID OpenParentId;
+        ImVec2 OpenPopupPos;
+        ImVec2 OpenMousePos;
+    }
+
+    struct ImGuiTabBar {
+        ImVector!ImGuiTabItem Tabs;
+        ImGuiID ID;
+        ImGuiID SelectedTabId;
+        ImGuiID NextSelectedTabId;
+        ImGuiID VisibleTabId;
+        int CurrFrameVisible;
+        int PrevFrameVisible;
+        ImRect BarRect;
+        float LastTabContentHeight;
+        float WidthAllTabs;
+        float WidthAllTabsIdeal;
+        float ScrollingAnim;
+        float ScrollingTarget;
+        float ScrollingTargetDistToVisibility;
+        float ScrollingSpeed;
+        float ScrollingRectMinX;
+        float ScrollingRectMaxX;
+        ImGuiTabBarFlags Flags;
+        ImGuiID ReorderRequestTabId;
+        ImS8 ReorderRequestDir;
+        ImS8 TabsActiveCount;
+        bool WantLayout;
+        bool VisibleTabWasSubmitted;
+        bool TabsAddedNew;
+        short LastTabItemIdx;
+        ImVec2 FramePadding;
+        ImGuiTextBuffer TabsNames;
+    }
+
+    struct ImVec2 {
+        float x;
+        float y;
+    }
+
+    struct ImGuiPayload {
+        void* Data;
+        int DataSize;
+        ImGuiID SourceId;
+        ImGuiID SourceParentId;
+        int DataFrameCount;
+        char[32+1] DataType;
+        bool Preview;
+        bool Delivery;
+    }
+
+    struct ImBitVector {
+        ImVector!ImU32 Storage;
+    }
+
+    struct ImDrawVert {
+        ImVec2 pos;
+        ImVec2 uv;
+        ImU32 col;
+    }
+
+    struct ImGuiViewport {
+        ImGuiID ID;
+        ImGuiViewportFlags Flags;
+        ImVec2 Pos;
+        ImVec2 Size;
+        ImVec2 WorkOffsetMin;
+        ImVec2 WorkOffsetMax;
+        float DpiScale;
+        ImDrawData* DrawData;
+        ImGuiID ParentViewportId;
+        void* RendererUserData;
+        void* PlatformUserData;
+        void* PlatformHandle;
+        void* PlatformHandleRaw;
+        bool PlatformRequestMove;
+        bool PlatformRequestResize;
+        bool PlatformRequestClose;
+    }
+
+    struct ImGuiWindowClass {
+        ImGuiID ClassId;
+        ImGuiID ParentViewportId;
+        ImGuiViewportFlags ViewportFlagsOverrideSet;
+        ImGuiViewportFlags ViewportFlagsOverrideClear;
+        ImGuiDockNodeFlags DockNodeFlagsOverrideSet;
+        ImGuiDockNodeFlags DockNodeFlagsOverrideClear;
+        bool DockingAlwaysTabBar;
+        bool DockingAllowUnclassed;
+    }
+
+    struct StbTexteditRow {
+        float x0;
+        float x1;
+        float baseline_y_delta;
+        float ymin;
+        float ymax;
+        int num_chars;
+    }
+
+    struct ImGuiWindowTempData {
+        ImVec2 CursorPos;
+        ImVec2 CursorPosPrevLine;
+        ImVec2 CursorStartPos;
+        ImVec2 CursorMaxPos;
+        ImVec2 CurrLineSize;
+        ImVec2 PrevLineSize;
+        float CurrLineTextBaseOffset;
+        float PrevLineTextBaseOffset;
+        ImVec1 Indent;
+        ImVec1 ColumnsOffset;
+        ImVec1 GroupOffset;
+        ImGuiID LastItemId;
+        ImGuiItemStatusFlags LastItemStatusFlags;
+        ImRect LastItemRect;
+        ImRect LastItemDisplayRect;
+        ImGuiNavLayer NavLayerCurrent;
+        int NavLayerActiveMask;
+        int NavLayerActiveMaskNext;
+        ImGuiID NavFocusScopeIdCurrent;
+        bool NavHideHighlightOneFrame;
+        bool NavHasScroll;
+        bool MenuBarAppending;
+        ImVec2 MenuBarOffset;
+        ImGuiMenuColumns MenuColumns;
+        int TreeDepth;
+        ImU32 TreeJumpToParentOnPopMask;
+        ImVector!ImGuiWindowPtr ChildWindows;
+        ImGuiStorage* StateStorage;
+        ImGuiColumns* CurrentColumns;
+        ImGuiLayoutType LayoutType;
+        ImGuiLayoutType ParentLayoutType;
+        int FocusCounterRegular;
+        int FocusCounterTabStop;
+        ImGuiItemFlags ItemFlags;
+        float ItemWidth;
+        float TextWrapPos;
+        ImVector!ImGuiItemFlags ItemFlagsStack;
+        ImVector!float ItemWidthStack;
+        ImVector!float TextWrapPosStack;
+        ImVector!ImGuiGroupData GroupStack;
+        short[6] StackSizesBackup;
+    }
+
+    struct StbUndoRecord {
+        int where;
+        int insert_length;
+        int delete_length;
+        int char_storage;
+    }
+
+    struct ImGuiGroupData {
+        ImVec2 BackupCursorPos;
+        ImVec2 BackupCursorMaxPos;
+        ImVec1 BackupIndent;
+        ImVec1 BackupGroupOffset;
+        ImVec2 BackupCurrLineSize;
+        float BackupCurrLineTextBaseOffset;
+        ImGuiID BackupActiveIdIsAlive;
+        bool BackupActiveIdPreviousFrameIsAlive;
+        bool EmitItem;
+    }
+
+    struct ImGuiColorMod {
+        ImGuiCol Col;
+        ImVec4 BackupValue;
+    }
+
+    struct ImColor {
+        ImVec4 Value;
+    }
+
+    struct ImGuiInputTextCallbackData {
+        ImGuiInputTextFlags EventFlag;
+        ImGuiInputTextFlags Flags;
+        void* UserData;
+        ImWchar EventChar;
+        ImGuiKey EventKey;
+        char* Buf;
+        int BufTextLen;
+        int BufSize;
+        bool BufDirty;
+        int CursorPos;
+        int SelectionStart;
+        int SelectionEnd;
+    }
+
+    struct ImGuiPlatformIO {
+        void function(ImGuiViewport* vp) Platform_CreateWindow;
+        void function(ImGuiViewport* vp) Platform_DestroyWindow;
+        void function(ImGuiViewport* vp) Platform_ShowWindow;
+        void function(ImGuiViewport* vp,ImVec2 pos) Platform_SetWindowPos;
+        ImVec2 function(ImGuiViewport* vp) Platform_GetWindowPos;
+        void function(ImGuiViewport* vp,ImVec2 size) Platform_SetWindowSize;
+        ImVec2 function(ImGuiViewport* vp) Platform_GetWindowSize;
+        void function(ImGuiViewport* vp) Platform_SetWindowFocus;
+        bool function(ImGuiViewport* vp) Platform_GetWindowFocus;
+        bool function(ImGuiViewport* vp) Platform_GetWindowMinimized;
+        void function(ImGuiViewport* vp,const(char)* str) Platform_SetWindowTitle;
+        void function(ImGuiViewport* vp,float alpha) Platform_SetWindowAlpha;
+        void function(ImGuiViewport* vp) Platform_UpdateWindow;
+        void function(ImGuiViewport* vp,void* render_arg) Platform_RenderWindow;
+        void function(ImGuiViewport* vp,void* render_arg) Platform_SwapBuffers;
+        float function(ImGuiViewport* vp) Platform_GetWindowDpiScale;
+        void function(ImGuiViewport* vp) Platform_OnChangedViewport;
+        void function(ImGuiViewport* vp,ImVec2 pos) Platform_SetImeInputPos;
+        int function(ImGuiViewport* vp,ImU64 vk_inst,const void* vk_allocators,ImU64* out_vk_surface) Platform_CreateVkSurface;
+        void function(ImGuiViewport* vp) Renderer_CreateWindow;
+        void function(ImGuiViewport* vp) Renderer_DestroyWindow;
+        void function(ImGuiViewport* vp,ImVec2 size) Renderer_SetWindowSize;
+        void function(ImGuiViewport* vp,void* render_arg) Renderer_RenderWindow;
+        void function(ImGuiViewport* vp,void* render_arg) Renderer_SwapBuffers;
+        ImVector!ImGuiPlatformMonitor Monitors;
+        ImGuiViewport* MainViewport;
+        ImVector!ImGuiViewportPtr Viewports;
+    }
+
+    struct ImFontGlyph {
+        uint Codepoint;
+        uint Visible;
+        float AdvanceX;
+        float X0;
+        float Y0;
+        float X1;
+        float Y1;
+        float U0;
+        float V0;
+        float U1;
+        float V1;
+    }
+
+    struct ImGuiNextItemData {
+        ImGuiNextItemDataFlags Flags;
+        float Width;
+        ImGuiID FocusScopeId;
+        ImGuiCond OpenCond;
+        bool OpenVal;
+    }
+
+    struct ImFontAtlas {
+        bool Locked;
+        ImFontAtlasFlags Flags;
+        ImTextureID TexID;
+        int TexDesiredWidth;
+        int TexGlyphPadding;
+        char* TexPixelsAlpha8;
+        uint* TexPixelsRGBA32;
+        int TexWidth;
+        int TexHeight;
+        ImVec2 TexUvScale;
+        ImVec2 TexUvWhitePixel;
+        ImVector!ImFontPtr Fonts;
+        ImVector!ImFontAtlasCustomRect CustomRects;
+        ImVector!ImFontConfig ConfigData;
+        ImVec4[(63)+1] TexUvLines;
+        int PackIdMouseCursors;
+        int PackIdLines;
+    }
+
+    struct ImGuiStyle {
+        float Alpha;
+        ImVec2 WindowPadding;
+        float WindowRounding;
+        float WindowBorderSize;
+        ImVec2 WindowMinSize;
+        ImVec2 WindowTitleAlign;
+        ImGuiDir WindowMenuButtonPosition;
+        float ChildRounding;
+        float ChildBorderSize;
+        float PopupRounding;
+        float PopupBorderSize;
+        ImVec2 FramePadding;
+        float FrameRounding;
+        float FrameBorderSize;
+        ImVec2 ItemSpacing;
+        ImVec2 ItemInnerSpacing;
+        ImVec2 TouchExtraPadding;
+        float IndentSpacing;
+        float ColumnsMinSpacing;
+        float ScrollbarSize;
+        float ScrollbarRounding;
+        float GrabMinSize;
+        float GrabRounding;
+        float LogSliderDeadzone;
+        float TabRounding;
+        float TabBorderSize;
+        float TabMinWidthForCloseButton;
+        ImGuiDir ColorButtonPosition;
+        ImVec2 ButtonTextAlign;
+        ImVec2 SelectableTextAlign;
+        ImVec2 DisplayWindowPadding;
+        ImVec2 DisplaySafeAreaPadding;
+        float MouseCursorScale;
+        bool AntiAliasedLines;
+        bool AntiAliasedLinesUseTex;
+        bool AntiAliasedFill;
+        float CurveTessellationTol;
+        float CircleSegmentMaxError;
+        ImVec4[ImGuiCol_COUNT] Colors;
+    }
+
+    struct ImGuiTextRange {
+        const(char)* b;
+        const(char)* e;
+    }
+
+    struct ImGuiContext {
+        bool Initialized;
+        bool FontAtlasOwnedByContext;
+        ImGuiIO IO;
+        ImGuiPlatformIO PlatformIO;
+        ImGuiStyle Style;
+        ImGuiConfigFlags ConfigFlagsCurrFrame;
+        ImGuiConfigFlags ConfigFlagsLastFrame;
+        ImFont* Font;
+        float FontSize;
+        float FontBaseSize;
+        ImDrawListSharedData DrawListSharedData;
+        double Time;
+        int FrameCount;
+        int FrameCountEnded;
+        int FrameCountPlatformEnded;
+        int FrameCountRendered;
+        bool WithinFrameScope;
+        bool WithinFrameScopeWithImplicitWindow;
+        bool WithinEndChild;
+        bool TestEngineHookItems;
+        ImGuiID TestEngineHookIdInfo;
+        void* TestEngine;
+        ImVector!ImGuiWindowPtr Windows;
+        ImVector!ImGuiWindowPtr WindowsFocusOrder;
+        ImVector!ImGuiWindowPtr WindowsTempSortBuffer;
+        ImVector!ImGuiWindowPtr CurrentWindowStack;
+        ImGuiStorage WindowsById;
+        int WindowsActiveCount;
+        ImGuiWindow* CurrentWindow;
+        ImGuiWindow* HoveredWindow;
+        ImGuiWindow* HoveredRootWindow;
+        ImGuiWindow* HoveredWindowUnderMovingWindow;
+        ImGuiDockNode* HoveredDockNode;
+        ImGuiWindow* MovingWindow;
+        ImGuiWindow* WheelingWindow;
+        ImVec2 WheelingWindowRefMousePos;
+        float WheelingWindowTimer;
+        ImGuiID HoveredId;
+        ImGuiID HoveredIdPreviousFrame;
+        bool HoveredIdAllowOverlap;
+        bool HoveredIdDisabled;
+        float HoveredIdTimer;
+        float HoveredIdNotActiveTimer;
+        ImGuiID ActiveId;
+        ImGuiID ActiveIdIsAlive;
+        float ActiveIdTimer;
+        bool ActiveIdIsJustActivated;
+        bool ActiveIdAllowOverlap;
+        bool ActiveIdNoClearOnFocusLoss;
+        bool ActiveIdHasBeenPressedBefore;
+        bool ActiveIdHasBeenEditedBefore;
+        bool ActiveIdHasBeenEditedThisFrame;
+        ImU32 ActiveIdUsingNavDirMask;
+        ImU32 ActiveIdUsingNavInputMask;
+        ImU64 ActiveIdUsingKeyInputMask;
+        ImVec2 ActiveIdClickOffset;
+        ImGuiWindow* ActiveIdWindow;
+        ImGuiInputSource ActiveIdSource;
+        int ActiveIdMouseButton;
+        ImGuiID ActiveIdPreviousFrame;
+        bool ActiveIdPreviousFrameIsAlive;
+        bool ActiveIdPreviousFrameHasBeenEditedBefore;
+        ImGuiWindow* ActiveIdPreviousFrameWindow;
+        ImGuiID LastActiveId;
+        float LastActiveIdTimer;
+        ImGuiNextWindowData NextWindowData;
+        ImGuiNextItemData NextItemData;
+        ImVector!ImGuiColorMod ColorModifiers;
+        ImVector!ImGuiStyleMod StyleModifiers;
+        ImVector!ImFontPtr FontStack;
+        ImVector!ImGuiPopupData OpenPopupStack;
+        ImVector!ImGuiPopupData BeginPopupStack;
+        ImVector!ImGuiViewportPPtr Viewports;
+        float CurrentDpiScale;
+        ImGuiViewportP* CurrentViewport;
+        ImGuiViewportP* MouseViewport;
+        ImGuiViewportP* MouseLastHoveredViewport;
+        int ViewportFrontMostStampCount;
+        ImGuiWindow* NavWindow;
+        ImGuiID NavId;
+        ImGuiID NavFocusScopeId;
+        ImGuiID NavActivateId;
+        ImGuiID NavActivateDownId;
+        ImGuiID NavActivatePressedId;
+        ImGuiID NavInputId;
+        ImGuiID NavJustTabbedId;
+        ImGuiID NavJustMovedToId;
+        ImGuiID NavJustMovedToFocusScopeId;
+        ImGuiKeyModFlags NavJustMovedToKeyMods;
+        ImGuiID NavNextActivateId;
+        ImGuiInputSource NavInputSource;
+        ImRect NavScoringRect;
+        int NavScoringCount;
+        ImGuiNavLayer NavLayer;
+        int NavIdTabCounter;
+        bool NavIdIsAlive;
+        bool NavMousePosDirty;
+        bool NavDisableHighlight;
+        bool NavDisableMouseHover;
+        bool NavAnyRequest;
+        bool NavInitRequest;
+        bool NavInitRequestFromMove;
+        ImGuiID NavInitResultId;
+        ImRect NavInitResultRectRel;
+        bool NavMoveRequest;
+        ImGuiNavMoveFlags NavMoveRequestFlags;
+        ImGuiNavForward NavMoveRequestForward;
+        ImGuiKeyModFlags NavMoveRequestKeyMods;
+        ImGuiDir NavMoveDir;
+        ImGuiDir NavMoveDirLast;
+        ImGuiDir NavMoveClipDir;
+        ImGuiNavMoveResult NavMoveResultLocal;
+        ImGuiNavMoveResult NavMoveResultLocalVisibleSet;
+        ImGuiNavMoveResult NavMoveResultOther;
+        ImGuiWindow* NavWrapRequestWindow;
+        ImGuiNavMoveFlags NavWrapRequestFlags;
+        ImGuiWindow* NavWindowingTarget;
+        ImGuiWindow* NavWindowingTargetAnim;
+        ImGuiWindow* NavWindowingListWindow;
+        float NavWindowingTimer;
+        float NavWindowingHighlightAlpha;
+        bool NavWindowingToggleLayer;
+        ImGuiWindow* FocusRequestCurrWindow;
+        ImGuiWindow* FocusRequestNextWindow;
+        int FocusRequestCurrCounterRegular;
+        int FocusRequestCurrCounterTabStop;
+        int FocusRequestNextCounterRegular;
+        int FocusRequestNextCounterTabStop;
+        bool FocusTabPressed;
+        float DimBgRatio;
+        ImGuiMouseCursor MouseCursor;
+        bool DragDropActive;
+        bool DragDropWithinSource;
+        bool DragDropWithinTarget;
+        ImGuiDragDropFlags DragDropSourceFlags;
+        int DragDropSourceFrameCount;
+        int DragDropMouseButton;
+        ImGuiPayload DragDropPayload;
+        ImRect DragDropTargetRect;
+        ImGuiID DragDropTargetId;
+        ImGuiDragDropFlags DragDropAcceptFlags;
+        float DragDropAcceptIdCurrRectSurface;
+        ImGuiID DragDropAcceptIdCurr;
+        ImGuiID DragDropAcceptIdPrev;
+        int DragDropAcceptFrameCount;
+        ImGuiID DragDropHoldJustPressedId;
+        ImVector!unsigned_char DragDropPayloadBufHeap;
+        char[16] DragDropPayloadBufLocal;
+        ImGuiTabBar* CurrentTabBar;
+        ImPool_ImGuiTabBar TabBars;
+        ImVector!ImGuiPtrOrIndex CurrentTabBarStack;
+        ImVector!ImGuiShrinkWidthItem ShrinkWidthBuffer;
+        ImVec2 LastValidMousePos;
+        ImGuiInputTextState InputTextState;
+        ImFont InputTextPasswordFont;
+        ImGuiID TempInputId;
+        ImGuiColorEditFlags ColorEditOptions;
+        float ColorEditLastHue;
+        float ColorEditLastSat;
+        float[3] ColorEditLastColor;
+        ImVec4 ColorPickerRef;
+        float SliderCurrentAccum;
+        bool SliderCurrentAccumDirty;
+        bool DragCurrentAccumDirty;
+        float DragCurrentAccum;
+        float DragSpeedDefaultRatio;
+        float ScrollbarClickDeltaToGrabCenter;
+        int TooltipOverrideCount;
+        ImVector!char ClipboardHandlerData;
+        ImVector!ImGuiID MenusIdSubmittedThisFrame;
+        ImVec2 PlatformImePos;
+        ImVec2 PlatformImeLastPos;
+        ImGuiViewportP* PlatformImePosViewport;
+        char PlatformLocaleDecimalPoint;
+        ImGuiDockContext DockContext;
+        bool SettingsLoaded;
+        float SettingsDirtyTimer;
+        ImGuiTextBuffer SettingsIniData;
+        ImVector!ImGuiSettingsHandler SettingsHandlers;
+        ImChunkStream_ImGuiWindowSettings SettingsWindows;
+        bool LogEnabled;
+        ImGuiLogType LogType;
+        ImFileHandle LogFile;
+        ImGuiTextBuffer LogBuffer;
+        float LogLinePosY;
+        bool LogLineFirstItem;
+        int LogDepthRef;
+        int LogDepthToExpand;
+        int LogDepthToExpandDefault;
+        bool DebugItemPickerActive;
+        ImGuiID DebugItemPickerBreakId;
+        float[120] FramerateSecPerFrame;
+        int FramerateSecPerFrameIdx;
+        float FramerateSecPerFrameAccum;
+        int WantCaptureMouseNextFrame;
+        int WantCaptureKeyboardNextFrame;
+        int WantTextInputNextFrame;
+        char[1024*3+1] TempBuffer;
+    }
+
+    struct ImFontConfig {
+        void* FontData;
+        int FontDataSize;
+        bool FontDataOwnedByAtlas;
+        int FontNo;
+        float SizePixels;
+        int OversampleH;
+        int OversampleV;
+        bool PixelSnapH;
+        ImVec2 GlyphExtraSpacing;
+        ImVec2 GlyphOffset;
+        const ImWchar* GlyphRanges;
+        float GlyphMinAdvanceX;
+        float GlyphMaxAdvanceX;
+        bool MergeMode;
+        uint RasterizerFlags;
+        float RasterizerMultiply;
+        ImWchar EllipsisChar;
+        char[40] Name;
+        ImFont* DstFont;
+    }
+
+    struct ImGuiColumnData {
+        float OffsetNorm;
+        float OffsetNormBeforeResize;
+        ImGuiColumnsFlags Flags;
+        ImRect ClipRect;
+    }
+
+    struct ImDrawListSharedData {
+        ImVec2 TexUvWhitePixel;
+        ImFont* Font;
+        float FontSize;
+        float CurveTessellationTol;
+        float CircleSegmentMaxError;
+        ImVec4 ClipRectFullscreen;
+        ImDrawListFlags InitialFlags;
+        ImVec2[12*1] ArcFastVtx;
+        ImU8[64] CircleSegmentCounts;
+        const ImVec4* TexUvLines;
+    }
+
+    struct ImDrawDataBuilder {
+        ImVector!ImDrawListPtr[2] Layers;
+    }
+
+    struct ImGuiViewportP {
+        ImGuiViewport _ImGuiViewport;
+        int Idx;
+        int LastFrameActive;
+        int[2] LastFrameDrawLists;
+        int LastFrontMostStampCount;
+        ImGuiID LastNameHash;
+        ImVec2 LastPos;
+        float Alpha;
+        float LastAlpha;
+        short PlatformMonitor;
+        bool PlatformWindowCreated;
+        ImGuiWindow* Window;
+        ImDrawList*[2] DrawLists;
+        ImDrawData DrawDataP;
+        ImDrawDataBuilder DrawDataBuilder;
+        ImVec2 LastPlatformPos;
+        ImVec2 LastPlatformSize;
+        ImVec2 LastRendererSize;
+        ImVec2 CurrWorkOffsetMin;
+        ImVec2 CurrWorkOffsetMax;
+    }
+
+    struct ImVec1 {
+        float x;
+    }
+
+    struct ImDrawData {
+        bool Valid;
+        ImDrawList** CmdLists;
+        int CmdListsCount;
+        int TotalIdxCount;
+        int TotalVtxCount;
+        ImVec2 DisplayPos;
+        ImVec2 DisplaySize;
+        ImVec2 FramebufferScale;
+        ImGuiViewport* OwnerViewport;
+    }
+
+    struct ImGuiInputTextState {
+        ImGuiID ID;
+        int CurLenW;
+        int CurLenA;
+        ImVector!ImWchar TextW;
+        ImVector!char TextA;
+        ImVector!char InitialTextA;
+        bool TextAIsValid;
+        int BufCapacityA;
+        float ScrollX;
+        STB_TexteditState Stb;
+        float CursorAnim;
+        bool CursorFollow;
+        bool SelectedAllMouseLock;
+        bool Edited;
+        ImGuiInputTextFlags UserFlags;
+        ImGuiInputTextCallback UserCallback;
+        void* UserCallbackData;
+    }
+
+    struct ImGuiPtrOrIndex {
+        void* Ptr;
+        int Index;
+    }
+
+    struct ImFont {
+        ImVector!float IndexAdvanceX;
+        float FallbackAdvanceX;
+        float FontSize;
+        ImVector!ImWchar IndexLookup;
+        ImVector!ImFontGlyph Glyphs;
+        const ImFontGlyph* FallbackGlyph;
+        ImFontAtlas* ContainerAtlas;
+        const ImFontConfig* ConfigData;
+        short ConfigDataCount;
+        ImWchar FallbackChar;
+        ImWchar EllipsisChar;
+        bool DirtyLookupTables;
+        float Scale;
+        float Ascent;
+        float Descent;
+        int MetricsTotalSurface;
+        ImU8[(0xFFFF+1)/4096/8] Used4kPagesMap;
+    }
+
+    struct ImGuiOnceUponAFrame {
+        int RefFrame;
+    }
+
+    struct ImGuiWindowSettings {
+        ImGuiID ID;
+        ImVec2ih Pos;
+        ImVec2ih Size;
+        ImVec2ih ViewportPos;
+        ImGuiID ViewportId;
+        ImGuiID DockId;
+        ImGuiID ClassId;
+        short DockOrder;
+        bool Collapsed;
+        bool WantApply;
+    }
+
+    struct ImVec4 {
+        float x;
+        float y;
+        float z;
+        float w;
+    }
+
+    struct ImGuiDockContext {
+        ImGuiStorage Nodes;
+        ImVector!ImGuiDockRequest Requests;
+        ImVector!ImGuiDockNodeSettings NodesSettings;
+        bool WantFullRebuild;
+    }
+
+    struct ImGuiNavMoveResult {
+        ImGuiWindow* Window;
+        ImGuiID ID;
+        ImGuiID FocusScopeId;
+        float DistBox;
+        float DistCenter;
+        float DistAxial;
+        ImRect RectRel;
+    }
+
+    struct ImGuiSettingsHandler {
+        const(char)* TypeName;
+        ImGuiID TypeHash;
+        void function(ImGuiContext* ctx,ImGuiSettingsHandler* handler) ClearAllFn;
+        void function(ImGuiContext* ctx,ImGuiSettingsHandler* handler) ReadInitFn;
+        void* function(ImGuiContext* ctx,ImGuiSettingsHandler* handler,const(char)* name) ReadOpenFn;
+        void function(ImGuiContext* ctx,ImGuiSettingsHandler* handler,void* entry,const(char)* line) ReadLineFn;
+        void function(ImGuiContext* ctx,ImGuiSettingsHandler* handler) ApplyAllFn;
+        void function(ImGuiContext* ctx,ImGuiSettingsHandler* handler,ImGuiTextBuffer* out_buf) WriteAllFn;
+        void* UserData;
+    }
+
+    struct ImDrawListSplitter {
+        int _Current;
+        int _Count;
+        ImVector!ImDrawChannel _Channels;
+    }
+
+    struct STB_TexteditState {
+        int cursor;
+        int select_start;
+        int select_end;
+        char insert_mode;
+        int row_count_per_page;
+        char cursor_at_end_of_line;
+        char initialized;
+        char has_preferred_x;
+        char single_line;
+        char padding1;
+        char padding2;
+        char padding3;
+        float preferred_x;
+        StbUndoState undostate;
+    }
+
+    struct ImDrawList {
+        ImVector!ImDrawCmd CmdBuffer;
+        ImVector!ImDrawIdx IdxBuffer;
+        ImVector!ImDrawVert VtxBuffer;
+        ImDrawListFlags Flags;
+        const ImDrawListSharedData* _Data;
+        const(char)* _OwnerName;
+        uint _VtxCurrentIdx;
+        ImDrawVert* _VtxWritePtr;
+        ImDrawIdx* _IdxWritePtr;
+        ImVector!ImVec4 _ClipRectStack;
+        ImVector!ImTextureID _TextureIdStack;
+        ImVector!ImVec2 _Path;
+        ImDrawCmd _CmdHeader;
+        ImDrawListSplitter _Splitter;
+    }
+
+    struct ImGuiStoragePair {
+        ImGuiID key;
+        union { int val_i; float val_f; void* val_p;} ;
+    }
+
+    struct ImDrawChannel {
+        ImVector!ImDrawCmd _CmdBuffer;
+        ImVector!ImDrawIdx _IdxBuffer;
+    }
+
+    struct ImDrawCmd {
+        ImVec4 ClipRect;
+        ImTextureID TextureId;
+        uint VtxOffset;
+        uint IdxOffset;
+        uint ElemCount;
+        ImDrawCallback UserCallback;
+        void* UserCallbackData;
+    }
+
+    struct ImGuiLastItemDataBackup {
+        ImGuiID LastItemId;
+        ImGuiItemStatusFlags LastItemStatusFlags;
+        ImRect LastItemRect;
+        ImRect LastItemDisplayRect;
+    }
+
+    struct StbUndoState {
+        StbUndoRecord[99] undo_rec;
+        ImWchar[999] undo_char;
+        short undo_point;
+        short redo_point;
+        int undo_char_point;
+        int redo_char_point;
+    }
+
+    struct ImGuiTextBuffer {
+        ImVector!char Buf;
+    }
+
+    struct ImGuiListClipper {
+        int DisplayStart;
+        int DisplayEnd;
+        int ItemsCount;
+        int StepNo;
+        float ItemsHeight;
+        float StartPosY;
+    }
+
+    struct ImGuiMenuColumns {
+        float Spacing;
+        float Width;
+        float NextWidth;
+        float[3] Pos;
+        float[3] NextWidths;
+    }
+
+    struct ImGuiDockNode {
+        ImGuiID ID;
+        ImGuiDockNodeFlags SharedFlags;
+        ImGuiDockNodeFlags LocalFlags;
+        ImGuiDockNode* ParentNode;
+        ImGuiDockNode*[2] ChildNodes;
+        ImVector!ImGuiWindowPtr Windows;
+        ImGuiTabBar* TabBar;
+        ImVec2 Pos;
+        ImVec2 Size;
+        ImVec2 SizeRef;
+        ImGuiAxis SplitAxis;
+        ImGuiWindowClass WindowClass;
+        ImGuiDockNodeState State;
+        ImGuiWindow* HostWindow;
+        ImGuiWindow* VisibleWindow;
+        ImGuiDockNode* CentralNode;
+        ImGuiDockNode* OnlyNodeWithWindows;
+        int LastFrameAlive;
+        int LastFrameActive;
+        int LastFrameFocused;
+        ImGuiID LastFocusedNodeId;
+        ImGuiID SelectedTabId;
+        ImGuiID WantCloseTabId;
+        ImGuiDataAuthority AuthorityForPos;
+        ImGuiDataAuthority AuthorityForSize;
+        ImGuiDataAuthority AuthorityForViewport;
+        bool IsVisible;
+        bool IsFocused;
+        bool HasCloseButton;
+        bool HasWindowMenuButton;
+        bool EnableCloseButton;
+        bool WantCloseAll;
+        bool WantLockSizeOnce;
+        bool WantMouseMove;
+        bool WantHiddenTabBarUpdate;
+        bool WantHiddenTabBarToggle;
+        bool MarkedForPosSizeWrite;
+    }
+
+    struct ImVec2ih {
+        short x;
+        short y;
+    }
+
+    struct ImGuiNextWindowData {
+        ImGuiNextWindowDataFlags Flags;
+        ImGuiCond PosCond;
+        ImGuiCond SizeCond;
+        ImGuiCond CollapsedCond;
+        ImGuiCond DockCond;
+        ImVec2 PosVal;
+        ImVec2 PosPivotVal;
+        ImVec2 SizeVal;
+        ImVec2 ContentSizeVal;
+        ImVec2 ScrollVal;
+        bool PosUndock;
+        bool CollapsedVal;
+        ImRect SizeConstraintRect;
+        ImGuiSizeCallback SizeCallback;
+        void* SizeCallbackUserData;
+        float BgAlphaVal;
+        ImGuiID ViewportId;
+        ImGuiID DockId;
+        ImGuiWindowClass WindowClass;
+        ImVec2 MenuBarOffsetMinVal;
+    }
+
+    struct ImGuiPlatformMonitor {
+        ImVec2 MainPos;
+        ImVec2 MainSize;
+        ImVec2 WorkPos;
+        ImVec2 WorkSize;
+        float DpiScale;
+    }
+
+    struct ImGuiStorage {
+        ImVector!ImGuiStoragePair Data;
+    }
+
+    struct ImGuiTabItem {
+        ImGuiID ID;
+        ImGuiTabItemFlags Flags;
+        ImGuiWindow* Window;
+        int LastFrameVisible;
+        int LastFrameSelected;
+        float Offset;
+        float Width;
+        float ContentWidth;
+        ImS16 NameOffset;
+        ImS8 BeginOrder;
+        ImS8 IndexDuringLayout;
+        bool WantClose;
+    }
 
-struct ImVector {
-    int Size;
-    int Capacity;
-    void* Data;
-}
-
-struct ImVector_char {
-    int Size;
-    int Capacity;
-    char* Data;
-}
-
-struct ImVector_ImGuiDockRequest {
-    int Size;
-    int Capacity;
-    ImGuiDockRequest* Data;
-}
-
-struct ImVector_ImGuiPopupData {
-    int Size;
-    int Capacity;
-    ImGuiPopupData* Data;
-}
-
-struct ImVector_ImGuiItemFlags {
-    int Size;
-    int Capacity;
-    ImGuiItemFlags* Data;
-}
-
-struct ImVector_ImFontConfig {
-    int Size;
-    int Capacity;
-    ImFontConfig* Data;
-}
-
-struct ImVector_ImDrawChannel {
-    int Size;
-    int Capacity;
-    ImDrawChannel* Data;
-}
-
-struct ImVector_ImFontAtlasCustomRect {
-    int Size;
-    int Capacity;
-    ImFontAtlasCustomRect* Data;
-}
-
-struct ImVector_ImDrawListPtr {
-    int Size;
-    int Capacity;
-    ImDrawList** Data;
-}
-
-
-struct ImPool_ImGuiTabBar {
-    ImGuiTabBar Buf;
-    ImGuiStorage Map;
-    ImPoolIdx FreeIdx;
-}
-
-
-struct ImVector_ImFontGlyph {
-    int Size;
-    int Capacity;
-    ImFontGlyph* Data;
-}
-
-struct ImVector_ImGuiTabItem {
-    int Size;
-    int Capacity;
-    ImGuiTabItem* Data;
-}
-
-struct ImVector_const_charPtr {
-    int Size;
-    int Capacity;
-    const(char)** Data;
-}
-
-struct ImVector_ImGuiStyleMod {
-    int Size;
-    int Capacity;
-    ImGuiStyleMod* Data;
-}
-
-struct ImVector_ImFontPtr {
-    int Size;
-    int Capacity;
-    ImFont** Data;
-}
-
-struct ImVector_ImDrawIdx {
-    int Size;
-    int Capacity;
-    ImDrawIdx* Data;
-}
-
-struct ImVector_float {
-    int Size;
-    int Capacity;
-    float* Data;
-}
-
-struct ImVector_ImWchar {
-    int Size;
-    int Capacity;
-    ImWchar* Data;
-}
-
-struct ImVector_ImU32 {
-    int Size;
-    int Capacity;
-    ImU32* Data;
-}
-
-struct ImVector_ImVec2 {
-    int Size;
-    int Capacity;
-    ImVec2* Data;
-}
-
-struct ImVector_ImGuiPtrOrIndex {
-    int Size;
-    int Capacity;
-    ImGuiPtrOrIndex* Data;
-}
-
-struct ImVector_ImVec4 {
-    int Size;
-    int Capacity;
-    ImVec4* Data;
-}
-
-struct ImVector_ImGuiWindowPtr {
-    int Size;
-    int Capacity;
-    ImGuiWindow** Data;
-}
-
-struct ImVector_ImGuiTextRange {
-    int Size;
-    int Capacity;
-    ImGuiTextRange* Data;
-}
-
-struct ImVector_ImDrawCmd {
-    int Size;
-    int Capacity;
-    ImDrawCmd* Data;
-}
-
-struct ImVector_ImGuiColumnData {
-    int Size;
-    int Capacity;
-    ImGuiColumnData* Data;
-}
-
-struct ImVector_ImGuiPlatformMonitor {
-    int Size;
-    int Capacity;
-    ImGuiPlatformMonitor* Data;
-}
-
-struct ImChunkStream_ImGuiWindowSettings {
-    ImGuiWindowSettings Buf;
-}
-
-struct ImVector_ImGuiStoragePair {
-    int Size;
-    int Capacity;
-    ImGuiStoragePair* Data;
-}
-
-struct ImVector_ImGuiViewportPPtr {
-    int Size;
-    int Capacity;
-    ImGuiViewportP** Data;
-}
-
-struct ImVector_ImGuiDockNodeSettings {
-    int Size;
-    int Capacity;
-    ImGuiDockNodeSettings* Data;
-}
-
-struct ImVector_ImGuiViewportPtr {
-    int Size;
-    int Capacity;
-    ImGuiViewport** Data;
-}
-
-struct ImVector_ImDrawVert {
-    int Size;
-    int Capacity;
-    ImDrawVert* Data;
-}
-
-struct ImVector_ImGuiShrinkWidthItem {
-    int Size;
-    int Capacity;
-    ImGuiShrinkWidthItem* Data;
-}
-
-struct ImVector_ImGuiColumns {
-    int Size;
-    int Capacity;
-    ImGuiColumns* Data;
-}
-
-struct ImVector_ImTextureID {
-    int Size;
-    int Capacity;
-    ImTextureID* Data;
-}
-
-struct ImVector_ImGuiID {
-    int Size;
-    int Capacity;
-    ImGuiID* Data;
-}
-
-struct ImVector_ImGuiSettingsHandler {
-    int Size;
-    int Capacity;
-    ImGuiSettingsHandler* Data;
-}
-
-struct ImVector_unsigned_char {
-    int Size;
-    int Capacity;
-    char* Data;
-}
-
-struct ImVector_ImGuiGroupData {
-    int Size;
-    int Capacity;
-    ImGuiGroupData* Data;
-}
-
-struct ImVector_ImGuiColorMod {
-    int Size;
-    int Capacity;
-    ImGuiColorMod* Data;
-}
-
-alias ImGuiLayoutType_ = int;
-enum {
-    ImGuiLayoutType_Horizontal = 0,
-    ImGuiLayoutType_Vertical = 1,
-}
-
-alias ImGuiNextItemDataFlags_ = int;
-enum {
-    ImGuiNextItemDataFlags_None = 0,
-    ImGuiNextItemDataFlags_HasWidth = 1,
-    ImGuiNextItemDataFlags_HasOpen = 2,
-}
-
-alias ImGuiItemStatusFlags_ = int;
-enum {
-    ImGuiItemStatusFlags_None = 0,
-    ImGuiItemStatusFlags_HoveredRect = 1,
-    ImGuiItemStatusFlags_HasDisplayRect = 2,
-    ImGuiItemStatusFlags_Edited = 4,
-    ImGuiItemStatusFlags_ToggledSelection = 8,
-    ImGuiItemStatusFlags_ToggledOpen = 16,
-    ImGuiItemStatusFlags_HasDeactivated = 32,
-    ImGuiItemStatusFlags_Deactivated = 64,
-}
-
-alias ImGuiSliderFlagsPrivate_ = int;
-enum {
-    ImGuiSliderFlags_Vertical = 1048576,
-    ImGuiSliderFlags_ReadOnly = 2097152,
-}
-
-alias ImGuiInputReadMode = int;
-enum {
-    ImGuiInputReadMode_Down = 0,
-    ImGuiInputReadMode_Pressed = 1,
-    ImGuiInputReadMode_Released = 2,
-    ImGuiInputReadMode_Repeat = 3,
-    ImGuiInputReadMode_RepeatSlow = 4,
-    ImGuiInputReadMode_RepeatFast = 5,
-}
-
-alias ImGuiMouseButton_ = int;
-enum {
-    ImGuiMouseButton_Left = 0,
-    ImGuiMouseButton_Right = 1,
-    ImGuiMouseButton_Middle = 2,
-    ImGuiMouseButton_COUNT = 5,
-}
-
-alias ImGuiDockNodeFlagsPrivate_ = int;
-enum {
-    ImGuiDockNodeFlags_DockSpace = 1024,
-    ImGuiDockNodeFlags_CentralNode = 2048,
-    ImGuiDockNodeFlags_NoTabBar = 4096,
-    ImGuiDockNodeFlags_HiddenTabBar = 8192,
-    ImGuiDockNodeFlags_NoWindowMenuButton = 16384,
-    ImGuiDockNodeFlags_NoCloseButton = 32768,
-    ImGuiDockNodeFlags_NoDocking = 65536,
-    ImGuiDockNodeFlags_NoDockingSplitMe = 131072,
-    ImGuiDockNodeFlags_NoDockingSplitOther = 262144,
-    ImGuiDockNodeFlags_NoDockingOverMe = 524288,
-    ImGuiDockNodeFlags_NoDockingOverOther = 1048576,
-    ImGuiDockNodeFlags_NoResizeX = 2097152,
-    ImGuiDockNodeFlags_NoResizeY = 4194304,
-    ImGuiDockNodeFlags_SharedFlagsInheritMask_ = -1,
-    ImGuiDockNodeFlags_NoResizeFlagsMask_ = 6291488,
-    ImGuiDockNodeFlags_LocalFlagsMask_ = 6421616,
-    ImGuiDockNodeFlags_LocalFlagsTransferMask_ = 6420592,
-    ImGuiDockNodeFlags_SavedFlagsMask_ = 6421536,
-}
-
-alias ImGuiDataAuthority_ = int;
-enum {
-    ImGuiDataAuthority_Auto = 0,
-    ImGuiDataAuthority_DockNode = 1,
-    ImGuiDataAuthority_Window = 2,
-}
-
-alias ImGuiNavDirSourceFlags_ = int;
-enum {
-    ImGuiNavDirSourceFlags_None = 0,
-    ImGuiNavDirSourceFlags_Keyboard = 1,
-    ImGuiNavDirSourceFlags_PadDPad = 2,
-    ImGuiNavDirSourceFlags_PadLStick = 4,
-}
-
-alias ImGuiTabBarFlagsPrivate_ = int;
-enum {
-    ImGuiTabBarFlags_DockNode = 1048576,
-    ImGuiTabBarFlags_IsFocused = 2097152,
-    ImGuiTabBarFlags_SaveSettings = 4194304,
-}
-
-alias ImGuiTooltipFlags_ = int;
-enum {
-    ImGuiTooltipFlags_None = 0,
-    ImGuiTooltipFlags_OverridePreviousTooltip = 1,
-}
-
-alias ImGuiTabItemFlags_ = int;
-enum {
-    ImGuiTabItemFlags_None = 0,
-    ImGuiTabItemFlags_UnsavedDocument = 1,
-    ImGuiTabItemFlags_SetSelected = 2,
-    ImGuiTabItemFlags_NoCloseWithMiddleMouseButton = 4,
-    ImGuiTabItemFlags_NoPushId = 8,
-    ImGuiTabItemFlags_NoTooltip = 16,
-    ImGuiTabItemFlags_NoReorder = 32,
-    ImGuiTabItemFlags_Leading = 64,
-    ImGuiTabItemFlags_Trailing = 128,
-}
-
-alias ImGuiPopupPositionPolicy = int;
-enum {
-    ImGuiPopupPositionPolicy_Default = 0,
-    ImGuiPopupPositionPolicy_ComboBox = 1,
-    ImGuiPopupPositionPolicy_Tooltip = 2,
-}
-
-alias ImGuiConfigFlags_ = int;
-enum {
-    ImGuiConfigFlags_None = 0,
-    ImGuiConfigFlags_NavEnableKeyboard = 1,
-    ImGuiConfigFlags_NavEnableGamepad = 2,
-    ImGuiConfigFlags_NavEnableSetMousePos = 4,
-    ImGuiConfigFlags_NavNoCaptureKeyboard = 8,
-    ImGuiConfigFlags_NoMouse = 16,
-    ImGuiConfigFlags_NoMouseCursorChange = 32,
-    ImGuiConfigFlags_DockingEnable = 64,
-    ImGuiConfigFlags_ViewportsEnable = 1024,
-    ImGuiConfigFlags_DpiEnableScaleViewports = 16384,
-    ImGuiConfigFlags_DpiEnableScaleFonts = 32768,
-    ImGuiConfigFlags_IsSRGB = 1048576,
-    ImGuiConfigFlags_IsTouchScreen = 2097152,
-}
-
-alias ImGuiKeyModFlags_ = int;
-enum {
-    ImGuiKeyModFlags_None = 0,
-    ImGuiKeyModFlags_Ctrl = 1,
-    ImGuiKeyModFlags_Shift = 2,
-    ImGuiKeyModFlags_Alt = 4,
-    ImGuiKeyModFlags_Super = 8,
-}
-
-alias ImGuiDataTypePrivate_ = int;
-enum {
-    ImGuiDataType_String = 11,
-    ImGuiDataType_Pointer = 12,
-    ImGuiDataType_ID = 13,
-}
-
-alias ImGuiNavInput_ = int;
-enum {
-    ImGuiNavInput_Activate = 0,
-    ImGuiNavInput_Cancel = 1,
-    ImGuiNavInput_Input = 2,
-    ImGuiNavInput_Menu = 3,
-    ImGuiNavInput_DpadLeft = 4,
-    ImGuiNavInput_DpadRight = 5,
-    ImGuiNavInput_DpadUp = 6,
-    ImGuiNavInput_DpadDown = 7,
-    ImGuiNavInput_LStickLeft = 8,
-    ImGuiNavInput_LStickRight = 9,
-    ImGuiNavInput_LStickUp = 10,
-    ImGuiNavInput_LStickDown = 11,
-    ImGuiNavInput_FocusPrev = 12,
-    ImGuiNavInput_FocusNext = 13,
-    ImGuiNavInput_TweakSlow = 14,
-    ImGuiNavInput_TweakFast = 15,
-    ImGuiNavInput_KeyMenu_ = 16,
-    ImGuiNavInput_KeyLeft_ = 17,
-    ImGuiNavInput_KeyRight_ = 18,
-    ImGuiNavInput_KeyUp_ = 19,
-    ImGuiNavInput_KeyDown_ = 20,
-    ImGuiNavInput_COUNT = 21,
-    ImGuiNavInput_InternalStart_ = 16,
-}
-
-alias ImGuiTreeNodeFlags_ = int;
-enum {
-    ImGuiTreeNodeFlags_None = 0,
-    ImGuiTreeNodeFlags_Selected = 1,
-    ImGuiTreeNodeFlags_Framed = 2,
-    ImGuiTreeNodeFlags_AllowItemOverlap = 4,
-    ImGuiTreeNodeFlags_NoTreePushOnOpen = 8,
-    ImGuiTreeNodeFlags_NoAutoOpenOnLog = 16,
-    ImGuiTreeNodeFlags_DefaultOpen = 32,
-    ImGuiTreeNodeFlags_OpenOnDoubleClick = 64,
-    ImGuiTreeNodeFlags_OpenOnArrow = 128,
-    ImGuiTreeNodeFlags_Leaf = 256,
-    ImGuiTreeNodeFlags_Bullet = 512,
-    ImGuiTreeNodeFlags_FramePadding = 1024,
-    ImGuiTreeNodeFlags_SpanAvailWidth = 2048,
-    ImGuiTreeNodeFlags_SpanFullWidth = 4096,
-    ImGuiTreeNodeFlags_NavLeftJumpsBackHere = 8192,
-    ImGuiTreeNodeFlags_CollapsingHeader = 26,
-}
-
-alias ImGuiDir_ = int;
-enum {
-    ImGuiDir_None = -1,
-    ImGuiDir_Left = 0,
-    ImGuiDir_Right = 1,
-    ImGuiDir_Up = 2,
-    ImGuiDir_Down = 3,
-    ImGuiDir_COUNT = 4,
-}
-
-alias ImGuiNavMoveFlags_ = int;
-enum {
-    ImGuiNavMoveFlags_None = 0,
-    ImGuiNavMoveFlags_LoopX = 1,
-    ImGuiNavMoveFlags_LoopY = 2,
-    ImGuiNavMoveFlags_WrapX = 4,
-    ImGuiNavMoveFlags_WrapY = 8,
-    ImGuiNavMoveFlags_AllowCurrentNavId = 16,
-    ImGuiNavMoveFlags_AlsoScoreVisibleSet = 32,
-    ImGuiNavMoveFlags_ScrollToEdge = 64,
-}
-
-alias ImGuiTextFlags_ = int;
-enum {
-    ImGuiTextFlags_None = 0,
-    ImGuiTextFlags_NoWidthForLargeClippedText = 1,
-}
-
-alias ImGuiColorEditFlags_ = int;
-enum {
-    ImGuiColorEditFlags_None = 0,
-    ImGuiColorEditFlags_NoAlpha = 2,
-    ImGuiColorEditFlags_NoPicker = 4,
-    ImGuiColorEditFlags_NoOptions = 8,
-    ImGuiColorEditFlags_NoSmallPreview = 16,
-    ImGuiColorEditFlags_NoInputs = 32,
-    ImGuiColorEditFlags_NoTooltip = 64,
-    ImGuiColorEditFlags_NoLabel = 128,
-    ImGuiColorEditFlags_NoSidePreview = 256,
-    ImGuiColorEditFlags_NoDragDrop = 512,
-    ImGuiColorEditFlags_NoBorder = 1024,
-    ImGuiColorEditFlags_AlphaBar = 65536,
-    ImGuiColorEditFlags_AlphaPreview = 131072,
-    ImGuiColorEditFlags_AlphaPreviewHalf = 262144,
-    ImGuiColorEditFlags_HDR = 524288,
-    ImGuiColorEditFlags_DisplayRGB = 1048576,
-    ImGuiColorEditFlags_DisplayHSV = 2097152,
-    ImGuiColorEditFlags_DisplayHex = 4194304,
-    ImGuiColorEditFlags_Uint8 = 8388608,
-    ImGuiColorEditFlags_Float = 16777216,
-    ImGuiColorEditFlags_PickerHueBar = 33554432,
-    ImGuiColorEditFlags_PickerHueWheel = 67108864,
-    ImGuiColorEditFlags_InputRGB = 134217728,
-    ImGuiColorEditFlags_InputHSV = 268435456,
-    ImGuiColorEditFlags__OptionsDefault = 177209344,
-    ImGuiColorEditFlags__DisplayMask = 7340032,
-    ImGuiColorEditFlags__DataTypeMask = 25165824,
-    ImGuiColorEditFlags__PickerMask = 100663296,
-    ImGuiColorEditFlags__InputMask = 402653184,
-}
-
-alias ImGuiTabBarFlags_ = int;
-enum {
-    ImGuiTabBarFlags_None = 0,
-    ImGuiTabBarFlags_Reorderable = 1,
-    ImGuiTabBarFlags_AutoSelectNewTabs = 2,
-    ImGuiTabBarFlags_TabListPopupButton = 4,
-    ImGuiTabBarFlags_NoCloseWithMiddleMouseButton = 8,
-    ImGuiTabBarFlags_NoTabListScrollingButtons = 16,
-    ImGuiTabBarFlags_NoTooltip = 32,
-    ImGuiTabBarFlags_FittingPolicyResizeDown = 64,
-    ImGuiTabBarFlags_FittingPolicyScroll = 128,
-    ImGuiTabBarFlags_FittingPolicyMask_ = 192,
-    ImGuiTabBarFlags_FittingPolicyDefault_ = 64,
-}
-
-alias ImDrawListFlags_ = int;
-enum {
-    ImDrawListFlags_None = 0,
-    ImDrawListFlags_AntiAliasedLines = 1,
-    ImDrawListFlags_AntiAliasedLinesUseTex = 2,
-    ImDrawListFlags_AntiAliasedFill = 4,
-    ImDrawListFlags_AllowVtxOffset = 8,
-}
-
-alias ImGuiWindowFlags_ = int;
-enum {
-    ImGuiWindowFlags_None = 0,
-    ImGuiWindowFlags_NoTitleBar = 1,
-    ImGuiWindowFlags_NoResize = 2,
-    ImGuiWindowFlags_NoMove = 4,
-    ImGuiWindowFlags_NoScrollbar = 8,
-    ImGuiWindowFlags_NoScrollWithMouse = 16,
-    ImGuiWindowFlags_NoCollapse = 32,
-    ImGuiWindowFlags_AlwaysAutoResize = 64,
-    ImGuiWindowFlags_NoBackground = 128,
-    ImGuiWindowFlags_NoSavedSettings = 256,
-    ImGuiWindowFlags_NoMouseInputs = 512,
-    ImGuiWindowFlags_MenuBar = 1024,
-    ImGuiWindowFlags_HorizontalScrollbar = 2048,
-    ImGuiWindowFlags_NoFocusOnAppearing = 4096,
-    ImGuiWindowFlags_NoBringToFrontOnFocus = 8192,
-    ImGuiWindowFlags_AlwaysVerticalScrollbar = 16384,
-    ImGuiWindowFlags_AlwaysHorizontalScrollbar = 32768,
-    ImGuiWindowFlags_AlwaysUseWindowPadding = 65536,
-    ImGuiWindowFlags_NoNavInputs = 262144,
-    ImGuiWindowFlags_NoNavFocus = 524288,
-    ImGuiWindowFlags_UnsavedDocument = 1048576,
-    ImGuiWindowFlags_NoDocking = 2097152,
-    ImGuiWindowFlags_NoNav = 786432,
-    ImGuiWindowFlags_NoDecoration = 43,
-    ImGuiWindowFlags_NoInputs = 786944,
-    ImGuiWindowFlags_NavFlattened = 8388608,
-    ImGuiWindowFlags_ChildWindow = 16777216,
-    ImGuiWindowFlags_Tooltip = 33554432,
-    ImGuiWindowFlags_Popup = 67108864,
-    ImGuiWindowFlags_Modal = 134217728,
-    ImGuiWindowFlags_ChildMenu = 268435456,
-    ImGuiWindowFlags_DockNodeHost = 536870912,
-}
-
-alias ImGuiCond_ = int;
-enum {
-    ImGuiCond_None = 0,
-    ImGuiCond_Always = 1,
-    ImGuiCond_Once = 2,
-    ImGuiCond_FirstUseEver = 4,
-    ImGuiCond_Appearing = 8,
-}
-
-alias ImGuiSelectableFlags_ = int;
-enum {
-    ImGuiSelectableFlags_None = 0,
-    ImGuiSelectableFlags_DontClosePopups = 1,
-    ImGuiSelectableFlags_SpanAllColumns = 2,
-    ImGuiSelectableFlags_AllowDoubleClick = 4,
-    ImGuiSelectableFlags_Disabled = 8,
-    ImGuiSelectableFlags_AllowItemOverlap = 16,
-}
-
-alias ImGuiNextWindowDataFlags_ = int;
-enum {
-    ImGuiNextWindowDataFlags_None = 0,
-    ImGuiNextWindowDataFlags_HasPos = 1,
-    ImGuiNextWindowDataFlags_HasSize = 2,
-    ImGuiNextWindowDataFlags_HasContentSize = 4,
-    ImGuiNextWindowDataFlags_HasCollapsed = 8,
-    ImGuiNextWindowDataFlags_HasSizeConstraint = 16,
-    ImGuiNextWindowDataFlags_HasFocus = 32,
-    ImGuiNextWindowDataFlags_HasBgAlpha = 64,
-    ImGuiNextWindowDataFlags_HasScroll = 128,
-    ImGuiNextWindowDataFlags_HasViewport = 256,
-    ImGuiNextWindowDataFlags_HasDock = 512,
-    ImGuiNextWindowDataFlags_HasWindowClass = 1024,
-}
-
-alias ImGuiStyleVar_ = int;
-enum {
-    ImGuiStyleVar_Alpha = 0,
-    ImGuiStyleVar_WindowPadding = 1,
-    ImGuiStyleVar_WindowRounding = 2,
-    ImGuiStyleVar_WindowBorderSize = 3,
-    ImGuiStyleVar_WindowMinSize = 4,
-    ImGuiStyleVar_WindowTitleAlign = 5,
-    ImGuiStyleVar_ChildRounding = 6,
-    ImGuiStyleVar_ChildBorderSize = 7,
-    ImGuiStyleVar_PopupRounding = 8,
-    ImGuiStyleVar_PopupBorderSize = 9,
-    ImGuiStyleVar_FramePadding = 10,
-    ImGuiStyleVar_FrameRounding = 11,
-    ImGuiStyleVar_FrameBorderSize = 12,
-    ImGuiStyleVar_ItemSpacing = 13,
-    ImGuiStyleVar_ItemInnerSpacing = 14,
-    ImGuiStyleVar_IndentSpacing = 15,
-    ImGuiStyleVar_ScrollbarSize = 16,
-    ImGuiStyleVar_ScrollbarRounding = 17,
-    ImGuiStyleVar_GrabMinSize = 18,
-    ImGuiStyleVar_GrabRounding = 19,
-    ImGuiStyleVar_TabRounding = 20,
-    ImGuiStyleVar_ButtonTextAlign = 21,
-    ImGuiStyleVar_SelectableTextAlign = 22,
-    ImGuiStyleVar_COUNT = 23,
-}
-
-alias ImDrawCornerFlags_ = int;
-enum {
-    ImDrawCornerFlags_None = 0,
-    ImDrawCornerFlags_TopLeft = 1,
-    ImDrawCornerFlags_TopRight = 2,
-    ImDrawCornerFlags_BotLeft = 4,
-    ImDrawCornerFlags_BotRight = 8,
-    ImDrawCornerFlags_Top = 3,
-    ImDrawCornerFlags_Bot = 12,
-    ImDrawCornerFlags_Left = 5,
-    ImDrawCornerFlags_Right = 10,
-    ImDrawCornerFlags_All = 15,
-}
-
-alias ImGuiComboFlags_ = int;
-enum {
-    ImGuiComboFlags_None = 0,
-    ImGuiComboFlags_PopupAlignLeft = 1,
-    ImGuiComboFlags_HeightSmall = 2,
-    ImGuiComboFlags_HeightRegular = 4,
-    ImGuiComboFlags_HeightLarge = 8,
-    ImGuiComboFlags_HeightLargest = 16,
-    ImGuiComboFlags_NoArrowButton = 32,
-    ImGuiComboFlags_NoPreview = 64,
-    ImGuiComboFlags_HeightMask_ = 30,
-}
-
-alias ImGuiBackendFlags_ = int;
-enum {
-    ImGuiBackendFlags_None = 0,
-    ImGuiBackendFlags_HasGamepad = 1,
-    ImGuiBackendFlags_HasMouseCursors = 2,
-    ImGuiBackendFlags_HasSetMousePos = 4,
-    ImGuiBackendFlags_RendererHasVtxOffset = 8,
-    ImGuiBackendFlags_PlatformHasViewports = 1024,
-    ImGuiBackendFlags_HasMouseHoveredViewport = 2048,
-    ImGuiBackendFlags_RendererHasViewports = 4096,
-}
-
-alias ImFontAtlasFlags_ = int;
-enum {
-    ImFontAtlasFlags_None = 0,
-    ImFontAtlasFlags_NoPowerOfTwoHeight = 1,
-    ImFontAtlasFlags_NoMouseCursors = 2,
-    ImFontAtlasFlags_NoBakedLines = 4,
-}
-
-alias ImGuiItemFlags_ = int;
-enum {
-    ImGuiItemFlags_None = 0,
-    ImGuiItemFlags_NoTabStop = 1,
-    ImGuiItemFlags_ButtonRepeat = 2,
-    ImGuiItemFlags_Disabled = 4,
-    ImGuiItemFlags_NoNav = 8,
-    ImGuiItemFlags_NoNavDefaultFocus = 16,
-    ImGuiItemFlags_SelectableDontClosePopup = 32,
-    ImGuiItemFlags_MixedValue = 64,
-    ImGuiItemFlags_ReadOnly = 128,
-    ImGuiItemFlags_Default_ = 0,
-}
-
-alias ImGuiNavLayer = int;
-enum {
-    ImGuiNavLayer_Main = 0,
-    ImGuiNavLayer_Menu = 1,
-    ImGuiNavLayer_COUNT = 2,
-}
-
-alias ImGuiDockNodeState = int;
-enum {
-    ImGuiDockNodeState_Unknown = 0,
-    ImGuiDockNodeState_HostWindowHiddenBecauseSingleWindow = 1,
-    ImGuiDockNodeState_HostWindowHiddenBecauseWindowsAreResizing = 2,
-    ImGuiDockNodeState_HostWindowVisible = 3,
-}
-
-alias ImGuiAxis = int;
-enum {
-    ImGuiAxis_None = -1,
-    ImGuiAxis_X = 0,
-    ImGuiAxis_Y = 1,
-}
-
-alias ImGuiButtonFlagsPrivate_ = int;
-enum {
-    ImGuiButtonFlags_PressedOnClick = 16,
-    ImGuiButtonFlags_PressedOnClickRelease = 32,
-    ImGuiButtonFlags_PressedOnClickReleaseAnywhere = 64,
-    ImGuiButtonFlags_PressedOnRelease = 128,
-    ImGuiButtonFlags_PressedOnDoubleClick = 256,
-    ImGuiButtonFlags_PressedOnDragDropHold = 512,
-    ImGuiButtonFlags_Repeat = 1024,
-    ImGuiButtonFlags_FlattenChildren = 2048,
-    ImGuiButtonFlags_AllowItemOverlap = 4096,
-    ImGuiButtonFlags_DontClosePopups = 8192,
-    ImGuiButtonFlags_Disabled = 16384,
-    ImGuiButtonFlags_AlignTextBaseLine = 32768,
-    ImGuiButtonFlags_NoKeyModifiers = 65536,
-    ImGuiButtonFlags_NoHoldingActiveId = 131072,
-    ImGuiButtonFlags_NoNavFocus = 262144,
-    ImGuiButtonFlags_NoHoveredOnFocus = 524288,
-    ImGuiButtonFlags_PressedOnMask_ = 1008,
-    ImGuiButtonFlags_PressedOnDefault_ = 32,
-}
-
-alias ImGuiDragDropFlags_ = int;
-enum {
-    ImGuiDragDropFlags_None = 0,
-    ImGuiDragDropFlags_SourceNoPreviewTooltip = 1,
-    ImGuiDragDropFlags_SourceNoDisableHover = 2,
-    ImGuiDragDropFlags_SourceNoHoldToOpenOthers = 4,
-    ImGuiDragDropFlags_SourceAllowNullID = 8,
-    ImGuiDragDropFlags_SourceExtern = 16,
-    ImGuiDragDropFlags_SourceAutoExpirePayload = 32,
-    ImGuiDragDropFlags_AcceptBeforeDelivery = 1024,
-    ImGuiDragDropFlags_AcceptNoDrawDefaultRect = 2048,
-    ImGuiDragDropFlags_AcceptNoPreviewTooltip = 4096,
-    ImGuiDragDropFlags_AcceptPeekOnly = 3072,
-}
-
-alias ImGuiLogType = int;
-enum {
-    ImGuiLogType_None = 0,
-    ImGuiLogType_TTY = 1,
-    ImGuiLogType_File = 2,
-    ImGuiLogType_Buffer = 3,
-    ImGuiLogType_Clipboard = 4,
-}
-
-alias ImGuiNavForward = int;
-enum {
-    ImGuiNavForward_None = 0,
-    ImGuiNavForward_ForwardQueued = 1,
-    ImGuiNavForward_ForwardActive = 2,
-}
-
-alias ImGuiNavHighlightFlags_ = int;
-enum {
-    ImGuiNavHighlightFlags_None = 0,
-    ImGuiNavHighlightFlags_TypeDefault = 1,
-    ImGuiNavHighlightFlags_TypeThin = 2,
-    ImGuiNavHighlightFlags_AlwaysDraw = 4,
-    ImGuiNavHighlightFlags_NoRounding = 8,
-}
-
-alias ImGuiTreeNodeFlagsPrivate_ = int;
-enum {
-    ImGuiTreeNodeFlags_ClipLabelForTrailingButton = 1048576,
-}
-
-alias ImGuiFocusedFlags_ = int;
-enum {
-    ImGuiFocusedFlags_None = 0,
-    ImGuiFocusedFlags_ChildWindows = 1,
-    ImGuiFocusedFlags_RootWindow = 2,
-    ImGuiFocusedFlags_AnyWindow = 4,
-    ImGuiFocusedFlags_RootAndChildWindows = 3,
-}
-
-alias ImGuiTabItemFlagsPrivate_ = int;
-enum {
-    ImGuiTabItemFlags_NoCloseButton = 1048576,
-    ImGuiTabItemFlags_Button = 2097152,
-    ImGuiTabItemFlags_Unsorted = 4194304,
-    ImGuiTabItemFlags_Preview = 8388608,
-}
-
-alias ImGuiSliderFlags_ = int;
-enum {
-    ImGuiSliderFlags_None = 0,
-    ImGuiSliderFlags_AlwaysClamp = 16,
-    ImGuiSliderFlags_Logarithmic = 32,
-    ImGuiSliderFlags_NoRoundToFormat = 64,
-    ImGuiSliderFlags_NoInput = 128,
-    ImGuiSliderFlags_InvalidMask_ = 1879048207,
-}
-
-alias ImGuiDataType_ = int;
-enum {
-    ImGuiDataType_S8 = 0,
-    ImGuiDataType_U8 = 1,
-    ImGuiDataType_S16 = 2,
-    ImGuiDataType_U16 = 3,
-    ImGuiDataType_S32 = 4,
-    ImGuiDataType_U32 = 5,
-    ImGuiDataType_S64 = 6,
-    ImGuiDataType_U64 = 7,
-    ImGuiDataType_Float = 8,
-    ImGuiDataType_Double = 9,
-    ImGuiDataType_COUNT = 10,
-}
-
-alias ImGuiKey_ = int;
-enum {
-    ImGuiKey_Tab = 0,
-    ImGuiKey_LeftArrow = 1,
-    ImGuiKey_RightArrow = 2,
-    ImGuiKey_UpArrow = 3,
-    ImGuiKey_DownArrow = 4,
-    ImGuiKey_PageUp = 5,
-    ImGuiKey_PageDown = 6,
-    ImGuiKey_Home = 7,
-    ImGuiKey_End = 8,
-    ImGuiKey_Insert = 9,
-    ImGuiKey_Delete = 10,
-    ImGuiKey_Backspace = 11,
-    ImGuiKey_Space = 12,
-    ImGuiKey_Enter = 13,
-    ImGuiKey_Escape = 14,
-    ImGuiKey_KeyPadEnter = 15,
-    ImGuiKey_A = 16,
-    ImGuiKey_C = 17,
-    ImGuiKey_V = 18,
-    ImGuiKey_X = 19,
-    ImGuiKey_Y = 20,
-    ImGuiKey_Z = 21,
-    ImGuiKey_COUNT = 22,
-}
-
-alias ImGuiCol_ = int;
-enum {
-    ImGuiCol_Text = 0,
-    ImGuiCol_TextDisabled = 1,
-    ImGuiCol_WindowBg = 2,
-    ImGuiCol_ChildBg = 3,
-    ImGuiCol_PopupBg = 4,
-    ImGuiCol_Border = 5,
-    ImGuiCol_BorderShadow = 6,
-    ImGuiCol_FrameBg = 7,
-    ImGuiCol_FrameBgHovered = 8,
-    ImGuiCol_FrameBgActive = 9,
-    ImGuiCol_TitleBg = 10,
-    ImGuiCol_TitleBgActive = 11,
-    ImGuiCol_TitleBgCollapsed = 12,
-    ImGuiCol_MenuBarBg = 13,
-    ImGuiCol_ScrollbarBg = 14,
-    ImGuiCol_ScrollbarGrab = 15,
-    ImGuiCol_ScrollbarGrabHovered = 16,
-    ImGuiCol_ScrollbarGrabActive = 17,
-    ImGuiCol_CheckMark = 18,
-    ImGuiCol_SliderGrab = 19,
-    ImGuiCol_SliderGrabActive = 20,
-    ImGuiCol_Button = 21,
-    ImGuiCol_ButtonHovered = 22,
-    ImGuiCol_ButtonActive = 23,
-    ImGuiCol_Header = 24,
-    ImGuiCol_HeaderHovered = 25,
-    ImGuiCol_HeaderActive = 26,
-    ImGuiCol_Separator = 27,
-    ImGuiCol_SeparatorHovered = 28,
-    ImGuiCol_SeparatorActive = 29,
-    ImGuiCol_ResizeGrip = 30,
-    ImGuiCol_ResizeGripHovered = 31,
-    ImGuiCol_ResizeGripActive = 32,
-    ImGuiCol_Tab = 33,
-    ImGuiCol_TabHovered = 34,
-    ImGuiCol_TabActive = 35,
-    ImGuiCol_TabUnfocused = 36,
-    ImGuiCol_TabUnfocusedActive = 37,
-    ImGuiCol_DockingPreview = 38,
-    ImGuiCol_DockingEmptyBg = 39,
-    ImGuiCol_PlotLines = 40,
-    ImGuiCol_PlotLinesHovered = 41,
-    ImGuiCol_PlotHistogram = 42,
-    ImGuiCol_PlotHistogramHovered = 43,
-    ImGuiCol_TextSelectedBg = 44,
-    ImGuiCol_DragDropTarget = 45,
-    ImGuiCol_NavHighlight = 46,
-    ImGuiCol_NavWindowingHighlight = 47,
-    ImGuiCol_NavWindowingDimBg = 48,
-    ImGuiCol_ModalWindowDimBg = 49,
-    ImGuiCol_COUNT = 50,
-}
-
-alias ImGuiButtonFlags_ = int;
-enum {
-    ImGuiButtonFlags_None = 0,
-    ImGuiButtonFlags_MouseButtonLeft = 1,
-    ImGuiButtonFlags_MouseButtonRight = 2,
-    ImGuiButtonFlags_MouseButtonMiddle = 4,
-    ImGuiButtonFlags_MouseButtonMask_ = 7,
-    ImGuiButtonFlags_MouseButtonDefault_ = 1,
-}
-
-alias ImGuiViewportFlags_ = int;
-enum {
-    ImGuiViewportFlags_None = 0,
-    ImGuiViewportFlags_NoDecoration = 1,
-    ImGuiViewportFlags_NoTaskBarIcon = 2,
-    ImGuiViewportFlags_NoFocusOnAppearing = 4,
-    ImGuiViewportFlags_NoFocusOnClick = 8,
-    ImGuiViewportFlags_NoInputs = 16,
-    ImGuiViewportFlags_NoRendererClear = 32,
-    ImGuiViewportFlags_TopMost = 64,
-    ImGuiViewportFlags_Minimized = 128,
-    ImGuiViewportFlags_NoAutoMerge = 256,
-    ImGuiViewportFlags_CanHostOtherWindows = 512,
-}
-
-alias ImGuiSelectableFlagsPrivate_ = int;
-enum {
-    ImGuiSelectableFlags_NoHoldingActiveID = 1048576,
-    ImGuiSelectableFlags_SelectOnClick = 2097152,
-    ImGuiSelectableFlags_SelectOnRelease = 4194304,
-    ImGuiSelectableFlags_SpanAvailWidth = 8388608,
-    ImGuiSelectableFlags_DrawHoveredWhenHeld = 16777216,
-    ImGuiSelectableFlags_SetNavIdOnHover = 33554432,
-    ImGuiSelectableFlags_NoPadWithHalfSpacing = 67108864,
-}
-
-alias ImGuiInputSource = int;
-enum {
-    ImGuiInputSource_None = 0,
-    ImGuiInputSource_Mouse = 1,
-    ImGuiInputSource_Nav = 2,
-    ImGuiInputSource_NavKeyboard = 3,
-    ImGuiInputSource_NavGamepad = 4,
-    ImGuiInputSource_COUNT = 5,
-}
-
-alias ImGuiMouseCursor_ = int;
-enum {
-    ImGuiMouseCursor_None = -1,
-    ImGuiMouseCursor_Arrow = 0,
-    ImGuiMouseCursor_TextInput = 1,
-    ImGuiMouseCursor_ResizeAll = 2,
-    ImGuiMouseCursor_ResizeNS = 3,
-    ImGuiMouseCursor_ResizeEW = 4,
-    ImGuiMouseCursor_ResizeNESW = 5,
-    ImGuiMouseCursor_ResizeNWSE = 6,
-    ImGuiMouseCursor_Hand = 7,
-    ImGuiMouseCursor_NotAllowed = 8,
-    ImGuiMouseCursor_COUNT = 9,
-}
-
-alias ImGuiPlotType = int;
-enum {
-    ImGuiPlotType_Lines = 0,
-    ImGuiPlotType_Histogram = 1,
-}
-
-alias ImGuiColumnsFlags_ = int;
-enum {
-    ImGuiColumnsFlags_None = 0,
-    ImGuiColumnsFlags_NoBorder = 1,
-    ImGuiColumnsFlags_NoResize = 2,
-    ImGuiColumnsFlags_NoPreserveWidths = 4,
-    ImGuiColumnsFlags_NoForceWithinWindow = 8,
-    ImGuiColumnsFlags_GrowParentContentsSize = 16,
-}
-
-alias ImGuiDockNodeFlags_ = int;
-enum {
-    ImGuiDockNodeFlags_None = 0,
-    ImGuiDockNodeFlags_KeepAliveOnly = 1,
-    ImGuiDockNodeFlags_NoDockingInCentralNode = 4,
-    ImGuiDockNodeFlags_PassthruCentralNode = 8,
-    ImGuiDockNodeFlags_NoSplit = 16,
-    ImGuiDockNodeFlags_NoResize = 32,
-    ImGuiDockNodeFlags_AutoHideTabBar = 64,
-}
-
-alias ImGuiInputTextFlags_ = int;
-enum {
-    ImGuiInputTextFlags_None = 0,
-    ImGuiInputTextFlags_CharsDecimal = 1,
-    ImGuiInputTextFlags_CharsHexadecimal = 2,
-    ImGuiInputTextFlags_CharsUppercase = 4,
-    ImGuiInputTextFlags_CharsNoBlank = 8,
-    ImGuiInputTextFlags_AutoSelectAll = 16,
-    ImGuiInputTextFlags_EnterReturnsTrue = 32,
-    ImGuiInputTextFlags_CallbackCompletion = 64,
-    ImGuiInputTextFlags_CallbackHistory = 128,
-    ImGuiInputTextFlags_CallbackAlways = 256,
-    ImGuiInputTextFlags_CallbackCharFilter = 512,
-    ImGuiInputTextFlags_AllowTabInput = 1024,
-    ImGuiInputTextFlags_CtrlEnterForNewLine = 2048,
-    ImGuiInputTextFlags_NoHorizontalScroll = 4096,
-    ImGuiInputTextFlags_AlwaysInsertMode = 8192,
-    ImGuiInputTextFlags_ReadOnly = 16384,
-    ImGuiInputTextFlags_Password = 32768,
-    ImGuiInputTextFlags_NoUndoRedo = 65536,
-    ImGuiInputTextFlags_CharsScientific = 131072,
-    ImGuiInputTextFlags_CallbackResize = 262144,
-    ImGuiInputTextFlags_CallbackEdit = 524288,
-    ImGuiInputTextFlags_Multiline = 1048576,
-    ImGuiInputTextFlags_NoMarkEdited = 2097152,
-}
-
-alias ImGuiPopupFlags_ = int;
-enum {
-    ImGuiPopupFlags_None = 0,
-    ImGuiPopupFlags_MouseButtonLeft = 0,
-    ImGuiPopupFlags_MouseButtonRight = 1,
-    ImGuiPopupFlags_MouseButtonMiddle = 2,
-    ImGuiPopupFlags_MouseButtonMask_ = 31,
-    ImGuiPopupFlags_MouseButtonDefault_ = 1,
-    ImGuiPopupFlags_NoOpenOverExistingPopup = 32,
-    ImGuiPopupFlags_NoOpenOverItems = 64,
-    ImGuiPopupFlags_AnyPopupId = 128,
-    ImGuiPopupFlags_AnyPopupLevel = 256,
-    ImGuiPopupFlags_AnyPopup = 384,
-}
-
-alias ImGuiSeparatorFlags_ = int;
-enum {
-    ImGuiSeparatorFlags_None = 0,
-    ImGuiSeparatorFlags_Horizontal = 1,
-    ImGuiSeparatorFlags_Vertical = 2,
-    ImGuiSeparatorFlags_SpanAllColumns = 4,
-}
-
-alias ImGuiHoveredFlags_ = int;
-enum {
-    ImGuiHoveredFlags_None = 0,
-    ImGuiHoveredFlags_ChildWindows = 1,
-    ImGuiHoveredFlags_RootWindow = 2,
-    ImGuiHoveredFlags_AnyWindow = 4,
-    ImGuiHoveredFlags_AllowWhenBlockedByPopup = 8,
-    ImGuiHoveredFlags_AllowWhenBlockedByActiveItem = 32,
-    ImGuiHoveredFlags_AllowWhenOverlapped = 64,
-    ImGuiHoveredFlags_AllowWhenDisabled = 128,
-    ImGuiHoveredFlags_RectOnly = 104,
-    ImGuiHoveredFlags_RootAndChildWindows = 3,
-}
-
-
-struct ImGuiSizeCallbackData {
-    void* UserData;
-    ImVec2 Pos;
-    ImVec2 CurrentSize;
-    ImVec2 DesiredSize;
-}
-
-struct ImGuiShrinkWidthItem {
-    int Index;
-    float Width;
-}
-
-struct ImGuiStyleMod {
-    ImGuiStyleVar VarIdx;
-    union { int[2] BackupInt; float[2] BackupFloat;} ;
-}
-
-struct ImRect {
-    ImVec2 Min;
-    ImVec2 Max;
-}
-
-struct ImFontGlyphRangesBuilder {
-    ImVector_ImU32 UsedChars;
-}
-
-struct ImGuiDataTypeTempStorage {
-    ImU8[8] Data;
-}
-
-struct ImGuiIO {
-    ImGuiConfigFlags ConfigFlags;
-    ImGuiBackendFlags BackendFlags;
-    ImVec2 DisplaySize;
-    float DeltaTime;
-    float IniSavingRate;
-    const(char)* IniFilename;
-    const(char)* LogFilename;
-    float MouseDoubleClickTime;
-    float MouseDoubleClickMaxDist;
-    float MouseDragThreshold;
-    int[ImGuiKey_COUNT] KeyMap;
-    float KeyRepeatDelay;
-    float KeyRepeatRate;
-    void* UserData;
-    ImFontAtlas* Fonts;
-    float FontGlobalScale;
-    bool FontAllowUserScaling;
-    ImFont* FontDefault;
-    ImVec2 DisplayFramebufferScale;
-    bool ConfigDockingNoSplit;
-    bool ConfigDockingWithShift;
-    bool ConfigDockingAlwaysTabBar;
-    bool ConfigDockingTransparentPayload;
-    bool ConfigViewportsNoAutoMerge;
-    bool ConfigViewportsNoTaskBarIcon;
-    bool ConfigViewportsNoDecoration;
-    bool ConfigViewportsNoDefaultParent;
-    bool MouseDrawCursor;
-    bool ConfigMacOSXBehaviors;
-    bool ConfigInputTextCursorBlink;
-    bool ConfigWindowsResizeFromEdges;
-    bool ConfigWindowsMoveFromTitleBarOnly;
-    float ConfigWindowsMemoryCompactTimer;
-    const(char)* BackendPlatformName;
-    const(char)* BackendRendererName;
-    void* BackendPlatformUserData;
-    void* BackendRendererUserData;
-    void* BackendLanguageUserData;
-    const char* function(void* user_data) GetClipboardTextFn;
-    void function(void* user_data,const char* text) SetClipboardTextFn;
-    void* ClipboardUserData;
-    void* RenderDrawListsFnUnused;
-    ImVec2 MousePos;
-    bool[5] MouseDown;
-    float MouseWheel;
-    float MouseWheelH;
-    ImGuiID MouseHoveredViewport;
-    bool KeyCtrl;
-    bool KeyShift;
-    bool KeyAlt;
-    bool KeySuper;
-    bool[512] KeysDown;
-    float[ImGuiNavInput_COUNT] NavInputs;
-    bool WantCaptureMouse;
-    bool WantCaptureKeyboard;
-    bool WantTextInput;
-    bool WantSetMousePos;
-    bool WantSaveIniSettings;
-    bool NavActive;
-    bool NavVisible;
-    float Framerate;
-    int MetricsRenderVertices;
-    int MetricsRenderIndices;
-    int MetricsRenderWindows;
-    int MetricsActiveWindows;
-    int MetricsActiveAllocations;
-    ImVec2 MouseDelta;
-    ImGuiKeyModFlags KeyMods;
-    ImVec2 MousePosPrev;
-    ImVec2[5] MouseClickedPos;
-    double[5] MouseClickedTime;
-    bool[5] MouseClicked;
-    bool[5] MouseDoubleClicked;
-    bool[5] MouseReleased;
-    bool[5] MouseDownOwned;
-    bool[5] MouseDownWasDoubleClick;
-    float[5] MouseDownDuration;
-    float[5] MouseDownDurationPrev;
-    ImVec2[5] MouseDragMaxDistanceAbs;
-    float[5] MouseDragMaxDistanceSqr;
-    float[512] KeysDownDuration;
-    float[512] KeysDownDurationPrev;
-    float[ImGuiNavInput_COUNT] NavInputsDownDuration;
-    float[ImGuiNavInput_COUNT] NavInputsDownDurationPrev;
-    float PenPressure;
-    ImWchar16 InputQueueSurrogate;
-    ImVector_ImWchar InputQueueCharacters;
-}
-
-struct ImGuiTextFilter {
-    char[256] InputBuf;
-    ImVector_ImGuiTextRange Filters;
-    int CountGrep;
-}
-
-struct ImGuiDataTypeInfo {
-    size_t Size;
-    const(char)* Name;
-    const(char)* PrintFmt;
-    const(char)* ScanFmt;
-}
-
-struct ImFontAtlasCustomRect {
-    ushort Width;
-    ushort Height;
-    ushort X;
-    ushort Y;
-    uint GlyphID;
-    float GlyphAdvanceX;
-    ImVec2 GlyphOffset;
-    ImFont* Font;
-}
-
-struct ImGuiColumns {
-    ImGuiID ID;
-    ImGuiColumnsFlags Flags;
-    bool IsFirstFrame;
-    bool IsBeingResized;
-    int Current;
-    int Count;
-    float OffMinX;
-    float OffMaxX;
-    float LineMinY;
-    float LineMaxY;
-    float HostCursorPosY;
-    float HostCursorMaxPosX;
-    ImRect HostInitialClipRect;
-    ImRect HostBackupClipRect;
-    ImRect HostBackupParentWorkRect;
-    ImVector_ImGuiColumnData Columns;
-    ImDrawListSplitter Splitter;
-}
-
-struct ImGuiWindow {
-    char* Name;
-    ImGuiID ID;
-    ImGuiWindowFlags Flags;
-    ImGuiWindowFlags FlagsPreviousFrame;
-    ImGuiWindowClass WindowClass;
-    ImGuiViewportP* Viewport;
-    ImGuiID ViewportId;
-    ImVec2 ViewportPos;
-    int ViewportAllowPlatformMonitorExtend;
-    ImVec2 Pos;
-    ImVec2 Size;
-    ImVec2 SizeFull;
-    ImVec2 ContentSize;
-    ImVec2 ContentSizeExplicit;
-    ImVec2 WindowPadding;
-    float WindowRounding;
-    float WindowBorderSize;
-    int NameBufLen;
-    ImGuiID MoveId;
-    ImGuiID ChildId;
-    ImVec2 Scroll;
-    ImVec2 ScrollMax;
-    ImVec2 ScrollTarget;
-    ImVec2 ScrollTargetCenterRatio;
-    ImVec2 ScrollTargetEdgeSnapDist;
-    ImVec2 ScrollbarSizes;
-    bool ScrollbarX;
-    bool ScrollbarY;
-    bool ViewportOwned;
-    bool Active;
-    bool WasActive;
-    bool WriteAccessed;
-    bool Collapsed;
-    bool WantCollapseToggle;
-    bool SkipItems;
-    bool Appearing;
-    bool Hidden;
-    bool IsFallbackWindow;
-    bool HasCloseButton;
-    byte ResizeBorderHeld;
-    short BeginCount;
-    short BeginOrderWithinParent;
-    short BeginOrderWithinContext;
-    ImGuiID PopupId;
-    ImS8 AutoFitFramesX;
-    ImS8 AutoFitFramesY;
-    ImS8 AutoFitChildAxises;
-    bool AutoFitOnlyGrows;
-    ImGuiDir AutoPosLastDirection;
-    int HiddenFramesCanSkipItems;
-    int HiddenFramesCannotSkipItems;
-    ImGuiCond SetWindowPosAllowFlags;
-    ImGuiCond SetWindowSizeAllowFlags;
-    ImGuiCond SetWindowCollapsedAllowFlags;
-    ImGuiCond SetWindowDockAllowFlags;
-    ImVec2 SetWindowPosVal;
-    ImVec2 SetWindowPosPivot;
-    ImVector_ImGuiID IDStack;
-    ImGuiWindowTempData DC;
-    ImRect OuterRectClipped;
-    ImRect InnerRect;
-    ImRect InnerClipRect;
-    ImRect WorkRect;
-    ImRect ParentWorkRect;
-    ImRect ClipRect;
-    ImRect ContentRegionRect;
-    ImVec2ih HitTestHoleSize;
-    ImVec2ih HitTestHoleOffset;
-    int LastFrameActive;
-    int LastFrameJustFocused;
-    float LastTimeActive;
-    float ItemWidthDefault;
-    ImGuiStorage StateStorage;
-    ImVector_ImGuiColumns ColumnsStorage;
-    float FontWindowScale;
-    float FontDpiScale;
-    int SettingsOffset;
-    ImDrawList* DrawList;
-    ImDrawList DrawListInst;
-    ImGuiWindow* ParentWindow;
-    ImGuiWindow* RootWindow;
-    ImGuiWindow* RootWindowDockStop;
-    ImGuiWindow* RootWindowForTitleBarHighlight;
-    ImGuiWindow* RootWindowForNav;
-    ImGuiWindow* NavLastChildNavWindow;
-    ImGuiID[ImGuiNavLayer_COUNT] NavLastIds;
-    ImRect[ImGuiNavLayer_COUNT] NavRectRel;
-    bool MemoryCompacted;
-    int MemoryDrawListIdxCapacity;
-    int MemoryDrawListVtxCapacity;
-    ImGuiDockNode* DockNode;
-    ImGuiDockNode* DockNodeAsHost;
-    ImGuiID DockId;
-    ImGuiItemStatusFlags DockTabItemStatusFlags;
-    ImRect DockTabItemRect;
-    short DockOrder;
-    bool DockIsActive;
-    bool DockTabIsVisible;
-    bool DockTabWantClose;
-}
-
-struct ImGuiPopupData {
-    ImGuiID PopupId;
-    ImGuiWindow* Window;
-    ImGuiWindow* SourceWindow;
-    int OpenFrameCount;
-    ImGuiID OpenParentId;
-    ImVec2 OpenPopupPos;
-    ImVec2 OpenMousePos;
-}
-
-struct ImGuiTabBar {
-    ImVector_ImGuiTabItem Tabs;
-    ImGuiID ID;
-    ImGuiID SelectedTabId;
-    ImGuiID NextSelectedTabId;
-    ImGuiID VisibleTabId;
-    int CurrFrameVisible;
-    int PrevFrameVisible;
-    ImRect BarRect;
-    float LastTabContentHeight;
-    float WidthAllTabs;
-    float WidthAllTabsIdeal;
-    float ScrollingAnim;
-    float ScrollingTarget;
-    float ScrollingTargetDistToVisibility;
-    float ScrollingSpeed;
-    float ScrollingRectMinX;
-    float ScrollingRectMaxX;
-    ImGuiTabBarFlags Flags;
-    ImGuiID ReorderRequestTabId;
-    ImS8 ReorderRequestDir;
-    ImS8 TabsActiveCount;
-    bool WantLayout;
-    bool VisibleTabWasSubmitted;
-    bool TabsAddedNew;
-    short LastTabItemIdx;
-    ImVec2 FramePadding;
-    ImGuiTextBuffer TabsNames;
-}
-
-struct ImVec2 {
-    float x;
-    float y;
-}
-
-struct ImGuiPayload {
-    void* Data;
-    int DataSize;
-    ImGuiID SourceId;
-    ImGuiID SourceParentId;
-    int DataFrameCount;
-    char[32+1] DataType;
-    bool Preview;
-    bool Delivery;
-}
-
-struct ImBitVector {
-    ImVector_ImU32 Storage;
-}
-
-struct ImDrawVert {
-    ImVec2 pos;
-    ImVec2 uv;
-    ImU32 col;
-}
-
-struct ImGuiViewport {
-    ImGuiID ID;
-    ImGuiViewportFlags Flags;
-    ImVec2 Pos;
-    ImVec2 Size;
-    ImVec2 WorkOffsetMin;
-    ImVec2 WorkOffsetMax;
-    float DpiScale;
-    ImDrawData* DrawData;
-    ImGuiID ParentViewportId;
-    void* RendererUserData;
-    void* PlatformUserData;
-    void* PlatformHandle;
-    void* PlatformHandleRaw;
-    bool PlatformRequestMove;
-    bool PlatformRequestResize;
-    bool PlatformRequestClose;
-}
-
-struct ImGuiWindowClass {
-    ImGuiID ClassId;
-    ImGuiID ParentViewportId;
-    ImGuiViewportFlags ViewportFlagsOverrideSet;
-    ImGuiViewportFlags ViewportFlagsOverrideClear;
-    ImGuiDockNodeFlags DockNodeFlagsOverrideSet;
-    ImGuiDockNodeFlags DockNodeFlagsOverrideClear;
-    bool DockingAlwaysTabBar;
-    bool DockingAllowUnclassed;
-}
-
-struct StbTexteditRow {
-    float x0;
-    float x1;
-    float baseline_y_delta;
-    float ymin;
-    float ymax;
-    int num_chars;
-}
-
-struct ImGuiWindowTempData {
-    ImVec2 CursorPos;
-    ImVec2 CursorPosPrevLine;
-    ImVec2 CursorStartPos;
-    ImVec2 CursorMaxPos;
-    ImVec2 CurrLineSize;
-    ImVec2 PrevLineSize;
-    float CurrLineTextBaseOffset;
-    float PrevLineTextBaseOffset;
-    ImVec1 Indent;
-    ImVec1 ColumnsOffset;
-    ImVec1 GroupOffset;
-    ImGuiID LastItemId;
-    ImGuiItemStatusFlags LastItemStatusFlags;
-    ImRect LastItemRect;
-    ImRect LastItemDisplayRect;
-    ImGuiNavLayer NavLayerCurrent;
-    int NavLayerActiveMask;
-    int NavLayerActiveMaskNext;
-    ImGuiID NavFocusScopeIdCurrent;
-    bool NavHideHighlightOneFrame;
-    bool NavHasScroll;
-    bool MenuBarAppending;
-    ImVec2 MenuBarOffset;
-    ImGuiMenuColumns MenuColumns;
-    int TreeDepth;
-    ImU32 TreeJumpToParentOnPopMask;
-    ImVector_ImGuiWindowPtr ChildWindows;
-    ImGuiStorage* StateStorage;
-    ImGuiColumns* CurrentColumns;
-    ImGuiLayoutType LayoutType;
-    ImGuiLayoutType ParentLayoutType;
-    int FocusCounterRegular;
-    int FocusCounterTabStop;
-    ImGuiItemFlags ItemFlags;
-    float ItemWidth;
-    float TextWrapPos;
-    ImVector_ImGuiItemFlags ItemFlagsStack;
-    ImVector_float ItemWidthStack;
-    ImVector_float TextWrapPosStack;
-    ImVector_ImGuiGroupData GroupStack;
-    short[6] StackSizesBackup;
-}
-
-struct StbUndoRecord {
-    int where;
-    int insert_length;
-    int delete_length;
-    int char_storage;
-}
-
-struct ImGuiGroupData {
-    ImVec2 BackupCursorPos;
-    ImVec2 BackupCursorMaxPos;
-    ImVec1 BackupIndent;
-    ImVec1 BackupGroupOffset;
-    ImVec2 BackupCurrLineSize;
-    float BackupCurrLineTextBaseOffset;
-    ImGuiID BackupActiveIdIsAlive;
-    bool BackupActiveIdPreviousFrameIsAlive;
-    bool EmitItem;
-}
-
-struct ImGuiColorMod {
-    ImGuiCol Col;
-    ImVec4 BackupValue;
-}
-
-struct ImColor {
-    ImVec4 Value;
-}
-
-struct ImGuiInputTextCallbackData {
-    ImGuiInputTextFlags EventFlag;
-    ImGuiInputTextFlags Flags;
-    void* UserData;
-    ImWchar EventChar;
-    ImGuiKey EventKey;
-    char* Buf;
-    int BufTextLen;
-    int BufSize;
-    bool BufDirty;
-    int CursorPos;
-    int SelectionStart;
-    int SelectionEnd;
-}
-
-struct ImGuiPlatformIO {
-    void function(ImGuiViewport* vp) Platform_CreateWindow;
-    void function(ImGuiViewport* vp) Platform_DestroyWindow;
-    void function(ImGuiViewport* vp) Platform_ShowWindow;
-    void function(ImGuiViewport* vp,ImVec2 pos) Platform_SetWindowPos;
-    ImVec2 function(ImGuiViewport* vp) Platform_GetWindowPos;
-    void function(ImGuiViewport* vp,ImVec2 size) Platform_SetWindowSize;
-    ImVec2 function(ImGuiViewport* vp) Platform_GetWindowSize;
-    void function(ImGuiViewport* vp) Platform_SetWindowFocus;
-    bool function(ImGuiViewport* vp) Platform_GetWindowFocus;
-    bool function(ImGuiViewport* vp) Platform_GetWindowMinimized;
-    void function(ImGuiViewport* vp,const char* str) Platform_SetWindowTitle;
-    void function(ImGuiViewport* vp,float alpha) Platform_SetWindowAlpha;
-    void function(ImGuiViewport* vp) Platform_UpdateWindow;
-    void function(ImGuiViewport* vp,void* render_arg) Platform_RenderWindow;
-    void function(ImGuiViewport* vp,void* render_arg) Platform_SwapBuffers;
-    float function(ImGuiViewport* vp) Platform_GetWindowDpiScale;
-    void function(ImGuiViewport* vp) Platform_OnChangedViewport;
-    void function(ImGuiViewport* vp,ImVec2 pos) Platform_SetImeInputPos;
-    int function(ImGuiViewport* vp,ImU64 vk_inst,const void* vk_allocators,ImU64* out_vk_surface) Platform_CreateVkSurface;
-    void function(ImGuiViewport* vp) Renderer_CreateWindow;
-    void function(ImGuiViewport* vp) Renderer_DestroyWindow;
-    void function(ImGuiViewport* vp,ImVec2 size) Renderer_SetWindowSize;
-    void function(ImGuiViewport* vp,void* render_arg) Renderer_RenderWindow;
-    void function(ImGuiViewport* vp,void* render_arg) Renderer_SwapBuffers;
-    ImVector_ImGuiPlatformMonitor Monitors;
-    ImGuiViewport* MainViewport;
-    ImVector_ImGuiViewportPtr Viewports;
-}
-
-struct ImFontGlyph {
-    uint Codepoint;
-    uint Visible;
-    float AdvanceX;
-    float X0;
-    float Y0;
-    float X1;
-    float Y1;
-    float U0;
-    float V0;
-    float U1;
-    float V1;
-}
-
-struct ImGuiNextItemData {
-    ImGuiNextItemDataFlags Flags;
-    float Width;
-    ImGuiID FocusScopeId;
-    ImGuiCond OpenCond;
-    bool OpenVal;
-}
-
-struct ImFontAtlas {
-    bool Locked;
-    ImFontAtlasFlags Flags;
-    ImTextureID TexID;
-    int TexDesiredWidth;
-    int TexGlyphPadding;
-    char* TexPixelsAlpha8;
-    uint* TexPixelsRGBA32;
-    int TexWidth;
-    int TexHeight;
-    ImVec2 TexUvScale;
-    ImVec2 TexUvWhitePixel;
-    ImVector_ImFontPtr Fonts;
-    ImVector_ImFontAtlasCustomRect CustomRects;
-    ImVector_ImFontConfig ConfigData;
-    ImVec4[(63)+1] TexUvLines;
-    int PackIdMouseCursors;
-    int PackIdLines;
-}
-
-struct ImGuiStyle {
-    float Alpha;
-    ImVec2 WindowPadding;
-    float WindowRounding;
-    float WindowBorderSize;
-    ImVec2 WindowMinSize;
-    ImVec2 WindowTitleAlign;
-    ImGuiDir WindowMenuButtonPosition;
-    float ChildRounding;
-    float ChildBorderSize;
-    float PopupRounding;
-    float PopupBorderSize;
-    ImVec2 FramePadding;
-    float FrameRounding;
-    float FrameBorderSize;
-    ImVec2 ItemSpacing;
-    ImVec2 ItemInnerSpacing;
-    ImVec2 TouchExtraPadding;
-    float IndentSpacing;
-    float ColumnsMinSpacing;
-    float ScrollbarSize;
-    float ScrollbarRounding;
-    float GrabMinSize;
-    float GrabRounding;
-    float LogSliderDeadzone;
-    float TabRounding;
-    float TabBorderSize;
-    float TabMinWidthForCloseButton;
-    ImGuiDir ColorButtonPosition;
-    ImVec2 ButtonTextAlign;
-    ImVec2 SelectableTextAlign;
-    ImVec2 DisplayWindowPadding;
-    ImVec2 DisplaySafeAreaPadding;
-    float MouseCursorScale;
-    bool AntiAliasedLines;
-    bool AntiAliasedLinesUseTex;
-    bool AntiAliasedFill;
-    float CurveTessellationTol;
-    float CircleSegmentMaxError;
-    ImVec4[ImGuiCol_COUNT] Colors;
-}
-
-struct ImGuiTextRange {
-    const(char)* b;
-    const(char)* e;
-}
-
-struct ImGuiContext {
-    bool Initialized;
-    bool FontAtlasOwnedByContext;
-    ImGuiIO IO;
-    ImGuiPlatformIO PlatformIO;
-    ImGuiStyle Style;
-    ImGuiConfigFlags ConfigFlagsCurrFrame;
-    ImGuiConfigFlags ConfigFlagsLastFrame;
-    ImFont* Font;
-    float FontSize;
-    float FontBaseSize;
-    ImDrawListSharedData DrawListSharedData;
-    double Time;
-    int FrameCount;
-    int FrameCountEnded;
-    int FrameCountPlatformEnded;
-    int FrameCountRendered;
-    bool WithinFrameScope;
-    bool WithinFrameScopeWithImplicitWindow;
-    bool WithinEndChild;
-    bool TestEngineHookItems;
-    ImGuiID TestEngineHookIdInfo;
-    void* TestEngine;
-    ImVector_ImGuiWindowPtr Windows;
-    ImVector_ImGuiWindowPtr WindowsFocusOrder;
-    ImVector_ImGuiWindowPtr WindowsTempSortBuffer;
-    ImVector_ImGuiWindowPtr CurrentWindowStack;
-    ImGuiStorage WindowsById;
-    int WindowsActiveCount;
-    ImGuiWindow* CurrentWindow;
-    ImGuiWindow* HoveredWindow;
-    ImGuiWindow* HoveredRootWindow;
-    ImGuiWindow* HoveredWindowUnderMovingWindow;
-    ImGuiDockNode* HoveredDockNode;
-    ImGuiWindow* MovingWindow;
-    ImGuiWindow* WheelingWindow;
-    ImVec2 WheelingWindowRefMousePos;
-    float WheelingWindowTimer;
-    ImGuiID HoveredId;
-    ImGuiID HoveredIdPreviousFrame;
-    bool HoveredIdAllowOverlap;
-    bool HoveredIdDisabled;
-    float HoveredIdTimer;
-    float HoveredIdNotActiveTimer;
-    ImGuiID ActiveId;
-    ImGuiID ActiveIdIsAlive;
-    float ActiveIdTimer;
-    bool ActiveIdIsJustActivated;
-    bool ActiveIdAllowOverlap;
-    bool ActiveIdNoClearOnFocusLoss;
-    bool ActiveIdHasBeenPressedBefore;
-    bool ActiveIdHasBeenEditedBefore;
-    bool ActiveIdHasBeenEditedThisFrame;
-    ImU32 ActiveIdUsingNavDirMask;
-    ImU32 ActiveIdUsingNavInputMask;
-    ImU64 ActiveIdUsingKeyInputMask;
-    ImVec2 ActiveIdClickOffset;
-    ImGuiWindow* ActiveIdWindow;
-    ImGuiInputSource ActiveIdSource;
-    int ActiveIdMouseButton;
-    ImGuiID ActiveIdPreviousFrame;
-    bool ActiveIdPreviousFrameIsAlive;
-    bool ActiveIdPreviousFrameHasBeenEditedBefore;
-    ImGuiWindow* ActiveIdPreviousFrameWindow;
-    ImGuiID LastActiveId;
-    float LastActiveIdTimer;
-    ImGuiNextWindowData NextWindowData;
-    ImGuiNextItemData NextItemData;
-    ImVector_ImGuiColorMod ColorModifiers;
-    ImVector_ImGuiStyleMod StyleModifiers;
-    ImVector_ImFontPtr FontStack;
-    ImVector_ImGuiPopupData OpenPopupStack;
-    ImVector_ImGuiPopupData BeginPopupStack;
-    ImVector_ImGuiViewportPPtr Viewports;
-    float CurrentDpiScale;
-    ImGuiViewportP* CurrentViewport;
-    ImGuiViewportP* MouseViewport;
-    ImGuiViewportP* MouseLastHoveredViewport;
-    int ViewportFrontMostStampCount;
-    ImGuiWindow* NavWindow;
-    ImGuiID NavId;
-    ImGuiID NavFocusScopeId;
-    ImGuiID NavActivateId;
-    ImGuiID NavActivateDownId;
-    ImGuiID NavActivatePressedId;
-    ImGuiID NavInputId;
-    ImGuiID NavJustTabbedId;
-    ImGuiID NavJustMovedToId;
-    ImGuiID NavJustMovedToFocusScopeId;
-    ImGuiKeyModFlags NavJustMovedToKeyMods;
-    ImGuiID NavNextActivateId;
-    ImGuiInputSource NavInputSource;
-    ImRect NavScoringRect;
-    int NavScoringCount;
-    ImGuiNavLayer NavLayer;
-    int NavIdTabCounter;
-    bool NavIdIsAlive;
-    bool NavMousePosDirty;
-    bool NavDisableHighlight;
-    bool NavDisableMouseHover;
-    bool NavAnyRequest;
-    bool NavInitRequest;
-    bool NavInitRequestFromMove;
-    ImGuiID NavInitResultId;
-    ImRect NavInitResultRectRel;
-    bool NavMoveRequest;
-    ImGuiNavMoveFlags NavMoveRequestFlags;
-    ImGuiNavForward NavMoveRequestForward;
-    ImGuiKeyModFlags NavMoveRequestKeyMods;
-    ImGuiDir NavMoveDir;
-    ImGuiDir NavMoveDirLast;
-    ImGuiDir NavMoveClipDir;
-    ImGuiNavMoveResult NavMoveResultLocal;
-    ImGuiNavMoveResult NavMoveResultLocalVisibleSet;
-    ImGuiNavMoveResult NavMoveResultOther;
-    ImGuiWindow* NavWrapRequestWindow;
-    ImGuiNavMoveFlags NavWrapRequestFlags;
-    ImGuiWindow* NavWindowingTarget;
-    ImGuiWindow* NavWindowingTargetAnim;
-    ImGuiWindow* NavWindowingListWindow;
-    float NavWindowingTimer;
-    float NavWindowingHighlightAlpha;
-    bool NavWindowingToggleLayer;
-    ImGuiWindow* FocusRequestCurrWindow;
-    ImGuiWindow* FocusRequestNextWindow;
-    int FocusRequestCurrCounterRegular;
-    int FocusRequestCurrCounterTabStop;
-    int FocusRequestNextCounterRegular;
-    int FocusRequestNextCounterTabStop;
-    bool FocusTabPressed;
-    float DimBgRatio;
-    ImGuiMouseCursor MouseCursor;
-    bool DragDropActive;
-    bool DragDropWithinSource;
-    bool DragDropWithinTarget;
-    ImGuiDragDropFlags DragDropSourceFlags;
-    int DragDropSourceFrameCount;
-    int DragDropMouseButton;
-    ImGuiPayload DragDropPayload;
-    ImRect DragDropTargetRect;
-    ImGuiID DragDropTargetId;
-    ImGuiDragDropFlags DragDropAcceptFlags;
-    float DragDropAcceptIdCurrRectSurface;
-    ImGuiID DragDropAcceptIdCurr;
-    ImGuiID DragDropAcceptIdPrev;
-    int DragDropAcceptFrameCount;
-    ImGuiID DragDropHoldJustPressedId;
-    ImVector_unsigned_char DragDropPayloadBufHeap;
-    char[16] DragDropPayloadBufLocal;
-    ImGuiTabBar* CurrentTabBar;
-    ImPool_ImGuiTabBar TabBars;
-    ImVector_ImGuiPtrOrIndex CurrentTabBarStack;
-    ImVector_ImGuiShrinkWidthItem ShrinkWidthBuffer;
-    ImVec2 LastValidMousePos;
-    ImGuiInputTextState InputTextState;
-    ImFont InputTextPasswordFont;
-    ImGuiID TempInputId;
-    ImGuiColorEditFlags ColorEditOptions;
-    float ColorEditLastHue;
-    float ColorEditLastSat;
-    float[3] ColorEditLastColor;
-    ImVec4 ColorPickerRef;
-    float SliderCurrentAccum;
-    bool SliderCurrentAccumDirty;
-    bool DragCurrentAccumDirty;
-    float DragCurrentAccum;
-    float DragSpeedDefaultRatio;
-    float ScrollbarClickDeltaToGrabCenter;
-    int TooltipOverrideCount;
-    ImVector_char ClipboardHandlerData;
-    ImVector_ImGuiID MenusIdSubmittedThisFrame;
-    ImVec2 PlatformImePos;
-    ImVec2 PlatformImeLastPos;
-    ImGuiViewportP* PlatformImePosViewport;
-    char PlatformLocaleDecimalPoint;
-    ImGuiDockContext DockContext;
-    bool SettingsLoaded;
-    float SettingsDirtyTimer;
-    ImGuiTextBuffer SettingsIniData;
-    ImVector_ImGuiSettingsHandler SettingsHandlers;
-    ImChunkStream_ImGuiWindowSettings SettingsWindows;
-    bool LogEnabled;
-    ImGuiLogType LogType;
-    ImFileHandle LogFile;
-    ImGuiTextBuffer LogBuffer;
-    float LogLinePosY;
-    bool LogLineFirstItem;
-    int LogDepthRef;
-    int LogDepthToExpand;
-    int LogDepthToExpandDefault;
-    bool DebugItemPickerActive;
-    ImGuiID DebugItemPickerBreakId;
-    float[120] FramerateSecPerFrame;
-    int FramerateSecPerFrameIdx;
-    float FramerateSecPerFrameAccum;
-    int WantCaptureMouseNextFrame;
-    int WantCaptureKeyboardNextFrame;
-    int WantTextInputNextFrame;
-    char[1024*3+1] TempBuffer;
-}
-
-struct ImFontConfig {
-    void* FontData;
-    int FontDataSize;
-    bool FontDataOwnedByAtlas;
-    int FontNo;
-    float SizePixels;
-    int OversampleH;
-    int OversampleV;
-    bool PixelSnapH;
-    ImVec2 GlyphExtraSpacing;
-    ImVec2 GlyphOffset;
-    const ImWchar* GlyphRanges;
-    float GlyphMinAdvanceX;
-    float GlyphMaxAdvanceX;
-    bool MergeMode;
-    uint RasterizerFlags;
-    float RasterizerMultiply;
-    ImWchar EllipsisChar;
-    char[40] Name;
-    ImFont* DstFont;
-}
-
-struct ImGuiColumnData {
-    float OffsetNorm;
-    float OffsetNormBeforeResize;
-    ImGuiColumnsFlags Flags;
-    ImRect ClipRect;
-}
-
-struct ImDrawListSharedData {
-    ImVec2 TexUvWhitePixel;
-    ImFont* Font;
-    float FontSize;
-    float CurveTessellationTol;
-    float CircleSegmentMaxError;
-    ImVec4 ClipRectFullscreen;
-    ImDrawListFlags InitialFlags;
-    ImVec2[12*1] ArcFastVtx;
-    ImU8[64] CircleSegmentCounts;
-    const ImVec4* TexUvLines;
-}
-
-struct ImDrawDataBuilder {
-    ImVector_ImDrawListPtr[2] Layers;
-}
-
-struct ImGuiViewportP {
-    ImGuiViewport _ImGuiViewport;
-    int Idx;
-    int LastFrameActive;
-    int[2] LastFrameDrawLists;
-    int LastFrontMostStampCount;
-    ImGuiID LastNameHash;
-    ImVec2 LastPos;
-    float Alpha;
-    float LastAlpha;
-    short PlatformMonitor;
-    bool PlatformWindowCreated;
-    ImGuiWindow* Window;
-    ImDrawList*[2] DrawLists;
-    ImDrawData DrawDataP;
-    ImDrawDataBuilder DrawDataBuilder;
-    ImVec2 LastPlatformPos;
-    ImVec2 LastPlatformSize;
-    ImVec2 LastRendererSize;
-    ImVec2 CurrWorkOffsetMin;
-    ImVec2 CurrWorkOffsetMax;
-}
-
-struct ImVec1 {
-    float x;
-}
-
-struct ImDrawData {
-    bool Valid;
-    ImDrawList** CmdLists;
-    int CmdListsCount;
-    int TotalIdxCount;
-    int TotalVtxCount;
-    ImVec2 DisplayPos;
-    ImVec2 DisplaySize;
-    ImVec2 FramebufferScale;
-    ImGuiViewport* OwnerViewport;
-}
-
-struct ImGuiInputTextState {
-    ImGuiID ID;
-    int CurLenW;
-    int CurLenA;
-    ImVector_ImWchar TextW;
-    ImVector_char TextA;
-    ImVector_char InitialTextA;
-    bool TextAIsValid;
-    int BufCapacityA;
-    float ScrollX;
-    STB_TexteditState Stb;
-    float CursorAnim;
-    bool CursorFollow;
-    bool SelectedAllMouseLock;
-    bool Edited;
-    ImGuiInputTextFlags UserFlags;
-    ImGuiInputTextCallback UserCallback;
-    void* UserCallbackData;
-}
-
-struct ImGuiPtrOrIndex {
-    void* Ptr;
-    int Index;
-}
-
-struct ImFont {
-    ImVector_float IndexAdvanceX;
-    float FallbackAdvanceX;
-    float FontSize;
-    ImVector_ImWchar IndexLookup;
-    ImVector_ImFontGlyph Glyphs;
-    const ImFontGlyph* FallbackGlyph;
-    ImFontAtlas* ContainerAtlas;
-    const ImFontConfig* ConfigData;
-    short ConfigDataCount;
-    ImWchar FallbackChar;
-    ImWchar EllipsisChar;
-    bool DirtyLookupTables;
-    float Scale;
-    float Ascent;
-    float Descent;
-    int MetricsTotalSurface;
-    ImU8[(0xFFFF+1)/4096/8] Used4kPagesMap;
-}
-
-struct ImGuiOnceUponAFrame {
-    int RefFrame;
-}
-
-struct ImGuiWindowSettings {
-    ImGuiID ID;
-    ImVec2ih Pos;
-    ImVec2ih Size;
-    ImVec2ih ViewportPos;
-    ImGuiID ViewportId;
-    ImGuiID DockId;
-    ImGuiID ClassId;
-    short DockOrder;
-    bool Collapsed;
-    bool WantApply;
-}
-
-struct ImVec4 {
-    float x;
-    float y;
-    float z;
-    float w;
-}
-
-struct ImGuiDockContext {
-    ImGuiStorage Nodes;
-    ImVector_ImGuiDockRequest Requests;
-    ImVector_ImGuiDockNodeSettings NodesSettings;
-    bool WantFullRebuild;
-}
-
-struct ImGuiNavMoveResult {
-    ImGuiWindow* Window;
-    ImGuiID ID;
-    ImGuiID FocusScopeId;
-    float DistBox;
-    float DistCenter;
-    float DistAxial;
-    ImRect RectRel;
-}
-
-struct ImGuiSettingsHandler {
-    const(char)* TypeName;
-    ImGuiID TypeHash;
-    void function(ImGuiContext* ctx,ImGuiSettingsHandler* handler) ClearAllFn;
-    void function(ImGuiContext* ctx,ImGuiSettingsHandler* handler) ReadInitFn;
-    void* function(ImGuiContext* ctx,ImGuiSettingsHandler* handler,const char* name) ReadOpenFn;
-    void function(ImGuiContext* ctx,ImGuiSettingsHandler* handler,void* entry,const char* line) ReadLineFn;
-    void function(ImGuiContext* ctx,ImGuiSettingsHandler* handler) ApplyAllFn;
-    void function(ImGuiContext* ctx,ImGuiSettingsHandler* handler,ImGuiTextBuffer* out_buf) WriteAllFn;
-    void* UserData;
-}
-
-struct ImDrawListSplitter {
-    int _Current;
-    int _Count;
-    ImVector_ImDrawChannel _Channels;
-}
-
-struct STB_TexteditState {
-    int cursor;
-    int select_start;
-    int select_end;
-    char insert_mode;
-    int row_count_per_page;
-    char cursor_at_end_of_line;
-    char initialized;
-    char has_preferred_x;
-    char single_line;
-    char padding1;
-    char padding2;
-    char padding3;
-    float preferred_x;
-    StbUndoState undostate;
-}
-
-struct ImDrawList {
-    ImVector_ImDrawCmd CmdBuffer;
-    ImVector_ImDrawIdx IdxBuffer;
-    ImVector_ImDrawVert VtxBuffer;
-    ImDrawListFlags Flags;
-    const ImDrawListSharedData* _Data;
-    const(char)* _OwnerName;
-    uint _VtxCurrentIdx;
-    ImDrawVert* _VtxWritePtr;
-    ImDrawIdx* _IdxWritePtr;
-    ImVector_ImVec4 _ClipRectStack;
-    ImVector_ImTextureID _TextureIdStack;
-    ImVector_ImVec2 _Path;
-    ImDrawCmd _CmdHeader;
-    ImDrawListSplitter _Splitter;
-}
-
-struct ImGuiStoragePair {
-    ImGuiID key;
-    union { int val_i; float val_f; void* val_p;} ;
-}
-
-struct ImDrawChannel {
-    ImVector_ImDrawCmd _CmdBuffer;
-    ImVector_ImDrawIdx _IdxBuffer;
-}
-
-struct ImDrawCmd {
-    ImVec4 ClipRect;
-    ImTextureID TextureId;
-    uint VtxOffset;
-    uint IdxOffset;
-    uint ElemCount;
-    ImDrawCallback UserCallback;
-    void* UserCallbackData;
-}
 
-struct ImGuiLastItemDataBackup {
-    ImGuiID LastItemId;
-    ImGuiItemStatusFlags LastItemStatusFlags;
-    ImRect LastItemRect;
-    ImRect LastItemDisplayRect;
 }
-
-struct StbUndoState {
-    StbUndoRecord[99] undo_rec;
-    ImWchar[999] undo_char;
-    short undo_point;
-    short redo_point;
-    int undo_char_point;
-    int redo_char_point;
-}
-
-struct ImGuiTextBuffer {
-    ImVector_char Buf;
-}
-
-struct ImGuiListClipper {
-    int DisplayStart;
-    int DisplayEnd;
-    int ItemsCount;
-    int StepNo;
-    float ItemsHeight;
-    float StartPosY;
-}
-
-struct ImGuiMenuColumns {
-    float Spacing;
-    float Width;
-    float NextWidth;
-    float[3] Pos;
-    float[3] NextWidths;
-}
-
-struct ImGuiDockNode {
-    ImGuiID ID;
-    ImGuiDockNodeFlags SharedFlags;
-    ImGuiDockNodeFlags LocalFlags;
-    ImGuiDockNode* ParentNode;
-    ImGuiDockNode*[2] ChildNodes;
-    ImVector_ImGuiWindowPtr Windows;
-    ImGuiTabBar* TabBar;
-    ImVec2 Pos;
-    ImVec2 Size;
-    ImVec2 SizeRef;
-    ImGuiAxis SplitAxis;
-    ImGuiWindowClass WindowClass;
-    ImGuiDockNodeState State;
-    ImGuiWindow* HostWindow;
-    ImGuiWindow* VisibleWindow;
-    ImGuiDockNode* CentralNode;
-    ImGuiDockNode* OnlyNodeWithWindows;
-    int LastFrameAlive;
-    int LastFrameActive;
-    int LastFrameFocused;
-    ImGuiID LastFocusedNodeId;
-    ImGuiID SelectedTabId;
-    ImGuiID WantCloseTabId;
-    ImGuiDataAuthority AuthorityForPos;
-    ImGuiDataAuthority AuthorityForSize;
-    ImGuiDataAuthority AuthorityForViewport;
-    bool IsVisible;
-    bool IsFocused;
-    bool HasCloseButton;
-    bool HasWindowMenuButton;
-    bool EnableCloseButton;
-    bool WantCloseAll;
-    bool WantLockSizeOnce;
-    bool WantMouseMove;
-    bool WantHiddenTabBarUpdate;
-    bool WantHiddenTabBarToggle;
-    bool MarkedForPosSizeWrite;
-}
-
-struct ImVec2ih {
-    short x;
-    short y;
-}
-
-struct ImGuiNextWindowData {
-    ImGuiNextWindowDataFlags Flags;
-    ImGuiCond PosCond;
-    ImGuiCond SizeCond;
-    ImGuiCond CollapsedCond;
-    ImGuiCond DockCond;
-    ImVec2 PosVal;
-    ImVec2 PosPivotVal;
-    ImVec2 SizeVal;
-    ImVec2 ContentSizeVal;
-    ImVec2 ScrollVal;
-    bool PosUndock;
-    bool CollapsedVal;
-    ImRect SizeConstraintRect;
-    ImGuiSizeCallback SizeCallback;
-    void* SizeCallbackUserData;
-    float BgAlphaVal;
-    ImGuiID ViewportId;
-    ImGuiID DockId;
-    ImGuiWindowClass WindowClass;
-    ImVec2 MenuBarOffsetMinVal;
-}
-
-struct ImGuiPlatformMonitor {
-    ImVec2 MainPos;
-    ImVec2 MainSize;
-    ImVec2 WorkPos;
-    ImVec2 WorkSize;
-    float DpiScale;
-}
-
-struct ImGuiStorage {
-    ImVector_ImGuiStoragePair Data;
-}
-
-struct ImGuiTabItem {
-    ImGuiID ID;
-    ImGuiTabItemFlags Flags;
-    ImGuiWindow* Window;
-    int LastFrameVisible;
-    int LastFrameSelected;
-    float Offset;
-    float Width;
-    float ContentWidth;
-    ImS16 NameOffset;
-    ImS8 BeginOrder;
-    ImS8 IndexDuringLayout;
-    bool WantClose;
-}
-
-
 version (BindImGui_Static) {
     extern (C) @nogc nothrow {
         void ImDrawList_AddCircleFilled(ImDrawList* self, const ImVec2 center, float radius, ImU32 col, int num_segments);
@@ -2541,7 +2485,7 @@ version (BindImGui_Static) {
         void ImGuiWindow_destroy(ImGuiWindow* self);
         bool igComboStr_arr(const(char)* label, int* current_item, const(char)** items, int items_count, int popup_max_height_in_items);
         bool igComboStr(const(char)* label, int* current_item, const(char)* items_separated_by_zeros, int popup_max_height_in_items);
-        bool igComboFnBoolPtr(const(char)* label, int* current_item, bool function(void* data,int idx,const char** out_text) items_getter, void* data, int items_count, int popup_max_height_in_items);
+        bool igComboFnBoolPtr(const(char)* label, int* current_item, bool function(void* data,int idx,const(char)** out_text) items_getter, void* data, int items_count, int popup_max_height_in_items);
         bool igIsWindowChildOf(ImGuiWindow* window, ImGuiWindow* potential_parent);
         float ImGuiWindow_CalcFontSize(ImGuiWindow* self);
         void ImDrawList_AddLine(ImDrawList* self, const ImVec2 p1, const ImVec2 p2, ImU32 col, float thickness);
@@ -2753,12 +2697,12 @@ version (BindImGui_Static) {
         void igMarkIniSettingsDirtyWindowPtr(ImGuiWindow* window);
         float igGetWindowWidth();
         void igBulletTextV(const(char)* fmt, va_list args);
-        void igDockBuilderCopyNode(ImGuiID src_node_id, ImGuiID dst_node_id, ImVector_ImGuiID* out_node_remap_pairs);
+        void igDockBuilderCopyNode(ImGuiID src_node_id, ImGuiID dst_node_id, ImVector!ImGuiID* out_node_remap_pairs);
         void ImDrawListSplitter_SetCurrentChannel(ImDrawListSplitter* self, ImDrawList* draw_list, int channel_idx);
         void ImGuiStorage_SetBool(ImGuiStorage* self, ImGuiID key, bool val);
         void igAlignTextToFramePadding();
         bool igIsWindowHovered(ImGuiHoveredFlags flags);
-        void igDockBuilderCopyDockSpace(ImGuiID src_dockspace_id, ImGuiID dst_dockspace_id, ImVector_const_charPtr* in_window_remap_pairs);
+        void igDockBuilderCopyDockSpace(ImGuiID src_dockspace_id, ImGuiID dst_dockspace_id, ImVector!const_charPtr* in_window_remap_pairs);
         void ImDrawList_PathBezierCurveTo(ImDrawList* self, const ImVec2 p2, const ImVec2 p3, const ImVec2 p4, int num_segments);
         void ImRect_GetCenter(ImVec2* pOut, ImRect* self);
         float igGetWindowContentRegionWidth();
@@ -3100,7 +3044,7 @@ version (BindImGui_Static) {
         void ImDrawList_AddConvexPolyFilled(ImDrawList* self, const ImVec2* points, int num_points, ImU32 col);
         void igGetCursorScreenPos(ImVec2* pOut);
         bool igListBoxStr_arr(const(char)* label, int* current_item, const(char)** items, int items_count, int height_in_items);
-        bool igListBoxFnBoolPtr(const(char)* label, int* current_item, bool function(void* data,int idx,const char** out_text) items_getter, void* data, int items_count, int height_in_items);
+        bool igListBoxFnBoolPtr(const(char)* label, int* current_item, bool function(void* data,int idx,const(char)** out_text) items_getter, void* data, int items_count, int height_in_items);
         void igPopItemFlag();
         void igPopColumnsBackground();
         void igLogBegin(ImGuiLogType type, int auto_open_depth);
@@ -3258,7 +3202,7 @@ version (BindImGui_Static) {
         void ImGuiDockContext_destroy(ImGuiDockContext* self);
         bool ImGuiPayload_IsDataType(ImGuiPayload* self, const(char)* type);
         void igSetActiveID(ImGuiID id, ImGuiWindow* window);
-        void ImFontGlyphRangesBuilder_BuildRanges(ImFontGlyphRangesBuilder* self, ImVector_ImWchar* out_ranges);
+        void ImFontGlyphRangesBuilder_BuildRanges(ImFontGlyphRangesBuilder* self, ImVector!ImWchar* out_ranges);
         void igTreePop();
         void igSetWindowSizeVec2(const ImVec2 size, ImGuiCond cond);
         void igSetWindowSizeStr(const(char)* name, const ImVec2 size, ImGuiCond cond);
@@ -3314,7 +3258,7 @@ version (BindImGui_Static) {
         void ImGuiPlatformIO_destroy(ImGuiPlatformIO* self);
         void ImDrawListSharedData_SetCircleSegmentMaxError(ImDrawListSharedData* self, float max_error);
         void ImGuiInputTextCallbackData_ClearSelection(ImGuiInputTextCallbackData* self);
-        void ImGuiTextRange_split(ImGuiTextRange* self, char separator, ImVector_ImGuiTextRange* outItem);
+        void ImGuiTextRange_split(ImGuiTextRange* self, char separator, ImVector!ImGuiTextRange* outItem);
         void ImBitVector_Clear(ImBitVector* self);
         ImGuiID igDockBuilderAddNode(ImGuiID node_id, ImGuiDockNodeFlags flags);
         ImGuiWindowSettings* igCreateNewWindowSettings(const(char)* name);
@@ -3639,7 +3583,7 @@ version (BindImGui_Static) {
         alias pImGuiWindow_destroy = void function(ImGuiWindow* self);
         alias pigComboStr_arr = bool function(const(char)* label, int* current_item, const(char)** items, int items_count, int popup_max_height_in_items);
         alias pigComboStr = bool function(const(char)* label, int* current_item, const(char)* items_separated_by_zeros, int popup_max_height_in_items);
-        alias pigComboFnBoolPtr = bool function(const(char)* label, int* current_item, bool function(void* data,int idx,const char** out_text) items_getter, void* data, int items_count, int popup_max_height_in_items);
+        alias pigComboFnBoolPtr = bool function(const(char)* label, int* current_item, bool function(void* data,int idx,const(char)** out_text) items_getter, void* data, int items_count, int popup_max_height_in_items);
         alias pigIsWindowChildOf = bool function(ImGuiWindow* window, ImGuiWindow* potential_parent);
         alias pImGuiWindow_CalcFontSize = float function(ImGuiWindow* self);
         alias pImDrawList_AddLine = void function(ImDrawList* self, const ImVec2 p1, const ImVec2 p2, ImU32 col, float thickness);
@@ -3851,12 +3795,12 @@ version (BindImGui_Static) {
         alias pigMarkIniSettingsDirtyWindowPtr = void function(ImGuiWindow* window);
         alias pigGetWindowWidth = float function();
         alias pigBulletTextV = void function(const(char)* fmt, va_list args);
-        alias pigDockBuilderCopyNode = void function(ImGuiID src_node_id, ImGuiID dst_node_id, ImVector_ImGuiID* out_node_remap_pairs);
+        alias pigDockBuilderCopyNode = void function(ImGuiID src_node_id, ImGuiID dst_node_id, ImVector!ImGuiID* out_node_remap_pairs);
         alias pImDrawListSplitter_SetCurrentChannel = void function(ImDrawListSplitter* self, ImDrawList* draw_list, int channel_idx);
         alias pImGuiStorage_SetBool = void function(ImGuiStorage* self, ImGuiID key, bool val);
         alias pigAlignTextToFramePadding = void function();
         alias pigIsWindowHovered = bool function(ImGuiHoveredFlags flags);
-        alias pigDockBuilderCopyDockSpace = void function(ImGuiID src_dockspace_id, ImGuiID dst_dockspace_id, ImVector_const_charPtr* in_window_remap_pairs);
+        alias pigDockBuilderCopyDockSpace = void function(ImGuiID src_dockspace_id, ImGuiID dst_dockspace_id, ImVector!const_charPtr* in_window_remap_pairs);
         alias pImDrawList_PathBezierCurveTo = void function(ImDrawList* self, const ImVec2 p2, const ImVec2 p3, const ImVec2 p4, int num_segments);
         alias pImRect_GetCenter = void function(ImVec2* pOut, ImRect* self);
         alias pigGetWindowContentRegionWidth = float function();
@@ -4198,7 +4142,7 @@ version (BindImGui_Static) {
         alias pImDrawList_AddConvexPolyFilled = void function(ImDrawList* self, const ImVec2* points, int num_points, ImU32 col);
         alias pigGetCursorScreenPos = void function(ImVec2* pOut);
         alias pigListBoxStr_arr = bool function(const(char)* label, int* current_item, const(char)** items, int items_count, int height_in_items);
-        alias pigListBoxFnBoolPtr = bool function(const(char)* label, int* current_item, bool function(void* data,int idx,const char** out_text) items_getter, void* data, int items_count, int height_in_items);
+        alias pigListBoxFnBoolPtr = bool function(const(char)* label, int* current_item, bool function(void* data,int idx,const(char)** out_text) items_getter, void* data, int items_count, int height_in_items);
         alias pigPopItemFlag = void function();
         alias pigPopColumnsBackground = void function();
         alias pigLogBegin = void function(ImGuiLogType type, int auto_open_depth);
@@ -4356,7 +4300,7 @@ version (BindImGui_Static) {
         alias pImGuiDockContext_destroy = void function(ImGuiDockContext* self);
         alias pImGuiPayload_IsDataType = bool function(ImGuiPayload* self, const(char)* type);
         alias pigSetActiveID = void function(ImGuiID id, ImGuiWindow* window);
-        alias pImFontGlyphRangesBuilder_BuildRanges = void function(ImFontGlyphRangesBuilder* self, ImVector_ImWchar* out_ranges);
+        alias pImFontGlyphRangesBuilder_BuildRanges = void function(ImFontGlyphRangesBuilder* self, ImVector!ImWchar* out_ranges);
         alias pigTreePop = void function();
         alias pigSetWindowSizeVec2 = void function(const ImVec2 size, ImGuiCond cond);
         alias pigSetWindowSizeStr = void function(const(char)* name, const ImVec2 size, ImGuiCond cond);
@@ -4412,7 +4356,7 @@ version (BindImGui_Static) {
         alias pImGuiPlatformIO_destroy = void function(ImGuiPlatformIO* self);
         alias pImDrawListSharedData_SetCircleSegmentMaxError = void function(ImDrawListSharedData* self, float max_error);
         alias pImGuiInputTextCallbackData_ClearSelection = void function(ImGuiInputTextCallbackData* self);
-        alias pImGuiTextRange_split = void function(ImGuiTextRange* self, char separator, ImVector_ImGuiTextRange* outItem);
+        alias pImGuiTextRange_split = void function(ImGuiTextRange* self, char separator, ImVector!ImGuiTextRange* outItem);
         alias pImBitVector_Clear = void function(ImBitVector* self);
         alias pigDockBuilderAddNode = ImGuiID function(ImGuiID node_id, ImGuiDockNodeFlags flags);
         alias pigCreateNewWindowSettings = ImGuiWindowSettings* function(const(char)* name);

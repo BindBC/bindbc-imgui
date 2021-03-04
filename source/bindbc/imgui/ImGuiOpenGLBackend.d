@@ -489,15 +489,18 @@ void destroy_device_objects()
 // This is an _advanced_ and _optional_ feature, allowing the back-end to create and handle multiple viewports simultaneously.
 // If you are new to dear imgui or creating a new binding for dear imgui, it is recommended that you completely ignore this section first..
 //--------------------------------------------------------------------------------------------------------
-static void render_window(ImGuiViewport* viewport, void*)
+extern (C)
 {
-    if (!(viewport.Flags & ImGuiViewportFlags_NoRendererClear))
+    static void render_window(ImGuiViewport* viewport, void*)
     {
-        ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
+        if (!(viewport.Flags & ImGuiViewportFlags_NoRendererClear))
+        {
+            ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+            glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+            glClear(GL_COLOR_BUFFER_BIT);
+        }
+        render_draw_data(viewport.DrawData);
     }
-    render_draw_data(viewport.DrawData);
 }
 
 static void init_platform_interface()

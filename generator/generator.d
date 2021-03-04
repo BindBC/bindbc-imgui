@@ -64,6 +64,13 @@ struct code_writer
         add_scope();
     }
 
+    void add_normal_extern_c()
+    {
+        write_indent();
+        mBuilder.put("extern (C) ");
+        add_scope();
+    }
+
     void add_enum()
     {
         write_indent();
@@ -237,6 +244,8 @@ string imgui_argname_to_dlang(string imguiName)
     return imguiName;
 }
 
+import std.algorithm;
+
 string imgui_type_to_dlang(string imguiType)
 {
     if (auto type = imguiType in cTypeMap)
@@ -245,7 +254,22 @@ string imgui_type_to_dlang(string imguiType)
     }
 
     imguiType = imguiType.replace("struct ", "");
-    imguiType = imguiType.replace("(*)", " function");
+
+    // Replace C template stubs with D template type.
+    {
+        imguiType = imguiType.replace("ImVector_", "ImVector!");
+    }
+
+    
+    if (canFind(imguiType, "(*)"))
+    {
+        imguiType = imguiType.replace("(*)", " function");
+
+        foreach (key, value; cTypeMap)
+        {
+            imguiType = imguiType.replace(key, value);
+        }
+    }
 
     return imguiType;
 }
@@ -390,10 +414,180 @@ struct TypeToReplace {
 
 
 const string imVector = `
-struct TypeToReplace {
+struct ImVector(tType) {
     int Size;
     int Capacity;
-    TemplatedTypeToReplace* Data;
+    tType* Data;
+
+    import core.stdc.string;
+
+
+    bool empty() const                       
+    {
+        return Size == 0; 
+    }
+
+    int size() const                        
+    {
+        return Size; 
+    }
+
+    int size_in_bytes() const               
+    {
+        return Size * cast(int)tType.sizeof; 
+    }
+
+    int max_size() const                    
+    {
+        return 0x7FFFFFFF / cast(int)tType.sizeof; 
+    }
+
+    int capacity() const                    
+    {
+        return Capacity; 
+    }
+
+    void clear()                             
+    {
+        if (Data) 
+        {
+            Size = Capacity = 0;
+            igMemFree(Data);
+            Data = null; 
+        } 
+    }
+
+    void swap(ImVector* rhs)
+    {
+        int rhs_size = rhs.Size;
+        rhs.Size = Size;
+        Size = rhs_size;
+        int rhs_cap = rhs.Capacity;
+        rhs.Capacity = Capacity;
+        Capacity = rhs_cap;
+        tType* rhs_data = rhs.Data;
+        rhs.Data = Data;
+        Data = rhs_data;
+    }
+
+    int _grow_capacity(int sz) const        
+    {
+        int new_capacity = Capacity ? (Capacity + Capacity / 2) : 8;
+        return new_capacity > sz ? new_capacity : sz; 
+    }
+
+    void resize(int new_size)                
+    {
+        if (new_size > Capacity) 
+            reserve(_grow_capacity(new_size)); Size = new_size; 
+    }
+
+    void resize(int new_size, const tType* v)    
+    {
+        if (new_size > Capacity)
+            reserve(_grow_capacity(new_size));
+        if (new_size > Size)
+            for (int n = Size; n < new_size; n++) 
+                memcpy(&Data[n], v, tType.sizeof); 
+        
+        Size = new_size; 
+    }
+
+    // Resize a vector to a smaller size, guaranteed not to cause a reallocation
+    void shrink(int new_size)                
+    {
+        //IM_ASSERT(new_size <= Size);
+        Size = new_size; 
+    } 
+
+    void reserve(int new_capacity)           
+    {
+        if (new_capacity <= Capacity) 
+            return; 
+
+        tType* new_data = cast(tType*)igMemAlloc(cast(size_t)new_capacity * tType.sizeof); 
+        
+        if (Data) 
+        {
+            memcpy(new_data, Data, cast(size_t)Size * tType.sizeof); 
+            igMemFree(Data);
+        } 
+
+        Data = new_data; 
+        Capacity = new_capacity; 
+    }
+
+
+    // NB: It is illegal to call push_back/push_front/insert with a reference pointing inside the ImVector data itself! e.g. v.push_back(v[10]) is forbidden.
+    void push_back(const tType* v)               
+    {
+        if (Size == Capacity)
+            reserve(_grow_capacity(Size + 1)); 
+        
+        memcpy(&Data[Size], v, tType.sizeof);
+        Size++; 
+    }
+
+    void pop_back()                          
+    {
+         //IM_ASSERT(Size > 0);
+         Size--; 
+    }
+
+    void push_front(const tType* v)              
+    {
+        if (Size == 0)
+            push_back(v); 
+        else 
+            insert(Data, v); 
+    }
+
+    tType* erase(const tType* it)
+    {
+         //IM_ASSERT(it >= Data && it < Data + Size);
+         const ptrdiff_t off = it - Data;
+         memmove(Data + off, Data + off + 1, (cast(size_t)Size - cast(size_t)off - 1) * tType.sizeof);
+         Size--;
+         return Data + off; 
+    }
+
+    tType* erase(const tType* it, const tType* it_last)
+    {
+         //IM_ASSERT(it >= Data && it < Data + Size && it_last > it && it_last <= Data + Size);
+         const ptrdiff_t count = it_last - it;
+         const ptrdiff_t off = it - Data;
+         memmove(Data + off, Data + off + count, (cast(size_t)Size - cast(size_t)off - count) * tType.sizeof);
+         Size -= cast(int)count;
+         return Data + off; 
+    }
+
+    tType* erase_unsorted(const tType* it)
+    {
+        //IM_ASSERT(it >= Data && it < Data + Size);
+        const ptrdiff_t off = it - Data;
+         
+        if (it < Data + Size - 1)
+            memcpy(Data + off, Data + Size - 1, tType.sizeof);
+        
+        Size--;
+        return Data + off; 
+    }
+
+    tType* insert(const tType* it, const tType* v)
+    {
+         //IM_ASSERT(it >= Data && it <= Data + Size); 
+         const ptrdiff_t off = it - Data;
+         
+        if (Size == Capacity) 
+            reserve(_grow_capacity(Size + 1));
+        
+        if (off < cast(int)Size) 
+            memmove(Data + off + 1, Data + off, (cast(size_t)Size - cast(size_t)off) * tType.sizeof);
+
+        memcpy(&Data[off], v, tType.sizeof);
+        Size++;
+        return Data + off; 
+    }
 }
 `;
 
@@ -403,16 +597,8 @@ struct TypeToReplace {
 }
 `;
 
-const string baseImVector = `
-struct ImVector {
-    int Size;
-    int Capacity;
-    void* Data;
-}
-`;
 
-
-void write_template_structs(code_writer codeWriter, JSONValue definitions)
+string[string] write_template_structs(code_writer codeWriter, JSONValue definitions)
 {
     string[string] imTemplateTypes;
     auto structs = definitions["structs"];
@@ -436,13 +622,13 @@ void write_template_structs(code_writer codeWriter, JSONValue definitions)
         }
     }
 
-    codeWriter.put_lines(baseImVector);
+    codeWriter.put_lines(imVector);
 
     foreach (string templateName, string templatedOnType; imTemplateTypes)
     {
         string structTemplate;
         if (startsWith(templateName, "ImVector_"))
-            structTemplate = imVector;
+            continue; // We utlize a D template for these. (ImPool and ImChunkStream to follow).
         else if (startsWith(templateName, "ImPool_"))
             structTemplate = imPool;
         else if (startsWith(templateName, "ImChunkStream_"))
@@ -801,13 +987,17 @@ void write_imgui_file(
     codeWriter.put_lines("import core.stdc.stdarg;");
     codeWriter.line_break();
 
+    codeWriter.add_normal_extern_c();
+
     write_typedefs(codeWriter, typedefs_dict, structs_and_enums);
-    write_template_structs(codeWriter, structs_and_enums);
+    auto tempalteStructInfo = write_template_structs(codeWriter, structs_and_enums);
     codeWriter.line_break();
     write_enums(codeWriter, structs_and_enums);
     codeWriter.line_break();
     write_structs(codeWriter, structs_and_enums);
     codeWriter.line_break();
+
+    codeWriter.remove_scope();
 
     // Writing out the static version of the symbols
     codeWriter.add_version("BindImGui_Static");
