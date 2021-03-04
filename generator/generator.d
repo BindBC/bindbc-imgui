@@ -28,6 +28,132 @@ shared immutable string[string] cArgMap;
 shared immutable string[string] cTypeMap;
 shared immutable BackendData[string] cBackendMap;
 
+shared static this()
+{
+    cArgMap = [
+        "align": "alignment",
+        "ref" : "reference",
+        "in" : "inItem",
+        "out" : "outItem"
+    ];
+    
+    cTypeMap = [
+        "unsigned char": "char",
+        "unsigned_char": "char",
+        "unsigned short": "ushort",
+        "unsigned int": "uint",
+        "unsigned char*": "char*",
+        "unsigned short*": "ushort*",
+        "unsigned int*": "uint*",
+        "signed char": "byte",
+        "signed short": "short",
+        "signed int": "int",
+        "signed char*": "byte*",
+        "signed short*": "short*",
+        "signed int*": "int*",
+        "int64_t" : "long",
+        "uint64_t" : "ulong",
+        "union { int BackupInt[2]; float BackupFloat[2];}": "union { int[2] BackupInt; float[2] BackupFloat;}",
+        "const char*" : "const(char)*",
+        "const char* const[]" : "const(char)**",
+        "unsigned char[256]" : "char[256]",
+        "unsigned char**" : "char**",
+        "const unsigned char[256]" : "const char[256]",
+        "ImGuiWindowPtr" : "ImGuiWindow*",
+        "ImFontPtr" : "ImFont*",
+        "ImDrawListPtr" : "ImDrawList*",
+        "ImGuiViewportPPtr" : "ImGuiViewportP*",
+    ];
+
+    cBackendMap = [
+        "ImGui_ImplSDL2": BackendData(
+            "ImGui_ImplSDL2", 
+            "SDL2", 
+            "import bindbc.sdl;",
+            "USE_SDL2"
+        ),
+        "ImGui_ImplGlfw" :BackendData(
+            "ImGui_ImplGlfw", 
+            "Glfw", 
+            "import bindbc.sdl;",
+            "USE_GLFW"
+        ),
+        "ImGui_ImplOpenGL2" :BackendData(
+            "ImGui_ImplOpenGL2", 
+            "OpenGL2", 
+            "",
+            "USE_OpenGL2"
+        ),
+        "ImGui_ImplOpenGL3" :BackendData(
+            "ImplOpenGL3", 
+            "OpenGL3", 
+            "",
+            "USE_OpenGL3"
+        ),
+    ];
+}
+
+string imgui_argname_to_dlang(string imguiName)
+{
+    if (auto type = imguiName in cArgMap)
+    {
+        return *type;
+    }
+
+    return imguiName;
+}
+
+import std.algorithm;
+
+string imgui_type_to_dlang(string imguiType)
+{
+    if (auto type = imguiType in cTypeMap)
+    {
+        return *type;
+    }
+
+    imguiType = imguiType.replace("struct ", "");
+
+    // Replace C template stubs with D template type.
+
+    if (startsWith(imguiType, "ImVector_"))
+    {
+        imguiType = imguiType.replace("ImVector_", "");
+        
+        if (endsWith(imguiType, "*"))
+            imguiType = imguiType.replace("*", "");
+
+        if (auto type = imguiType in cTypeMap)
+            imguiType = "ImVector!" ~ *type ~ "*";
+        else
+            imguiType = "ImVector!" ~ imguiType  ~ "*";
+    }
+    if (startsWith(imguiType, "ImSpan_"))
+    {
+        imguiType = imguiType.replace("ImSpan_", "");
+
+        if (endsWith(imguiType, "*"))
+            imguiType = imguiType.replace("*", "");
+
+        if (auto type = imguiType in cTypeMap)
+            imguiType = "ImSpan!" ~ *type ~ "*";
+        else
+            imguiType = "ImSpan!" ~ imguiType ~ "*";
+    }
+    
+    if (canFind(imguiType, "(*)"))
+    {
+        imguiType = imguiType.replace("(*)", " function");
+
+        foreach (key, value; cTypeMap)
+        {
+            imguiType = imguiType.replace(key, value);
+        }
+    }
+
+    return imguiType;
+}
+
 struct code_writer
 {
     void put_lines(string aLines)
@@ -173,106 +299,6 @@ struct code_writer
 
 
 
-shared static this()
-{
-    cArgMap = [
-        "align": "alignment",
-        "ref" : "reference",
-        "in" : "inItem",
-        "out" : "outItem"
-    ];
-    
-    cTypeMap = [
-        "unsigned char": "char",
-        "unsigned_char": "char",
-        "unsigned short": "ushort",
-        "unsigned int": "uint",
-        "unsigned char*": "char*",
-        "unsigned short*": "ushort*",
-        "unsigned int*": "uint*",
-        "signed char": "byte",
-        "signed short": "short",
-        "signed int": "int",
-        "signed char*": "byte*",
-        "signed short*": "short*",
-        "signed int*": "int*",
-        "int64_t" : "long",
-        "uint64_t" : "ulong",
-        "union { int BackupInt[2]; float BackupFloat[2];}": "union { int[2] BackupInt; float[2] BackupFloat;}",
-        "const char*" : "const(char)*",
-        "const char* const[]" : "const(char)**",
-        "unsigned char[256]" : "char[256]",
-        "unsigned char**" : "char**",
-        "const unsigned char[256]" : "const char[256]"
-    ];
-
-    cBackendMap = [
-        "ImGui_ImplSDL2": BackendData(
-            "ImGui_ImplSDL2", 
-            "SDL2", 
-            "import bindbc.sdl;",
-            "USE_SDL2"
-        ),
-        "ImGui_ImplGlfw" :BackendData(
-            "ImGui_ImplGlfw", 
-            "Glfw", 
-            "import bindbc.sdl;",
-            "USE_GLFW"
-        ),
-        "ImGui_ImplOpenGL2" :BackendData(
-            "ImGui_ImplOpenGL2", 
-            "OpenGL2", 
-            "",
-            "USE_OpenGL2"
-        ),
-        "ImGui_ImplOpenGL3" :BackendData(
-            "ImplOpenGL3", 
-            "OpenGL3", 
-            "",
-            "USE_OpenGL3"
-        ),
-    ];
-}
-
-string imgui_argname_to_dlang(string imguiName)
-{
-    if (auto type = imguiName in cArgMap)
-    {
-        return *type;
-    }
-
-    return imguiName;
-}
-
-import std.algorithm;
-
-string imgui_type_to_dlang(string imguiType)
-{
-    if (auto type = imguiType in cTypeMap)
-    {
-        return *type;
-    }
-
-    imguiType = imguiType.replace("struct ", "");
-
-    // Replace C template stubs with D template type.
-    {
-        imguiType = imguiType.replace("ImVector_", "ImVector!");
-    }
-
-    
-    if (canFind(imguiType, "(*)"))
-    {
-        imguiType = imguiType.replace("(*)", " function");
-
-        foreach (key, value; cTypeMap)
-        {
-            imguiType = imguiType.replace(key, value);
-        }
-    }
-
-    return imguiType;
-}
 
 string loaderPrelude = `
 module bindbc.imgui.dynload;
@@ -413,6 +439,98 @@ struct TypeToReplace {
 `;
 
 
+const string imSpan = `
+struct ImSpan(tType) {
+    tType* Data;
+    tType* DataEnd;
+
+    // Constructors, destructor
+    //this() 
+    //{
+    //    Data = DataEnd = NULL; 
+    //}
+
+    this(tType* data, int size)
+    {
+        Data = data;
+        DataEnd = data + size; 
+    }
+
+    this(tType* data, tType* data_end)
+    {
+        Data = data;
+        DataEnd = data_end; 
+    }
+
+    void set(tType* data, int size)
+    {
+            Data = data;
+            DataEnd = data + size; 
+    }
+
+    void set(tType* data, tType* data_end)
+    {
+        Data = data;
+        DataEnd = data_end; 
+    }
+
+    int size() const 
+    {
+        return cast(int)cast(ptrdiff_t)(DataEnd - Data); 
+    }
+
+    int size_in_bytes() const 
+    {
+        return cast(int)cast(ptrdiff_t)(DataEnd - Data) * cast(int)tType.sizeof;
+    }
+
+    tType* opIndex(size_t i)
+    {
+        tType* p = Data + i;
+        assert(p >= Data && p < DataEnd);
+        return p; 
+    }
+
+    const(tType)* opIndex(size_t i)
+    {
+        const(tType)* p = Data + i;
+        assert(p >= Data && p < DataEnd);
+        return p; 
+    }
+
+    tType* begin() 
+    {
+        return Data; 
+    }
+
+    const(tType)* begin() 
+    {
+        return Data; 
+    }
+
+    tType* end() 
+    {
+        return DataEnd; 
+    }
+
+    const(tType)* end() 
+    {
+        return DataEnd; 
+    }
+
+    // Utilities
+    int  index_from_ptr(const tType* it)
+    { 
+        assert(it >= Data && it < DataEnd); 
+        const ptrdiff_t off = it - Data;
+        return cast(int)off; 
+    }
+}
+
+
+`;
+
+
 const string imVector = `
 struct ImVector(tType) {
     int Size;
@@ -496,7 +614,7 @@ struct ImVector(tType) {
     // Resize a vector to a smaller size, guaranteed not to cause a reallocation
     void shrink(int new_size)                
     {
-        //IM_ASSERT(new_size <= Size);
+        assert(new_size <= Size);
         Size = new_size; 
     } 
 
@@ -530,7 +648,7 @@ struct ImVector(tType) {
 
     void pop_back()                          
     {
-         //IM_ASSERT(Size > 0);
+         assert(Size > 0);
          Size--; 
     }
 
@@ -544,7 +662,7 @@ struct ImVector(tType) {
 
     tType* erase(const tType* it)
     {
-         //IM_ASSERT(it >= Data && it < Data + Size);
+         assert(it >= Data && it < Data + Size);
          const ptrdiff_t off = it - Data;
          memmove(Data + off, Data + off + 1, (cast(size_t)Size - cast(size_t)off - 1) * tType.sizeof);
          Size--;
@@ -553,7 +671,7 @@ struct ImVector(tType) {
 
     tType* erase(const tType* it, const tType* it_last)
     {
-         //IM_ASSERT(it >= Data && it < Data + Size && it_last > it && it_last <= Data + Size);
+         assert(it >= Data && it < Data + Size && it_last > it && it_last <= Data + Size);
          const ptrdiff_t count = it_last - it;
          const ptrdiff_t off = it - Data;
          memmove(Data + off, Data + off + count, (cast(size_t)Size - cast(size_t)off - count) * tType.sizeof);
@@ -563,7 +681,7 @@ struct ImVector(tType) {
 
     tType* erase_unsorted(const tType* it)
     {
-        //IM_ASSERT(it >= Data && it < Data + Size);
+        assert(it >= Data && it < Data + Size);
         const ptrdiff_t off = it - Data;
          
         if (it < Data + Size - 1)
@@ -575,7 +693,7 @@ struct ImVector(tType) {
 
     tType* insert(const tType* it, const tType* v)
     {
-         //IM_ASSERT(it >= Data && it <= Data + Size); 
+         assert(it >= Data && it <= Data + Size); 
          const ptrdiff_t off = it - Data;
          
         if (Size == Capacity) 
@@ -623,11 +741,13 @@ string[string] write_template_structs(code_writer codeWriter, JSONValue definiti
     }
 
     codeWriter.put_lines(imVector);
+    codeWriter.put_lines(imSpan);
 
     foreach (string templateName, string templatedOnType; imTemplateTypes)
     {
         string structTemplate;
-        if (startsWith(templateName, "ImVector_"))
+        if (startsWith(templateName, "ImVector_") 
+            || startsWith(templateName, "ImSpan_"))
             continue; // We utlize a D template for these. (ImPool and ImChunkStream to follow).
         else if (startsWith(templateName, "ImPool_"))
             structTemplate = imPool;
@@ -636,6 +756,8 @@ string[string] write_template_structs(code_writer codeWriter, JSONValue definiti
 
         codeWriter.put_lines(structTemplate.replace("TemplatedTypeToReplace", imgui_type_to_dlang(templatedOnType)).replace("TypeToReplace", templateName));
     }
+
+    return imTemplateTypes;
 }
 
 void write_typedefs(code_writer codeWriter, JSONValue typedefs, JSONValue structs_and_enums)
