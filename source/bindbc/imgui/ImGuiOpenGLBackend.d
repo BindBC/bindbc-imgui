@@ -21,7 +21,7 @@ static uint g_VboHandle = 0, g_ElementsHandle = 0;
 bool init(const (char)* glsl_version)
 {
     // Query for GL version (e.g. 320 for GL 3.2)
-    const GLint major = 3, minor = 3;
+    const GLint major = 4, minor = 2;
     //glGetIntegerv(GL_MAJOR_VERSION, &major);
     //glGetIntegerv(GL_MINOR_VERSION, &minor);
     g_GlVersion = cast(GLuint)(major * 100 + minor * 10);

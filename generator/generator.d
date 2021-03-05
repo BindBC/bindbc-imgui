@@ -63,6 +63,8 @@ shared static this()
         "ImFontPtr" : "ImFont*",
         "ImDrawListPtr" : "ImDrawList*",
         "ImGuiViewportPPtr" : "ImGuiViewportP*",
+        "ImGuiViewportPtr" : "ImGuiViewport*",
+        "const_charPtr" : "const(char)*"
     ];
 
     cBackendMap = [
@@ -105,6 +107,28 @@ string imgui_argname_to_dlang(string imguiName)
 
 import std.algorithm;
 
+string handle_dang_template(string templateName, string imguiType)
+{
+    imguiType = imguiType.replace(templateName ~ "_", "");
+    bool addPointerBack = false;
+
+    if (endsWith(imguiType, "*"))
+    {
+        imguiType = imguiType[0 .. (imguiType.length - 1)];
+        addPointerBack = true;
+    }
+
+    if (auto type = imguiType in cTypeMap)
+        imguiType = templateName ~ "!(" ~ *type ~ ")";
+    else
+        imguiType = templateName ~ "!(" ~ imguiType ~ ")";
+
+    if (addPointerBack)
+        imguiType = imguiType ~ "*";
+
+    return imguiType;
+}
+
 string imgui_type_to_dlang(string imguiType)
 {
     if (auto type = imguiType in cTypeMap)
@@ -115,31 +139,10 @@ string imgui_type_to_dlang(string imguiType)
     imguiType = imguiType.replace("struct ", "");
 
     // Replace C template stubs with D template type.
-
     if (startsWith(imguiType, "ImVector_"))
-    {
-        imguiType = imguiType.replace("ImVector_", "");
-        
-        if (endsWith(imguiType, "*"))
-            imguiType = imguiType.replace("*", "");
-
-        if (auto type = imguiType in cTypeMap)
-            imguiType = "ImVector!" ~ *type ~ "*";
-        else
-            imguiType = "ImVector!" ~ imguiType  ~ "*";
-    }
-    if (startsWith(imguiType, "ImSpan_"))
-    {
-        imguiType = imguiType.replace("ImSpan_", "");
-
-        if (endsWith(imguiType, "*"))
-            imguiType = imguiType.replace("*", "");
-
-        if (auto type = imguiType in cTypeMap)
-            imguiType = "ImSpan!" ~ *type ~ "*";
-        else
-            imguiType = "ImSpan!" ~ imguiType ~ "*";
-    }
+        imguiType = handle_dang_template("ImVector", imguiType);
+    else if (startsWith(imguiType, "ImSpan_"))
+        imguiType = handle_dang_template("ImSpan", imguiType);
     
     if (canFind(imguiType, "(*)"))
     {
