@@ -431,18 +431,16 @@ string loaderEnd = `
 }
 `;
 
-const string imPool = `
-
+const string imPool = q{
 struct TypeToReplace {
     TemplatedTypeToReplace Buf;
     ImGuiStorage Map;
     ImPoolIdx FreeIdx;
 }
+};
 
-`;
 
-
-const string imSpan = `
+const string imSpan = q{
 struct ImSpan(tType) {
     tType* Data;
     tType* DataEnd;
@@ -529,12 +527,10 @@ struct ImSpan(tType) {
         return cast(int)off; 
     }
 }
+};
 
 
-`;
-
-
-const string imVector = `
+const string imVector = q{
 struct ImVector(tType) {
     int Size;
     int Capacity;
@@ -710,13 +706,13 @@ struct ImVector(tType) {
         return Data + off; 
     }
 }
-`;
+};
 
-const string imChunkStream = `
+const string imChunkStream = q{
 struct TypeToReplace {
     TemplatedTypeToReplace Buf;
 }
-`;
+};
 
 
 string[string] write_template_structs(code_writer codeWriter, JSONValue definitions)

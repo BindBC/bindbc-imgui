@@ -16,3 +16,8 @@ bindbc-imgui-test.exe
 #Also on Linux
 libbindbc-imgui.so
 libbindbc-imgui.a
+
+SDL2.dll
+cimgui.dll
+bindbc-imgui.lib
+imgui.ini

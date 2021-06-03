@@ -4,12 +4,14 @@ homepage ""
 authors "Joshua T. Fisher" "Luna Nielsen"
 license "Boost"
 
-copyFiles "libs/x86_64/cimgui.dll" platform="windows-x64"
-copyFiles "libs/x86_64/imgui.ini"
+copyFiles "libs/x86_64/cimgui.dll" platform="windows-x86_64"
+copyFiles "libs/x86_64/SDL2.dll" platform="windows-x86_64"
+//copyFiles "libs/x86_64/imgui.ini"
 
 configuration "dynamic" {
     dependency "bindbc-loader" version="~>0.3.0"
     dependency "bindbc-opengl" version="~>0.13.0"
+    dependency "bindbc-sdl" version=">0.1.0"
     versions "GL_33"
 }
 
@@ -17,6 +19,7 @@ configuration "dynamicBC" {
     dependency "bindbc-loader" version="~>0.3.0"
     subConfiguration "bindbc-loader" "yesBC"
     dependency "bindbc-opengl" version="~>0.13.0"
+    dependency "bindbc-sdl" version=">0.1.0"
     versions "GL_33"
     dflags "-betterC"
 }

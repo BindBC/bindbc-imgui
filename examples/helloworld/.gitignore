@@ -13,3 +13,5 @@ helloworld-test-*
 *.o
 *.obj
 *.lst
+SDL2.dll
+cimgui.dll

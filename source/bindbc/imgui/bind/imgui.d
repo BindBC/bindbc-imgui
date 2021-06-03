@@ -299,13 +299,6 @@ alias ImGuiNextItemDataFlags = int;
             return cast(int)cast(ptrdiff_t)(DataEnd - Data) * cast(int)tType.sizeof;
         }
     
-        tType* opIndex(size_t i)
-        {
-            tType* p = Data + i;
-            assert(p >= Data && p < DataEnd);
-            return p; 
-        }
-    
         const(tType)* opIndex(size_t i)
         {
             const(tType)* p = Data + i;
@@ -313,19 +306,9 @@ alias ImGuiNextItemDataFlags = int;
             return p; 
         }
     
-        tType* begin() 
-        {
-            return Data; 
-        }
-    
         const(tType)* begin() 
         {
             return Data; 
-        }
-    
-        tType* end() 
-        {
-            return DataEnd; 
         }
     
         const(tType)* end() 
