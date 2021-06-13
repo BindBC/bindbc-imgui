@@ -1,14 +1,13 @@
 import std.stdio;
 import std.file;
 import std.json;
+import std.conv;
 import std.array;
 import std.format;
 import std.string;
 import std.algorithm;
 import std.algorithm.searching;
 import std.algorithm.iteration;
-
-
 
 struct BackendData
 {
@@ -24,9 +23,18 @@ struct backend_function
     JSONValue cimguiFunction;
 }
 
+struct enum_values
+{
+    string[string] values;
+}
+
 shared immutable string[string] cArgMap;
 shared immutable string[string] cTypeMap;
+shared immutable string[string] cDefaultArgumentsNeedingConversion;
 shared immutable BackendData[string] cBackendMap;
+shared enum_values[string] gEnumType; // this should actually just be a set...
+shared string[string] gConvertedEnumValue;
+
 
 shared static this()
 {
@@ -65,6 +73,15 @@ shared static this()
         "ImGuiViewportPPtr" : "ImGuiViewportP*",
         "ImGuiViewportPtr" : "ImGuiViewport*",
         "const_charPtr" : "const(char)*"
+    ];
+
+    cDefaultArgumentsNeedingConversion = [
+        "sizeof(float)" : "float.sizeof",
+        "((void*)0)" : "null",
+        "NULL" : "null",
+        "FLT_MIN" : "float.min_normal",
+        "FLT_MAX" : "float.max",
+        "ImVec2(-FLT_MIN,0)" : "ImVec2(-float.min_normal,0)"
     ];
 
     cBackendMap = [
@@ -200,10 +217,20 @@ struct code_writer
         add_scope();
     }
 
-    void add_enum()
+    void add_enum(string enumName, string enumBaseType = "")
     {
         write_indent();
         mBuilder.put("enum ");
+        mBuilder.put(enumName);
+        mBuilder.put(" ");
+
+        if (enumBaseType.length != 0)
+        {
+            mBuilder.put(": ");
+            mBuilder.put(enumBaseType);
+            mBuilder.put(" ");
+        }
+
         add_scope();
     }
     
@@ -502,11 +529,6 @@ struct ImSpan(tType) {
         return DataEnd; 
     }
 
-    const(tType)* end() 
-    {
-        return DataEnd; 
-    }
-
     // Utilities
     int  index_from_ptr(const tType* it)
     { 
@@ -703,6 +725,26 @@ struct TypeToReplace {
 };
 
 
+const string cCFunctionWrapper = q{
+auto igGenFuncC(T)(T func) {
+  import std.traits;
+  extern(C) ReturnType!T f(Parameters!T args)
+  {
+    static if (is(ReturnType!T == void)) 
+    {
+      func(args);
+    } else 
+    {
+      return func(args);
+    }
+  }
+
+  return &f;
+}
+};
+
+
+
 string[string] write_template_structs(code_writer codeWriter, JSONValue definitions)
 {
     string[string] imTemplateTypes;
@@ -753,6 +795,10 @@ void write_typedefs(code_writer codeWriter, JSONValue typedefs, JSONValue struct
     {
         const string originalTypeName = imgui_type_to_dlang(typeDefValue.str);
 
+        if (typedefName in structs_and_enums["enums"] ||
+            (typedefName ~ "_") in structs_and_enums["enums"])
+            continue;
+
         if (originalTypeName == "T") continue;
         if (typedefName == "iterator") continue;
         if (typedefName == "const_iterator") continue;
@@ -775,18 +821,43 @@ void write_typedefs(code_writer codeWriter, JSONValue typedefs, JSONValue struct
 void write_enums(code_writer codeWriter, JSONValue definitions)
 {
     auto enums = definitions["enums"];
+
     foreach (string enumName, JSONValue enumValues; enums) 
     {
-        string adjustedName = enumName;
+        string enumBaseType = "";
+        string adjustedEnumTypeName = enumName;
 
-        if ('_' == adjustedName[adjustedName.length - 1])
-            adjustedName = adjustedName[0 .. adjustedName.length - 1];
+        if ('_' == adjustedEnumTypeName[adjustedEnumTypeName.length - 1])
+            adjustedEnumTypeName = adjustedEnumTypeName[0 .. adjustedEnumTypeName.length - 1];
 
-        codeWriter.put_lines(format("alias %s = int;", enumName));
-        codeWriter.add_enum();
+        if (adjustedEnumTypeName.endsWith("Private"))
+        {
+            adjustedEnumTypeName = adjustedEnumTypeName[0 .. adjustedEnumTypeName.length - "Private".length] ~ "I"; 
+            enumBaseType = adjustedEnumTypeName[0 .. adjustedEnumTypeName.length - 1];
+        }
+
+        codeWriter.add_enum(adjustedEnumTypeName, enumBaseType);
+        gEnumType[adjustedEnumTypeName] = enum_values();
 
         foreach (JSONValue value; enumValues.array)
-            codeWriter.put_lines(format("%s = %d,\n", value["name"].str, value["calc_value"].integer));
+        {
+            auto valueName = value["name"].str;
+            if (valueName.startsWith(enumName))
+                valueName = valueName[enumName.length .. valueName.length];
+            else if (valueName.startsWith(enumBaseType))
+                valueName = valueName[enumBaseType.length .. valueName.length];
+
+            if (valueName.startsWith("_"))
+                valueName = valueName[1 .. valueName.length];
+
+            gConvertedEnumValue[value["name"].str] = adjustedEnumTypeName ~ "." ~ valueName;
+
+            if (enumBaseType.length == 0)
+                codeWriter.put_lines(format("%s = %d,\n", valueName, value["calc_value"].integer));
+            else
+                codeWriter.put_lines(format("%s = cast(%s)%d,\n", valueName, enumBaseType, value["calc_value"].integer));
+            gEnumType[adjustedEnumTypeName].values[to!string(value["calc_value"].integer)] = valueName; // should cache the first gEnumType[adjustedEnumTypeName] call, but don't know how to take it by ref.
+        }
 
         codeWriter.remove_scope();
         codeWriter.line_break();
@@ -808,7 +879,12 @@ void write_structs(code_writer codeWriter, JSONValue definitions)
             if ((0 != objectName.length) && (']' == objectName[objectName.length - 1]))
             {
                 ptrdiff_t position = std.string.lastIndexOf(objectName, '[');
-                typeName = typeName ~ objectName[position .. objectName.length];
+
+                string sizeExpression = objectName[position + 1 .. objectName.length - 1]; 
+                if (sizeExpression in gConvertedEnumValue)
+                    sizeExpression = gConvertedEnumValue[sizeExpression];
+
+                typeName = typeName ~ "[" ~ sizeExpression ~ "]";
                 objectName = objectName[0 .. position];
             }
             else
@@ -907,40 +983,148 @@ void write_backend_function_loading(code_writer codeWriter, JSONValue definition
     }
 }
 
-/// Return value is the type of the Function pointer, so that it can later be used if we're writing the global symbols to load into.
-string write_function(code_writer codeWriter, string functionName, JSONValue cimguiFunction, bool writeFunctionGlobals)
+
+struct function_overload_info
 {
-    string returnType;
+    void put_name(string name, string overloadName)
+    {
+        overload_name = overloadName;
+        is_overload = name != overloadName;
+        overload_decl = overload_decl ~ " " ~ overloadName ~ "(";
+        decl = decl ~ " " ~ name ~ "(";
+        call = call ~ " " ~ name ~ "(";
+    }
+
+    void put_return(string returnType)
+    {
+        overload_decl = returnType ~ " ";
+        decl = returnType ~ " ";
+        if (returnType != "void")
+            call = "return ";
+    }
+
+    void end_function()
+    {
+        overload_decl = overload_decl ~ ")";
+        decl = decl ~ ");";
+        call = call ~ ");";
+    }
+
+    void put_parameter_type(string parameterType)
+    {
+        if (parameter_already_placed)
+        {
+            overload_decl = overload_decl ~ ", ";
+            decl = decl ~ ", ";
+        }
+
+        if (parameterType.indexOf("function") != -1)
+        {
+            was_function_type = true;
+            last_function_type = parameterType;
+        }
+        else // function paramters need the name of the parameter to have their type name written out.
+        {
+            overload_decl = overload_decl ~ parameterType;
+            decl = decl ~ parameterType;
+        }
+
+        parameter_already_placed = true;
+    }
+
+    void put_parameter_name(string parameterName)
+    {
+        if (parameter_already_placed_call)
+        {
+            call = call ~ ", ";
+        }
+        
+        if (was_function_type)
+        {
+            string functionParameterTypeName = overload_name ~ "_" ~ parameterName;
+            string functionParameterType = "extern(C) alias " ~ functionParameterTypeName  ~ " = " ~ last_function_type ~ ";";
+            function_parameters ~= functionParameterType;
+
+            // Parameter Type part.
+            overload_decl = overload_decl ~ functionParameterTypeName;
+            decl = decl ~ functionParameterTypeName;
+
+            // Parameter name part.
+            call = call ~ parameterName;
+            was_function_type = false;
+        }
+        else
+        {
+            call = call ~ parameterName;
+        }
+
+        overload_decl = overload_decl ~ " " ~ parameterName;
+        decl = decl ~ " " ~ parameterName;
+
+        parameter_already_placed_call = true;
+    }
+
+    void put_default_argument(string defaultArgument)
+    {
+        overload_decl = overload_decl ~ " = " ~ defaultArgument;
+        decl = decl ~ " = " ~ defaultArgument;
+        // the call doesn't require a default argument. 
+    }
+
+    string overload_decl;
+    string decl;
+    string call;
+    string overload_name;
+    string last_function_type;
+    string return_type = "";
+    string function_ptr_type = "";
+    string[] function_parameters;
+    bool parameter_already_placed = false;
+    bool parameter_already_placed_call = false;
+    bool was_function_type = false;
+    bool is_overload = false;
+};
+
+/// Return value is the type of the Function pointer, so that it can later be used if we're writing the global symbols to load into.
+function_overload_info write_function(code_writer codeWriter, string functionName, JSONValue cimguiFunction, bool writeFunctionGlobals)
+{
+    function_overload_info info;
 
     if ("templated" in cimguiFunction && cimguiFunction["templated"].boolean)
-        return "";
+        return info;
 
     codeWriter.write_indent();
 
     if ("constructor" in cimguiFunction && cimguiFunction["constructor"].boolean)
-        returnType = format("%s*", functionName[0 .. std.string.lastIndexOf(functionName, '_')]);
+        info.return_type = format("%s*", functionName[0 .. std.string.lastIndexOf(functionName, '_')]);
     else
-        returnType = cimguiFunction["ret"].str;
+        info.return_type = cimguiFunction["ret"].str;
 
-    string functionPtrType = "p" ~ cimguiFunction["ov_cimguiname"].str;
+    info.function_ptr_type = "p" ~ cimguiFunction["ov_cimguiname"].str;
     if (writeFunctionGlobals)
-        codeWriter.put_string("alias " ~ functionPtrType ~ " = ");
+        codeWriter.put_string("alias " ~ info.function_ptr_type ~ " = ");
 
-    codeWriter.put_string(imgui_type_to_dlang(returnType));
+    info.put_return(imgui_type_to_dlang(info.return_type));
+    codeWriter.put_string(imgui_type_to_dlang(info.return_type));
     codeWriter.put_string(' ');
     
     if (writeFunctionGlobals)
         codeWriter.put_string("function");
     else
         codeWriter.put_string(cimguiFunction["ov_cimguiname"].str);
+
+    info.put_name(cimguiFunction["ov_cimguiname"].str, cimguiFunction["cimguiname"].str);
     
     codeWriter.put_string("(");
 
     int i = 0;
+    auto defaultArguments = cimguiFunction["defaults"];
     foreach (JSONValue parameter; cimguiFunction["argsT"].array)
     {
         string argType = imgui_type_to_dlang(parameter["type"].str);
         string argName = parameter["name"].str;
+        string origArgName = parameter["name"].str;
+        string defaultArgument = "";
 
         // Deal with arraySubScriptToken in Arg name
         if ((0 != argName.length) && (']' == argName[argName.length - 1]))
@@ -968,28 +1152,54 @@ string write_function(code_writer codeWriter, string functionName, JSONValue cim
         argName = imgui_argname_to_dlang(argName);
         argType = imgui_type_to_dlang(argType);
 
+        info.put_parameter_type(argType);
         codeWriter.put_string(argType);
         
         if (!startsWith(argType, "..."))
             codeWriter.put_string(' ');
 
         // Don't write the name out if this function is variadic
-        if (argName != "...") codeWriter.put_string(argName);
+        if (argName != "...") 
+        {
+
+            info.put_parameter_name(argName);
+            codeWriter.put_string(argName);
+        }
+
+        // Parse default argument information
+        if (origArgName in defaultArguments)
+        {
+            defaultArgument = defaultArguments[origArgName].str;
+
+            if (defaultArgument in gConvertedEnumValue) 
+                defaultArgument = gConvertedEnumValue[defaultArgument];
+            
+            if (defaultArgument in cDefaultArgumentsNeedingConversion)
+                defaultArgument = cDefaultArgumentsNeedingConversion[defaultArgument];
+
+            if (isNumeric(defaultArgument) && argType in gEnumType)
+                defaultArgument = argType ~ "." ~ to!string(gEnumType[argType].values[defaultArgument]);
+            
+            info.put_default_argument(defaultArgument);
+            codeWriter.put_string(" = " ~ defaultArgument);
+        }
 
         // Write out a comma and space if this isn't the last parameter.
         if (++i != cimguiFunction["argsT"].array.length) codeWriter.put_string(", ");
     }
     
+    info.end_function();
     codeWriter.put_string(");");
     codeWriter.line_break();
 
-    return functionPtrType;
+    return info;
 }
 
 
-void write_functions(code_writer codeWriter, JSONValue definitions, bool writeFunctionGlobals)
+function_overload_info[] write_functions(code_writer codeWriter, JSONValue definitions, bool writeFunctionGlobals)
 {
     string[] imFunctionPtrTypes;
+    function_overload_info[] infos;
 
     codeWriter.add_extern_c();
     foreach (string functionName, JSONValue functionDecl; definitions)
@@ -999,12 +1209,21 @@ void write_functions(code_writer codeWriter, JSONValue definitions, bool writeFu
 
         foreach (JSONValue cimguiFunction; functionDecl.array)
         {
-            const string functionPointerTypeName = write_function(codeWriter, functionName, cimguiFunction, writeFunctionGlobals);
+            auto functionInfo = write_function(codeWriter, functionName, cimguiFunction, writeFunctionGlobals);
+            const string functionPointerTypeName = functionInfo.function_ptr_type;
+
+            //if (functionDecl.array.length > 1)
+            //    writeln(functionName ~ " : " ~ cimguiFunction["ov_cimguiname"].str);    
 
             if (writeFunctionGlobals && (functionPointerTypeName.length != 0))
             {
                 ++imFunctionPtrTypes.length;
                 imFunctionPtrTypes[imFunctionPtrTypes.length - 1] = functionPointerTypeName;
+            }
+
+            if (functionInfo.is_overload)
+            {
+                infos ~= functionInfo;
             }
         }
     }
@@ -1020,12 +1239,14 @@ void write_functions(code_writer codeWriter, JSONValue definitions, bool writeFu
     }
     
     codeWriter.remove_scope();
+    return infos;
 }
 
-void write_backend_functions(code_writer codeWriter, JSONValue definitions, bool writeFunctionGlobals)
+function_overload_info[] write_backend_functions(code_writer codeWriter, JSONValue definitions, bool writeFunctionGlobals)
 {
     // impl to a Backend
     backend_function[][string] backendFunctionsMap = get_backend_functions(definitions);
+    function_overload_info[] infos;
     
     codeWriter.add_extern_c();
 
@@ -1050,16 +1271,22 @@ void write_backend_functions(code_writer codeWriter, JSONValue definitions, bool
 
         foreach (backendFunction; backendFunctions)
         {
-            const string functionPointerTypeName = write_function(
+            auto info = write_function(
                 codeWriter, 
                 backendFunction.functionName, 
                 backendFunction.cimguiFunction, 
                 writeFunctionGlobals);
+            const string functionPointerTypeName = info.function_ptr_type;
             
             if (writeFunctionGlobals && (functionPointerTypeName.length != 0))
             {
                 ++imFunctionPtrTypes.length;
                 imFunctionPtrTypes[imFunctionPtrTypes.length - 1] = functionPointerTypeName;
+            }
+
+            if (info.is_overload)
+            {
+                infos ~= info;
             }
         }
         
@@ -1078,6 +1305,7 @@ void write_backend_functions(code_writer codeWriter, JSONValue definitions, bool
     }
     
     codeWriter.remove_scope(); // extern
+    return infos;
 }
 
 
@@ -1090,6 +1318,8 @@ void write_imgui_file(
     auto codeWriter = code_writer();
 
     codeWriter.put_lines("module bindbc.imgui.bind.imgui;");
+    codeWriter.line_break();
+    codeWriter.put_lines("import std.algorithm;");
     codeWriter.line_break();
     codeWriter.put_lines("import core.stdc.stdio;");
     codeWriter.line_break();
@@ -1111,8 +1341,8 @@ void write_imgui_file(
     // Writing out the static version of the symbols
     codeWriter.add_version("BindImGui_Static");
 
-    write_functions(codeWriter, definitions, false);
-    write_backend_functions(codeWriter, impl_definitions, false);
+    auto infos = write_functions(codeWriter, definitions, false);
+    infos ~= write_backend_functions(codeWriter, impl_definitions, false);
 
     // NOTE: For some reason we merge this scope and following else into one line, hence why we're not using remove_scope here.    
     codeWriter.remove_indent();
@@ -1123,8 +1353,26 @@ void write_imgui_file(
 
     write_functions(codeWriter, definitions, true);
     write_backend_functions(codeWriter, impl_definitions, true);
-    
     codeWriter.remove_scope();
+
+    codeWriter.put_lines(cCFunctionWrapper);
+
+    // writing out the dlang overloaded functions:
+    foreach(function_overload_info overload; infos) 
+    {
+        foreach(functionParameter; overload.function_parameters) 
+        {
+            codeWriter.put_lines(functionParameter);
+            codeWriter.put_string("\n");
+        }
+
+        codeWriter.put_lines("pragma(inline):");
+        codeWriter.put_lines(overload.overload_decl);
+        codeWriter.add_scope();
+        codeWriter.put_lines(overload.call);
+        codeWriter.remove_scope();
+        codeWriter.put_string("\n");
+    }
 
     std.file.write("source/bindbc/imgui/bind/imgui.d", codeWriter.mBuilder.data);
 }
