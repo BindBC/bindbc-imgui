@@ -10,7 +10,9 @@ import bindbc.imgui.bind.imgui,
 
 // OpenGL Data
 static GLuint       g_GlVersion = 0;                // Extracted at runtime using GL_MAJOR_VERSION, GL_MINOR_VERSION queries (e.g. 320 for GL 3.2)
-static char[32]     g_GlslVersionString = "#version 130";   // Specified by user or detected based on compile time GL settings.
+
+version(OSX) static char[32]     g_GlslVersionString = "#version 330";   // Specified by user or detected based on compile time GL settings.
+else static char[32]     g_GlslVersionString = "#version 130";   // Specified by user or detected based on compile time GL settings.
 static GLuint       g_FontTexture = 0;
 static GLuint       g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
 static GLint        g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;                                // Uniforms location
