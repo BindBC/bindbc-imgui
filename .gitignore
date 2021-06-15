@@ -21,3 +21,5 @@ SDL2.dll
 cimgui.dll
 bindbc-imgui.lib
 imgui.ini
+
+.DS_Store

@@ -6,6 +6,7 @@ license "Boost"
 
 copyFiles "libs/x86_64/cimgui.dll" platform="windows-x86_64"
 copyFiles "libs/x86_64/SDL2.dll" platform="windows-x86_64"
+copyFiles "libs/arm64/cimgui.dylib" platform="osx-aarch64"
 //copyFiles "libs/x86_64/imgui.ini"
 
 configuration "dynamic" {
