@@ -6,6 +6,7 @@ To add bindbc-imgui to your project run
 ```
 dub add bindbc-imgui
 ```
+**Note** (Windows): For the precompiled DLLs you'll need Visual C++ Runtime 2019
 
 # Using backends
 To select backends use the `versions` directive in your dub package file
