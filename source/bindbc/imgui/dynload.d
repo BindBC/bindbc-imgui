@@ -116,9 +116,6 @@ ImGuiSupport loadImGui(const(char)* libName)
         return ImGuiSupport.noLibrary;
     }
 
-    auto errCount = errorCount();
-    loadedVersion = ImGuiSupport.badLibrary;
-
     lib.bindSymbol(cast(void**)&ImDrawList_AddCircleFilled, "ImDrawList_AddCircleFilled");
     lib.bindSymbol(cast(void**)&ImGuiPlatformIO_ImGuiPlatformIO, "ImGuiPlatformIO_ImGuiPlatformIO");
     lib.bindSymbol(cast(void**)&igDockContextQueueUndockWindow, "igDockContextQueueUndockWindow");
@@ -1358,5 +1355,7 @@ ImGuiSupport loadImGui(const(char)* libName)
 
 
 
-    return loadedVersion;
+    if (errorCount() != 0) return ImGuiSupport.badLibrary;
+
+    return ImGuiSupport.ImGui_1_79;
 }

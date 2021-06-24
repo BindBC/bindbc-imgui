@@ -447,14 +447,13 @@ ImGuiSupport loadImGui(const(char)* libName)
     if(lib == invalidHandle) {
         return ImGuiSupport.noLibrary;
     }
-
-    auto errCount = errorCount();
-    loadedVersion = ImGuiSupport.badLibrary;
 `;
 
 string loaderEnd = `
 
-    return loadedVersion;
+    if (errorCount() != 0) return ImGuiSupport.badLibrary;
+
+    return ImGuiSupport.ImGui_1_79;
 }
 `;
 
