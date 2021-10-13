@@ -1,6 +1,8 @@
 /.dub/
 lib/
 build/
+build_x64/
+build_x86/
 .dub/
 .vscode/
 
@@ -17,10 +19,6 @@ bindbc-imgui-test.exe
 libbindbc-imgui.so
 libbindbc-imgui.a
 
-SDL2.dll
-cimgui.dll
-bindbc-imgui.lib
-cimgui.dylib
 imgui.ini
 
 .DS_Store
