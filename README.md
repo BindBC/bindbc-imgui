@@ -27,7 +27,7 @@ Dynamically linked cimgui, statically linked C/C++ runtime libraries.
 #### Dependencies
 - Visual Studio 2022 (With "Desktop development with C++" workflow installed)
   - In theory, "Build Tools for Visual Studio 2022" should also work, but is untested.
-- CMake (Currently 3.16 or higher is needed.)
+- [CMake](https://cmake.org/download/) (Currently 3.16 or higher is needed.)
 - Dlang, either dmd or ldc
 
 ### Linux
