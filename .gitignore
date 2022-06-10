@@ -3,6 +3,7 @@ lib/
 build*/
 
 libs/
+out/
 
 .dub/
 .vscode/
@@ -10,6 +11,7 @@ libs/
 dub.selections.json
 
 *.exp
+*.lib
 
 #Avoid outputs being pushed
 bindbc-imgui
