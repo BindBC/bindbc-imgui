@@ -40,7 +40,8 @@ Dynamically linked cimgui, statically linked C/C++ runtime libraries.
 - appimagetool (for building an AppImage)
 
 ### Mac
-Unfortunately for now, Mac is still in flux. We're having issues setting up the D side of our toolchain to run consistently, and once it does, our C++ side likely needs some help as well. Check back soon, or contact us via Issues here or the inochi2D project discord if you'd like to help. We'd like Mac to be easy to build, but we're not there yet.
+- Currently only the dynamic version of the library works on macOS, you will additionally need `MACOSX_DEPLOYMENT_TARGET=11` to avoid pointer alignment linking errors on macOS (for now)
+- Only LDC2 is supported.
 
 # Using backends
 To select backends use the `versions` directive in your dub package file
