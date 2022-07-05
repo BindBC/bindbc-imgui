@@ -15,13 +15,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 option(BUILD_SHARED_LIBS "Build shared instead of static libraries." ON)
 
-
-# This needs to be augmented to detect ARM vs x86
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(PlatformArchitecture x86_64)
-elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    set(PlatformArchitecture x86)
-endif()
+set(PlatformArchitecture ${CMAKE_SYSTEM_PROCESSOR})
 
 if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
     add_compile_options(/MP)
