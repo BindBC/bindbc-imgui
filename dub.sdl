@@ -43,8 +43,24 @@ configuration "static_dynamicCRT" {
     copyFiles "libs/x86/win32/Static/DynamicCRT/freetype.dll" platform="windows-x86"
     
     
-    // MacOS Arm64
-    copyFiles "libs/arm64/cimgui.dylib" platform="osx-aarch64"
+    // macOS
+    preBuildCommands \
+        "cmake -DSTATIC_CIMGUI= -S deps -B deps/build_macOS_cimguiStatic" \
+        "cmake --build deps/build_macOS_cimguiStatic --config Release" platform="darwin"
+
+    sourceFiles \
+        "$PACKAGE_DIR/libs/arm64/darwin/Static/libSDL2-2.0.dylib"
+        "$PACKAGE_DIR/libs/arm64/darwin/Static/libfreetype.dylib" 
+        "$PACKAGE_DIR/libs/arm64/darwin/Static/cimgui.a" platform="darwin-aarch64"
+    sourceFiles \
+        "$PACKAGE_DIR/libs/x86_64/darwin/Static/libSDL2-2.0.dylib"
+        "$PACKAGE_DIR/libs/x86_64/darwin/Static/libfreetype.dylib" 
+        "$PACKAGE_DIR/libs/x86_64/darwin/Static/cimgui.a" platform="darwin-x86_64"
+    lflags "-all_load" platform="darwin"
+
+    copyFiles "$PACKAGE_DIR/libs/arm64/darwin/Static/libSDL2-2.0.dylib" "$PACKAGE_DIR/libs/arm64/darwin/Static/libfreetype.dylib" platform="darwin-aarch64"
+    copyFiles "$PACKAGE_DIR/libs/x86_64/darwin/Static/libSDL2-2.0.dylib" "$PACKAGE_DIR/libs/x86_64/darwin/Static/libfreetype.dylib" platform="darwin-x86_64"
+    libs "c++" platform="darwin"
 
     // Linux
     preBuildCommands \
@@ -88,8 +104,14 @@ configuration "static_staticCRT" {
     copyFiles "libs/x86/win32/Static/StaticCRT/SDL2.dll" platform="windows-x86"
     copyFiles "libs/x86/win32/Static/StaticCRT/freetype.dll" platform="windows-x86"
 
-    // MacOS Arm64
-    copyFiles "libs/arm64/cimgui.dylib" platform="osx-aarch64"
+    // macOS
+    preBuildCommands \
+        "cmake -DSTATIC_CIMGUI= -S deps -B deps/build_macOS_cimguiStatic" \
+        "cmake --build deps/build_macOS_cimguiStatic --config Release" platform="darwin"
+
+    sourceFiles "$PACKAGE_DIR/libs/arm64/darwin/Static/cimgui.a" platform="darwin-aarch64"
+    sourceFiles "$PACKAGE_DIR/libs/x86_64/darwin/Static/cimgui.a" platform="darwin-x86_64"
+    libs "sdl2" "freetype" ":libstdc++.a" platform="darwin"
 
     // Linux
     preBuildCommands \
@@ -134,8 +156,15 @@ configuration "dynamic_dynamicCRT" {
     copyFiles "libs/x86/win32/Dynamic/DynamicCRT/SDL2.dll" platform="windows-x86"
     copyFiles "libs/x86/win32/Dynamic/DynamicCRT/freetype.dll" platform="windows-x86"
 
-    // MacOS Arm64
-    copyFiles "libs/arm64/cimgui.dylib" platform="osx-aarch64"
+    // macOS
+    preBuildCommands \
+        "cmake -S deps -B deps/build_macOS_cimguiDynamic" \
+        "cmake --build deps/build_macOS_cimguiDynamic --config Release" platform="darwin"
+
+    sourceFiles "$PACKAGE_DIR/libs/arm64/darwin/Dynamic/cimgui.a" platform="darwin-arm64"
+    sourceFiles "$PACKAGE_DIR/libs/x86_64/darwin/Dynamic/cimgui.a" platform="darwin-x86_64"
+    copyFiles "libs/arm64/darwin/Dynamic/*.dylib" platform="darwin-aarch64"
+    copyFiles "libs/x86_64/darwin/Dynamic/*.dylib" platform="darwin-x86_64"
 
     // Linux
     preBuildCommands \
@@ -180,8 +209,15 @@ configuration "dynamic_staticCRT" {
     copyFiles "libs/x86/win32/Dynamic/StaticCRT/SDL2.dll" platform="windows-x86"
     copyFiles "libs/x86/win32/Dynamic/StaticCRT/freetype.dll" platform="windows-x86"
 
-    // MacOS Arm64
-    copyFiles "libs/arm64/cimgui.dylib" platform="osx-aarch64"
+    // macOS
+    preBuildCommands \
+        "cmake -S deps -B deps/build_darwin_cimguiDynamic" \
+        "cmake --build deps/build_darwin_cimguiDynamic --config Release" platform="darwin"
+
+    sourceFiles "$PACKAGE_DIR/libs/arm64/darwin/Dynamic/cimgui.a" platform="darwin-aarch64"
+    sourceFiles "$PACKAGE_DIR/libs/x86_64/darwin/Dynamic/cimgui.a" platform="darwin-x86_64"
+    copyFiles "libs/arm64/darwin/Dynamic/*.dylib" platform="darwin-aarch64"
+    copyFiles "libs/x86_64/darwin/Dynamic/*.dylib" platform="darwin-x86_64"
 
     // Linux
     preBuildCommands \
