@@ -40,8 +40,12 @@ Dynamically linked cimgui, statically linked C/C++ runtime libraries.
 - appimagetool (for building an AppImage)
 
 ### Mac
+#### Notes
 - Currently only the dynamic version of the library works on macOS, you will additionally need `MACOSX_DEPLOYMENT_TARGET=11` to avoid pointer alignment linking errors on macOS (for now)
 - Only LDC2 is supported.
+#### Dependencies
+- You will need [CMake](https://cmake.org/install/) installed to build this project.
+  - You will additionally need to set it up for command line use, see `Tools->How to Install For Command Line Use` in the CMake GUI
 
 # Using backends
 To select backends use the `versions` directive in your dub package file
