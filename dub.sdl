@@ -148,7 +148,6 @@ configuration "dynamic_dynamicCRT" {
         "cmake -S deps -B deps/build_linux_x64_cimguiDynamic" \
         "cmake --build deps/build_linux_x64_cimguiDynamic --config Release" platform="linux-x86_64"
 
-    sourceFiles "$PACKAGE_DIR/libs/x86_64/linux/Dynamic/cimgui.a" platform="linux-x86_64"
     copyFiles "libs/x86_64/linux/Dynamic/cimgui.so" platform="linux-x86_64"
 }
 
@@ -201,6 +200,5 @@ configuration "dynamic_staticCRT" {
         "cmake -S deps -B deps/build_linux_x64_cimguiDynamic" \
         "cmake --build deps/build_linux_x64_cimguiDynamic --config Release" platform="linux-x86_64"
         
-    sourceFiles "$PACKAGE_DIR/libs/x86_64/linux/Dynamic/cimgui.a" platform="linux-x86_64"
     copyFiles "libs/x86_64/linux/Dynamic/cimgui.so" platform="linux-x86_64"
 }
