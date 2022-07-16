@@ -70,12 +70,12 @@ configuration "static_staticCRT" {
         "cmake --build deps/build_windows_x64_cimguiStatic_StaticCRT --config Release" platform="windows-x86_64"
 
     libs \
-        "$PACKAGE_DIR/libs/x86_64/win32/Static/StaticCRT/cimgui" \
-        "$PACKAGE_DIR/libs/x86_64/win32/Static/StaticCRT/SDL2"   \
-        "$PACKAGE_DIR/libs/x86_64/win32/Static/StaticCRT/freetype" platform="windows-x86_64"
+        "$PACKAGE_DIR/libs/AMD64/win32/Static/StaticCRT/cimgui" \
+        "$PACKAGE_DIR/libs/AMD64/win32/Static/StaticCRT/SDL2"   \
+        "$PACKAGE_DIR/libs/AMD64/win32/Static/StaticCRT/freetype" platform="windows-x86_64"
 
-    copyFiles "libs/x86_64/win32/Static/StaticCRT/SDL2.dll" platform="windows-x86_64"
-    copyFiles "libs/x86_64/win32/Static/StaticCRT/freetype.dll" platform="windows-x86_64"
+    copyFiles "libs/AMD64/win32/Static/StaticCRT/SDL2.dll" platform="windows-x86_64"
+    copyFiles "libs/AMD64/win32/Static/StaticCRT/freetype.dll" platform="windows-x86_64"
 
     // Windows x86
     preBuildCommands \
@@ -111,13 +111,13 @@ configuration "dynamic_dynamicCRT" {
         "cmake --build deps/build_windows_x64_cimguiDynamic_DynamicCRT --config Release" platform="windows-x86_64"
 
     libs \
-        "$PACKAGE_DIR/libs/x86_64/win32/Dynamic/DynamicCRT/cimgui" \
-        "$PACKAGE_DIR/libs/x86_64/win32/Dynamic/DynamicCRT/SDL2" \
-        "$PACKAGE_DIR/libs/x86_64/win32/Dynamic/DynamicCRT/freetype" platform="windows-x86_64"
+        "$PACKAGE_DIR/libs/AMD64/win32/Dynamic/DynamicCRT/cimgui" \
+        "$PACKAGE_DIR/libs/AMD64/win32/Dynamic/DynamicCRT/SDL2" \
+        "$PACKAGE_DIR/libs/AMD64/win32/Dynamic/DynamicCRT/freetype" platform="windows-x86_64"
 
-    copyFiles "libs/x86_64/win32/Dynamic/DynamicCRT/cimgui.dll" platform="windows-x86_64"
-    copyFiles "libs/x86_64/win32/Dynamic/DynamicCRT/SDL2.dll" platform="windows-x86_64"
-    copyFiles "libs/x86_64/win32/Dynamic/DynamicCRT/freetype.dll" platform="windows-x86_64"
+    copyFiles "libs/AMD64/win32/Dynamic/DynamicCRT/cimgui.dll" platform="windows-x86_64"
+    copyFiles "libs/AMD64/win32/Dynamic/DynamicCRT/SDL2.dll" platform="windows-x86_64"
+    copyFiles "libs/AMD64/win32/Dynamic/DynamicCRT/freetype.dll" platform="windows-x86_64"
 
     // Windows x86
     preBuildCommands \
@@ -163,13 +163,13 @@ configuration "dynamic_staticCRT" {
         "cmake --build deps/build_windows_x64_cimguiDynamic_StaticCRT --config Release" platform="windows-x86_64"
 
     libs \
-        "$PACKAGE_DIR/libs/x86_64/win32/Dynamic/StaticCRT/cimgui" \
-        "$PACKAGE_DIR/libs/x86_64/win32/Dynamic/StaticCRT/SDL2" \
-        "$PACKAGE_DIR/libs/x86_64/win32/Dynamic/StaticCRT/freetype" platform="windows-x86_64"
+        "$PACKAGE_DIR/libs/AMD64/win32/Dynamic/StaticCRT/cimgui" \
+        "$PACKAGE_DIR/libs/AMD64/win32/Dynamic/StaticCRT/SDL2" \
+        "$PACKAGE_DIR/libs/AMD64/win32/Dynamic/StaticCRT/freetype" platform="windows-x86_64"
 
-    copyFiles "libs/x86_64/win32/Dynamic/StaticCRT/cimgui.dll" platform="windows-x86_64"
-    copyFiles "libs/x86_64/win32/Dynamic/StaticCRT/SDL2.dll" platform="windows-x86_64"
-    copyFiles "libs/x86_64/win32/Dynamic/StaticCRT/freetype.dll" platform="windows-x86_64"
+    copyFiles "libs/AMD64/win32/Dynamic/StaticCRT/cimgui.dll" platform="windows-x86_64"
+    copyFiles "libs/AMD64/win32/Dynamic/StaticCRT/SDL2.dll" platform="windows-x86_64"
+    copyFiles "libs/AMD64/win32/Dynamic/StaticCRT/freetype.dll" platform="windows-x86_64"
 
     // Windows x86
     preBuildCommands \
