@@ -13,8 +13,8 @@ configuration "static_dynamicCRT" {
     versions "BindImGui_Static_DynamicCRT" "BindImGui_Static"
     excludedSourceFiles "source/bindbc/imgui/binddynamic.d"
     dflags "-mscrtlib=msvcrt" platform="windows-ldc"
-    dflags "-flto=full" platform="windows-ldc"
-    dflags "-defaultlib=phobos2-ldc-lto,druntime-ldc-lto" platform="windows-ldc"
+    // dflags "-flto=full" platform="windows-ldc"
+    // dflags "-defaultlib=phobos2-ldc-lto,druntime-ldc-lto" platform="windows-ldc"
 
     // For some reason this fixes compilation on Linux
     dflags "--fvisibility=public" platform="linux-ldc"
@@ -58,8 +58,8 @@ configuration "static_staticCRT" {
     versions "BindImGui_Static_StaticCRT" "BindImGui_Static"
     excludedSourceFiles "source/bindbc/imgui/binddynamic.d"
     dflags "-mscrtlib=msvcrt" platform="windows-ldc"
-    dflags "-flto=full" platform="windows-ldc"
-    dflags "-defaultlib=phobos2-ldc-lto,druntime-ldc-lto" platform="windows-ldc"
+    // dflags "-flto=full" platform="windows-ldc"
+    // dflags "-defaultlib=phobos2-ldc-lto,druntime-ldc-lto" platform="windows-ldc"
 
     // For some reason this fixes compilation on Linux
     dflags "--fvisibility=public" platform="linux-ldc"
@@ -102,8 +102,8 @@ configuration "static_staticCRT" {
 configuration "dynamic_dynamicCRT" {
     versions "BindImGui_Dynamic_DynamicCRT" "BindImGui_Dynamic"
     dflags "-mscrtlib=msvcrt" platform="windows-ldc"
-    dflags "-flto=full" platform="windows-ldc"
-    dflags "-defaultlib=phobos2-ldc-lto,druntime-ldc-lto" platform="windows-ldc"
+    //dflags "-flto=full" platform="windows-ldc"
+    //dflags "-defaultlib=phobos2-ldc-lto,druntime-ldc-lto" platform="windows-ldc"
 
     // Windows x86_64
     preBuildCommands \
@@ -154,8 +154,8 @@ configuration "dynamic_dynamicCRT" {
 configuration "dynamic_staticCRT" {
     versions "BindImGui_Dynamic_StaticCRT" "BindImGui_Dynamic"
     dflags "-mscrtlib=msvcrt" platform="windows-ldc"
-    dflags "-flto=full" platform="windows-ldc"
-    dflags "-defaultlib=phobos2-ldc-lto,druntime-ldc-lto" platform="windows-ldc"
+    // dflags "-flto=full" platform="windows-ldc"
+    // dflags "-defaultlib=phobos2-ldc-lto,druntime-ldc-lto" platform="windows-ldc"
 
     // Windows x86_64
     preBuildCommands \
