@@ -1,4 +1,8 @@
-# BindBC Imgui
+> __Note__
+>
+> These bindings are currently being re-written for package version 1.0.0. There will be moderate API changes, support for many more ImGui backends, and bindings of imgui_internal.h.
+
+# BindBC-ImGui
 D binding to CImgui with additional OpenGL and SDL backends
 
 # Adding to your project
