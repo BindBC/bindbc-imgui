@@ -1,6 +1,9 @@
-> __Note__
+> [!NOTE]\
+> These bindings are currently being re-written for package version 1.0.0.
 >
-> These bindings are currently being re-written for package version 1.0.0. There will be moderate API changes, support for many more ImGui backends, and bindings of imgui_internal.h.
+> The new bindings will be based directly on ImGui (i.e. they're C++ bindings), with support for many more ImGui backends, and including bindings of imgui_internal.h.
+>
+> To check out an __UNSTABLE__ preview of 1.0.0, you can download [this repository](https://github.com/ichordev/bindbc-imgui) and use `dub add-local`.
 
 # BindBC-ImGui
 D binding to CImgui with additional OpenGL and SDL backends
